@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewChild, ViewContainerRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -10,6 +10,7 @@ import { UIStateStore } from '../../core/stores/ui.store';
 import { WebSocketService } from '../../core/services/websocket.service';
 import { ConversationApiService } from '../../core/services/conversation-api.service';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader.component';
+import { DynamicUIService } from '../../core/services/dynamic-ui.service';
 
 @Component({
   selector: 'app-conversation-view',
@@ -71,6 +72,10 @@ import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader
                 <div class="schema-preview">
                   <strong>UI Schema Generated</strong>
                   <pre>{{ uiStateStore.currentSchema() | json }}</pre>
+                </div>
+                <div class="schema-rendered">
+                  <strong>Rendered UI</strong>
+                  <ng-container #uiHost></ng-container>
                 </div>
               </div>
             </div>
@@ -345,11 +350,19 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
   uiStateStore = inject(UIStateStore);
   webSocketService = inject(WebSocketService);
   private conversationApi = inject(ConversationApiService);
+  private dynamicUIService = inject(DynamicUIService);
   private route = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
 
   messageText = '';
   private conversationId: string = '';
+  private uiHost?: ViewContainerRef;
+
+  @ViewChild('uiHost', { read: ViewContainerRef })
+  set uiHostRef(host: ViewContainerRef | undefined) {
+    this.uiHost = host;
+    this.tryRenderSchema();
+  }
 
   ngOnInit(): void {
     // Get conversation ID from route
@@ -367,6 +380,8 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
           this.uiStateStore.addStreamingChunk(chunk);
         } else if (chunk?.type === 'complete') {
           this.uiStateStore.completeStreaming(chunk.data);
+          this.dynamicUIService.loadSchema(chunk.data);
+          this.tryRenderSchema();
           this.loadMessages(); // Reload messages to show assistant response
         } else if (chunk?.type === 'error') {
           this.uiStateStore.setStreamingError(chunk.data?.message || 'Error');
@@ -487,5 +502,17 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
       }
     }, 100);
+  }
+
+  private tryRenderSchema(): void {
+    if (!this.uiHost) {
+      return;
+    }
+
+    if (!this.dynamicUIService.getCurrentSchema()) {
+      return;
+    }
+
+    this.dynamicUIService.renderCurrentSchema(this.uiHost);
   }
 }
