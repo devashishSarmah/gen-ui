@@ -370,6 +370,17 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
       this.conversationId = params['id'];
       this.loadConversation();
       this.setupWebSocket();
+      
+      // Check for pending prompt from welcome screen
+      const pendingPrompt = sessionStorage.getItem('pendingPrompt');
+      if (pendingPrompt) {
+        sessionStorage.removeItem('pendingPrompt');
+        // Delay to ensure WebSocket is connected
+        setTimeout(() => {
+          this.messageText = pendingPrompt;
+          this.sendMessage();
+        }, 1000);
+      }
     });
 
     // Subscribe to WebSocket stream

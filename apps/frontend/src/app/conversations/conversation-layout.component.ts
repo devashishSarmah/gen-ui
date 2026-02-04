@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -8,8 +8,13 @@ import { RouterModule } from '@angular/router';
   imports: [CommonModule, RouterModule],
   template: `
     <div class="conversation-layout">
-      <aside class="sidebar">
-        <router-outlet name="list"></router-outlet>
+      <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
+        <button class="toggle-btn" (click)="toggleSidebar()" [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'">
+          <span class="toggle-icon">{{ sidebarCollapsed() ? '→' : '←' }}</span>
+        </button>
+        <div class="sidebar-content" *ngIf="!sidebarCollapsed()">
+          <router-outlet name="list"></router-outlet>
+        </div>
       </aside>
       <main class="main">
         <router-outlet></router-outlet>
@@ -28,6 +33,46 @@ import { RouterModule } from '@angular/router';
         width: 300px;
         border-right: 1px solid #e0e0e0;
         overflow: hidden;
+        transition: width 0.3s ease;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sidebar.collapsed {
+        width: 48px;
+      }
+
+      .toggle-btn {
+        position: absolute;
+        top: 1rem;
+        right: 0.5rem;
+        width: 32px;
+        height: 32px;
+        border: 1px solid #e0e0e0;
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s;
+      }
+
+      .toggle-btn:hover {
+        background: #f5f5f5;
+      }
+
+      .sidebar.collapsed .toggle-btn {
+        right: 8px;
+      }
+
+      .sidebar-content {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
       }
 
       .main {
@@ -49,6 +94,11 @@ import { RouterModule } from '@angular/router';
           max-height: 200px;
         }
 
+        .sidebar.collapsed {
+          width: 100%;
+          max-height: 48px;
+        }
+
         .main {
           min-height: 0;
         }
@@ -56,4 +106,10 @@ import { RouterModule } from '@angular/router';
     `,
   ],
 })
-export class ConversationLayoutComponent {}
+export class ConversationLayoutComponent {
+  sidebarCollapsed = signal(false);
+
+  toggleSidebar(): void {
+    this.sidebarCollapsed.update((v) => !v);
+  }
+}

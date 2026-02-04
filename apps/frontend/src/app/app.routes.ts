@@ -3,6 +3,7 @@ import { authGuard } from './auth/auth.guard';
 import { ConversationLayoutComponent } from './conversations/conversation-layout.component';
 import { ConversationListComponent } from './conversations/conversation-list.component';
 import { ConversationViewComponent } from './conversations/conversation-view.component';
+import { WelcomeScreenComponent } from './conversations/welcome-screen.component';
 
 export const appRoutes: Route[] = [
   {
@@ -31,6 +32,11 @@ export const appRoutes: Route[] = [
         path: '',
         component: ConversationListComponent,
         outlet: 'list',
+      },
+      {
+        path: '',
+        component: WelcomeScreenComponent,
+        outlet: 'primary',
       },
       {
         path: ':id',

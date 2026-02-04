@@ -89,4 +89,20 @@ export class ConversationStore {
   setError(error: string | null): void {
     this.error.set(error);
   }
+
+  /**
+   * Update a conversation in the list
+   */
+  updateConversation(id: string, updates: Partial<Conversation>): void {
+    this.conversations.update((convs) =>
+      convs.map((c) => (c.id === id ? { ...c, ...updates } : c))
+    );
+  }
+
+  /**
+   * Remove a conversation from the list
+   */
+  removeConversation(id: string): void {
+    this.conversations.update((convs) => convs.filter((c) => c.id !== id));
+  }
 }

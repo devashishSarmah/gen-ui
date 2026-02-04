@@ -144,6 +144,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data.prompt
       );
 
+      // Generate title from first prompt if conversation title is default
+      if (conversation.title === 'New Conversation') {
+        await this.conversationsService.generateTitle(data.conversationId, data.prompt);
+      }
+
       // Get conversation history
       const messages = await this.conversationsService.getConversationMessages(data.conversationId);
       const currentState = await this.stateManager.loadConversationState(data.conversationId);

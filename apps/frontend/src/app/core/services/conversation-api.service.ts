@@ -19,6 +19,15 @@ export class ConversationApiService {
   }
 
   /**
+   * Search conversations by title
+   */
+  searchConversations(query: string): Observable<ConversationDto[]> {
+    return this.http.get<ConversationDto[]>(`${this.apiUrl}/conversations`, {
+      params: { search: query },
+    });
+  }
+
+  /**
    * Get a single conversation
    */
   getConversation(id: string): Observable<ConversationDto> {
@@ -59,20 +68,17 @@ export class ConversationApiService {
 
   /**
    * Get a single message
+   * @deprecated Backend endpoint not implemented
    */
   getMessage(conversationId: string, messageId: string): Observable<MessageDto> {
-    return this.http.get<MessageDto>(
-      `${this.apiUrl}/conversations/${conversationId}/messages/${messageId}`
-    );
+    throw new Error('getMessage is not implemented on the backend');
   }
 
   /**
    * Send a message (user prompt)
+   * @deprecated Backend endpoint not implemented. Use WebSocket communication instead
    */
   sendMessage(conversationId: string, content: string): Observable<MessageDto> {
-    return this.http.post<MessageDto>(
-      `${this.apiUrl}/conversations/${conversationId}/messages`,
-      { content }
-    );
+    throw new Error('sendMessage is not implemented on the backend. Use WebSocket communication instead');
   }
 }

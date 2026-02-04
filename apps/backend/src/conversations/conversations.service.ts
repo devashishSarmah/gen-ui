@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { Conversation, Message } from '../entities';
 
 @Injectable()
@@ -68,5 +68,31 @@ export class ConversationsService {
       where: { conversationId },
       order: { createdAt: 'ASC' },
     });
+  }
+
+  async deleteConversation(id: string): Promise<void> {
+    const result = await this.conversationRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Conversation with id ${id} not found`);
+    }
+  }
+
+  async searchConversations(userId: string, searchTerm: string): Promise<Conversation[]> {
+    return await this.conversationRepository.find({
+      where: {
+        userId,
+        title: ILike(`%${searchTerm}%`),
+      },
+      order: { lastMessageAt: 'DESC' },
+    });
+  }
+
+  async generateTitle(conversationId: string, firstPrompt: string): Promise<Conversation> {
+    // Generate a title from the first prompt (truncate to 50 chars)
+    const generatedTitle = firstPrompt.length > 50 
+      ? firstPrompt.substring(0, 47) + '...' 
+      : firstPrompt;
+    
+    return await this.updateConversation(conversationId, { title: generatedTitle });
   }
 }
