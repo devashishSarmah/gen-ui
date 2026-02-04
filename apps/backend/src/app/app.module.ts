@@ -13,6 +13,10 @@ import {
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
 import { RedisModule } from '../redis/redis.module';
+import { ConversationsModule } from '../conversations/conversations.module';
+import { StateModule } from '../state/state.module';
+import { AIModule } from '../ai/ai.module';
+import { GatewayModule } from '../gateway/gateway.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -71,6 +75,10 @@ import { AppService } from './app.service';
     AuthModule,
     UsersModule,
     RedisModule,
+    ConversationsModule,
+    StateModule,
+    AIModule,
+    GatewayModule,
   ],
   controllers: [AppController],
   providers: [AppService],
