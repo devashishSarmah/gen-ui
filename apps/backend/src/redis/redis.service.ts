@@ -169,4 +169,18 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async del(key: string): Promise<void> {
     await this.client.del(key);
   }
+
+  /**
+   * Health check - ping Redis
+   */
+  async ping(): Promise<string> {
+    return await this.client.ping();
+  }
+
+  /**
+   * Get connection status
+   */
+  isConnected(): boolean {
+    return this.client && this.client.status === 'ready';
+  }
 }

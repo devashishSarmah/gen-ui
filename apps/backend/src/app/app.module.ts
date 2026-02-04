@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
+import { APP_FILTER } from '@nestjs/core';
 import {
   User,
   Conversation,
@@ -19,6 +20,8 @@ import { AIModule } from '../ai/ai.module';
 import { GatewayModule } from '../gateway/gateway.module';
 import { AdminModule } from '../admin/admin.module';
 import { SchedulerModule } from '../scheduler/scheduler.module';
+import { CommonModule } from '../common/common.module';
+import { GlobalExceptionFilter } from '../common/filters/global-exception.filter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -83,8 +86,12 @@ import { AppService } from './app.service';
     GatewayModule,
     AdminModule,
     SchedulerModule,
+    CommonModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_FILTER, useClass: GlobalExceptionFilter },
+  ],
 })
 export class AppModule {}
