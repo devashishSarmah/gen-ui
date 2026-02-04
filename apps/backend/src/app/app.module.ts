@@ -17,6 +17,8 @@ import { ConversationsModule } from '../conversations/conversations.module';
 import { StateModule } from '../state/state.module';
 import { AIModule } from '../ai/ai.module';
 import { GatewayModule } from '../gateway/gateway.module';
+import { AdminModule } from '../admin/admin.module';
+import { SchedulerModule } from '../scheduler/scheduler.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -79,6 +81,8 @@ import { AppService } from './app.service';
     StateModule,
     AIModule,
     GatewayModule,
+    AdminModule,
+    SchedulerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

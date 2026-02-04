@@ -1,8 +1,11 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bull';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bull';
+import { Repository, MoreThanOrEqual } from 'typeorm';
 import Redis from 'ioredis';
+import { InteractionEvent } from '../entities';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
@@ -11,7 +14,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private configService: ConfigService,
-    @InjectQueue('db-write') private dbWriteQueue: Queue
+    @InjectQueue('db-write') private dbWriteQueue: Queue,
+    @InjectRepository(InteractionEvent)
+    private interactionEventRepository: Repository<InteractionEvent>
   ) {}
 
   async onModuleInit() {
@@ -94,6 +99,33 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       id,
       data: JSON.parse(fields[1]),
     }));
+  }
+
+  /**
+   * Trim event stream to keep only recent events after snapshot
+   * Uses eventSequenceNumber to precisely trim the stream
+   */
+  async trimEventStream(conversationId: string, keepAfterSequence: number, maxLength: number): Promise<void> {
+    const streamKey = `conversation:${conversationId}:events`;
+
+    // Query PostgreSQL for the first event at or after the sequence cutoff
+    const minEvent = await this.interactionEventRepository.findOne({
+      where: {
+        conversationId,
+        eventSequenceNumber: MoreThanOrEqual(keepAfterSequence),
+      },
+      order: { eventSequenceNumber: 'ASC' },
+    });
+
+    if (minEvent && minEvent.streamId) {
+      // Trim Redis stream using MINID to keep entries >= minStreamId
+      // MINID removes entries with IDs lexicographically less than the specified ID
+      await this.client.xtrim(streamKey, 'MINID', '~', minEvent.streamId);
+    } else {
+      // Fallback: if no matching event found or no streamId, use MAXLEN
+      // This keeps approximately maxLength recent entries
+      await this.client.xtrim(streamKey, 'MAXLEN', '~', maxLength);
+    }
   }
 
   /**

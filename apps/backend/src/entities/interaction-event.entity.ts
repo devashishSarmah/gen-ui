@@ -12,6 +12,7 @@ import { Message } from './message.entity';
 
 @Entity('interaction_events')
 @Index(['conversationId', 'createdAt'])
+@Index(['conversationId', 'eventSequenceNumber'])
 export class InteractionEvent {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -38,4 +39,10 @@ export class InteractionEvent {
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
+
+  @Column({ type: 'integer', nullable: false, default: 0 })
+  eventSequenceNumber: number;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  streamId: string;
 }

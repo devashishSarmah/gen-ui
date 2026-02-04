@@ -4,6 +4,7 @@ import { ConversationLayoutComponent } from './conversations/conversation-layout
 import { ConversationListComponent } from './conversations/conversation-list.component';
 import { ConversationViewComponent } from './conversations/conversation-view.component';
 import { WelcomeScreenComponent } from './conversations/welcome-screen.component';
+import { AdminReplayComponent } from './admin/admin-replay.component';
 
 export const appRoutes: Route[] = [
   {
@@ -44,6 +45,11 @@ export const appRoutes: Route[] = [
         outlet: 'primary',
       },
     ],
+  },
+  {
+    path: 'admin/replay/:conversationId',
+    canActivate: [authGuard],
+    component: AdminReplayComponent,
   },
   {
     path: 'home',
