@@ -18,7 +18,7 @@ export class AuthService {
   
   // Signal-based state management (Angular 21)
   currentUser = signal<UserDto | null>(null);
-  isAuthenticated = signal<boolean>(false);
+  isAuthenticatedSignal = signal<boolean>(false);
 
   register(data: RegisterDto): Observable<UserDto> {
     return this.http.post<UserDto>(`${this.apiUrl}/auth/register`, data);
@@ -28,7 +28,7 @@ export class AuthService {
     return this.http.post<AuthResponseDto>(`${this.apiUrl}/auth/login`, data).pipe(
       tap((response) => {
         localStorage.setItem('access_token', response.access_token);
-        this.isAuthenticated.set(true);
+        this.isAuthenticatedSignal.set(true);
         this.loadProfile();
       })
     );
@@ -36,7 +36,7 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem('access_token');
-    this.isAuthenticated.set(false);
+    this.isAuthenticatedSignal.set(false);
     this.currentUser.set(null);
   }
 
@@ -44,7 +44,7 @@ export class AuthService {
     this.http.get<UserDto>(`${this.apiUrl}/auth/profile`).subscribe({
       next: (user) => {
         this.currentUser.set(user);
-        this.isAuthenticated.set(true);
+        this.isAuthenticatedSignal.set(true);
       },
       error: () => {
         this.logout();
@@ -54,5 +54,9 @@ export class AuthService {
 
   getToken(): string | null {
     return localStorage.getItem('access_token');
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.getToken();
   }
 }
