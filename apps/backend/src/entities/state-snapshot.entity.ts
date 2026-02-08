@@ -13,21 +13,21 @@ import { Conversation } from './conversation.entity';
 @Index(['conversationId', 'eventSequenceNumber'])
 export class StateSnapshot {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'uuid', nullable: false })
-  conversationId: string;
+  conversationId!: string;
 
   @ManyToOne(() => Conversation, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'conversationId' })
-  conversation: Conversation;
+  conversation!: Conversation;
 
   @Column({ type: 'jsonb', nullable: false })
-  snapshotData: any;
+  snapshotData!: any;
 
   @Column({ type: 'integer', nullable: false })
-  eventSequenceNumber: number;
+  eventSequenceNumber!: number;
 
   @CreateDateColumn({ type: 'timestamp' })
-  createdAt: Date;
+  createdAt!: Date;
 }

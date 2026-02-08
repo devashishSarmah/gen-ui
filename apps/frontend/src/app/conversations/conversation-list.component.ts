@@ -4,9 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { ConversationStore, Conversation } from '../../core/stores/conversation.store';
-import { ConversationApiService } from '../../core/services/conversation-api.service';
-import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader.component';
+import { ConversationStore, Conversation } from '../core/stores/conversation.store';
+import { ConversationApiService } from '../core/services/conversation-api.service';
+import { SkeletonLoaderComponent } from '../shared/components/skeleton-loader.component';
 
 @Component({
   selector: 'app-conversation-list',

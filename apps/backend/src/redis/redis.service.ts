@@ -9,7 +9,7 @@ import { InteractionEvent } from '../entities';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
-  private client: Redis;
+  private client!: Redis;
   private readonly DEFAULT_TTL = 24 * 60 * 60; // 24 hours in seconds
 
   constructor(
@@ -23,6 +23,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     this.client = new Redis({
       host: this.configService.get('REDIS_HOST'),
       port: this.configService.get<number>('REDIS_PORT'),
+      username: this.configService.get('REDIS_USERNAME'),
       password: this.configService.get('REDIS_PASSWORD'),
       retryStrategy: (times) => {
         const delay = Math.min(times * 50, 2000);
@@ -82,6 +83,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       'data',
       JSON.stringify(event)
     );
+    if (!eventId) {
+      throw new Error('Failed to add event to Redis stream');
+    }
     return eventId;
   }
 
@@ -181,6 +185,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Get connection status
    */
   isConnected(): boolean {
-    return this.client && this.client.status === 'ready';
+    return !!this.client && this.client.status === 'ready';
   }
 }

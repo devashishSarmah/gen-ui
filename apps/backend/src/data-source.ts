@@ -3,7 +3,7 @@ import { config } from 'dotenv';
 import { join } from 'path';
 
 // Load environment variables from root .env
-config({ path: join(__dirname, '../../../.env') });
+config({ path: join(process.cwd(), '.env') });
 
 export default new DataSource({
   type: 'postgres',

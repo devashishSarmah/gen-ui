@@ -5,12 +5,12 @@ import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
-import { ConversationStore, Message } from '../../core/stores/conversation.store';
-import { UIStateStore } from '../../core/stores/ui.store';
-import { WebSocketService } from '../../core/services/websocket.service';
-import { ConversationApiService } from '../../core/services/conversation-api.service';
-import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader.component';
-import { DynamicUIService } from '../../core/services/dynamic-ui.service';
+import { ConversationStore, Message } from '../core/stores/conversation.store';
+import { UIStateStore } from '../core/stores/ui.store';
+import { WebSocketService } from '../core/services/websocket.service';
+import { ConversationApiService } from '../core/services/conversation-api.service';
+import { SkeletonLoaderComponent } from '../shared/components/skeleton-loader.component';
+import { DynamicUIService } from '../core/services/dynamic-ui.service';
 
 @Component({
   selector: 'app-conversation-view',

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
-import { Conversation, Message } from '../entities';
+import { Conversation, Message, MessageRole } from '../entities';
 
 @Injectable()
 export class ConversationsService {
@@ -37,13 +37,17 @@ export class ConversationsService {
 
   async updateConversation(id: string, updates: Partial<Conversation>): Promise<Conversation> {
     await this.conversationRepository.update(id, updates);
-    return await this.findConversationById(id);
+    const updated = await this.findConversationById(id);
+    if (!updated) {
+      throw new NotFoundException(`Conversation with id ${id} not found`);
+    }
+    return updated;
   }
 
   async addMessage(
     conversationId: string,
-    role: 'user' | 'assistant' | 'system',
-    content?: string,
+    role: MessageRole,
+    content?: string | null,
     uiSchema?: any
   ): Promise<Message> {
     const message = this.messageRepository.create({
@@ -51,7 +55,7 @@ export class ConversationsService {
       role,
       content,
       uiSchema,
-    });
+    }) as Message;
 
     const savedMessage = await this.messageRepository.save(message);
 

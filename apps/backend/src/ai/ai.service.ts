@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { AIProvider, AIGenerationContext, UISchemaChunk } from './providers/ai-provider.interface';
 import { OpenAIProvider } from './providers/openai.provider';
 import { AnthropicProvider } from './providers/anthropic.provider';
+import { OpenRouterProvider } from './providers/openrouter.provider';
 import { SchemaValidationService } from './schema-validation.service';
 
 @Injectable()
@@ -14,11 +15,13 @@ export class AIService {
     private configService: ConfigService,
     private openaiProvider: OpenAIProvider,
     private anthropicProvider: AnthropicProvider,
+    private openrouterProvider: OpenRouterProvider,
     private schemaValidation: SchemaValidationService
   ) {
     this.providers = new Map();
     this.providers.set('openai', this.openaiProvider);
     this.providers.set('anthropic', this.anthropicProvider);
+    this.providers.set('openrouter', this.openrouterProvider);
     
     this.defaultProvider = this.configService.get('DEFAULT_AI_PROVIDER') || 'openai';
   }

@@ -77,9 +77,10 @@ export class OpenAIProvider extends AIProvider {
         done: true,
       };
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       yield {
         type: 'error',
-        data: { error: error.message },
+        data: { error: message },
         done: true,
       };
     }
@@ -126,9 +127,10 @@ export class OpenAIProvider extends AIProvider {
         done: true,
       };
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       yield {
         type: 'error',
-        data: { error: error.message },
+        data: { error: message },
         done: true,
       };
     }

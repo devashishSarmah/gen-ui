@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -15,12 +16,18 @@ export class ConversationsController {
   ) {}
 
   @Post()
-  async createConversation(@Request() req, @Body() body: { title?: string }) {
+  async createConversation(
+    @Request() req: ExpressRequest & { user: { id: string } },
+    @Body() body: { title?: string }
+  ) {
     return this.conversationsService.createConversation(req.user.id, body.title);
   }
 
   @Get(':id')
-  async getConversation(@Param('id') id: string, @Request() req) {
+  async getConversation(
+    @Param('id') id: string,
+    @Request() req: ExpressRequest & { user: { id: string } }
+  ) {
     const conversation = await this.conversationsService.findConversationById(id);
     if (!conversation) {
       throw new NotFoundException(`Conversation with id ${id} not found`);
@@ -32,7 +39,10 @@ export class ConversationsController {
   }
 
   @Get(':id/messages')
-  async getConversationMessages(@Param('id') id: string, @Request() req) {
+  async getConversationMessages(
+    @Param('id') id: string,
+    @Request() req: ExpressRequest & { user: { id: string } }
+  ) {
     const conversation = await this.conversationsService.findConversationById(id);
     if (!conversation) {
       throw new NotFoundException(`Conversation with id ${id} not found`);
@@ -47,7 +57,7 @@ export class ConversationsController {
   async updateConversation(
     @Param('id') id: string,
     @Body() body: { title?: string },
-    @Request() req
+    @Request() req: ExpressRequest & { user: { id: string } }
   ) {
     const conversation = await this.conversationsService.findConversationById(id);
     if (!conversation) {
@@ -60,7 +70,10 @@ export class ConversationsController {
   }
 
   @Delete(':id')
-  async deleteConversation(@Param('id') id: string, @Request() req) {
+  async deleteConversation(
+    @Param('id') id: string,
+    @Request() req: ExpressRequest & { user: { id: string } }
+  ) {
     const conversation = await this.conversationRepository.findOne({
       where: { id },
     });
@@ -75,7 +88,7 @@ export class ConversationsController {
 
   @Get()
   async getUserConversationsWithSearch(
-    @Request() req,
+    @Request() req: ExpressRequest & { user: { id: string } },
     @Query('search') search?: string
   ) {
     if (search) {

@@ -8,20 +8,20 @@ import {
 @Entity('ai_provider_configs')
 export class AiProviderConfig {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'varchar', length: 100, nullable: false })
-  providerName: string;
+  providerName!: string;
 
   @Column({ type: 'jsonb', nullable: false })
-  capabilities: any;
+  capabilities!: any;
 
   @Column({ type: 'jsonb', nullable: false })
-  config: any;
+  config!: any;
 
   @Column({ type: 'boolean', default: true })
-  isActive: boolean;
+  isActive!: boolean;
 
   @CreateDateColumn({ type: 'timestamp' })
-  createdAt: Date;
+  createdAt!: Date;
 }

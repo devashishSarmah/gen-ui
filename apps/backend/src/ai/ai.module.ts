@@ -3,11 +3,12 @@ import { ConfigModule } from '@nestjs/config';
 import { AIService } from './ai.service';
 import { OpenAIProvider } from './providers/openai.provider';
 import { AnthropicProvider } from './providers/anthropic.provider';
+import { OpenRouterProvider } from './providers/openrouter.provider';
 import { SchemaValidationService } from './schema-validation.service';
 
 @Module({
   imports: [ConfigModule],
-  providers: [AIService, OpenAIProvider, AnthropicProvider, SchemaValidationService],
+  providers: [AIService, OpenAIProvider, AnthropicProvider, OpenRouterProvider, SchemaValidationService],
   exports: [AIService],
 })
 export class AIModule {}

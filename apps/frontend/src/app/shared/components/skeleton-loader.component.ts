@@ -1,4 +1,5 @@
-import { Component, Input, NgIf, NgFor } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-skeleton-loader',

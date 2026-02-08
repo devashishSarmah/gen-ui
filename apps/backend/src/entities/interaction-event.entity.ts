@@ -15,34 +15,34 @@ import { Message } from './message.entity';
 @Index(['conversationId', 'eventSequenceNumber'])
 export class InteractionEvent {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'uuid', nullable: false })
-  conversationId: string;
+  conversationId!: string;
 
   @ManyToOne(() => Conversation, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'conversationId' })
-  conversation: Conversation;
+  conversation!: Conversation;
 
   @Column({ type: 'uuid', nullable: false })
-  messageId: string;
+  messageId!: string;
 
   @ManyToOne(() => Message, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'messageId' })
-  message: Message;
+  message!: Message;
 
   @Column({ type: 'varchar', length: 50, nullable: false })
-  eventType: string;
+  eventType!: string;
 
   @Column({ type: 'jsonb', nullable: false })
-  eventData: any;
+  eventData!: any;
 
   @CreateDateColumn({ type: 'timestamp' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @Column({ type: 'integer', nullable: false, default: 0 })
-  eventSequenceNumber: number;
+  eventSequenceNumber!: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  streamId: string;
+  streamId?: string | null;
 }

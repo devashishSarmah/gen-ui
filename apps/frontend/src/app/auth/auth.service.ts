@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, signal } from 'rxjs';
+import { Observable, tap } from 'rxjs';
+import { signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import {
   RegisterDto,

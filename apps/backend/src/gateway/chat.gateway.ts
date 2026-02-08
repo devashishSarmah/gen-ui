@@ -8,11 +8,12 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Injectable, UseGuards } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConversationsService } from '../conversations/conversations.service';
 import { StateManagerService } from '../state/state-manager.service';
 import { AIService } from '../ai/ai.service';
+import { MessageRole } from '../entities';
 
 @Injectable()
 @WebSocketGateway({
@@ -23,9 +24,9 @@ import { AIService } from '../ai/ai.service';
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
-  private userSessions: Map<string, { userId: string; conversationId: string }> = new Map();
+  private userSessions: Map<string, { userId: string; conversationId: string | null }> = new Map();
 
   constructor(
     private jwtService: JwtService,
@@ -57,7 +58,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log(`✅ Client connected: ${client.id} (User: ${payload.sub})`);
       client.emit('connected', { message: 'Connected successfully' });
     } catch (error) {
-      console.error('❌ Connection error:', error.message);
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('❌ Connection error:', message);
       client.disconnect();
     }
   }
@@ -140,7 +142,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Save user message
       await this.conversationsService.addMessage(
         data.conversationId,
-        'user',
+        MessageRole.USER,
         data.prompt
       );
 
@@ -177,7 +179,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           // Save assistant message to PostgreSQL
           await this.conversationsService.addMessage(
             data.conversationId,
-            'assistant',
+            MessageRole.ASSISTANT,
             null,
             chunk.data
           );
@@ -186,8 +188,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       return { success: true };
     } catch (error) {
-      console.error('Error handling prompt:', error);
-      return { error: error.message };
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Error handling prompt:', message);
+      return { error: message };
     }
   }
 
@@ -265,8 +268,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       return { success: true };
     } catch (error) {
-      console.error('Error handling interaction:', error);
-      return { error: error.message };
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Error handling interaction:', message);
+      return { error: message };
     }
   }
 

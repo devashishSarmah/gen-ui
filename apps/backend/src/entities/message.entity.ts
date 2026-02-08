@@ -19,28 +19,28 @@ export enum MessageRole {
 @Index(['conversationId', 'createdAt'])
 export class Message {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'uuid', nullable: false })
-  conversationId: string;
+  conversationId!: string;
 
   @ManyToOne(() => Conversation, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'conversationId' })
-  conversation: Conversation;
+  conversation!: Conversation;
 
   @Column({
     type: 'varchar',
     length: 20,
     nullable: false,
   })
-  role: MessageRole;
+  role!: MessageRole;
 
   @Column({ type: 'text', nullable: true })
-  content: string;
+  content?: string | null;
 
   @Column({ type: 'jsonb', nullable: true })
-  uiSchema: any;
+  uiSchema?: any | null;
 
   @CreateDateColumn({ type: 'timestamp' })
-  createdAt: Date;
+  createdAt!: Date;
 }

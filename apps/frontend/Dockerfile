@@ -9,7 +9,7 @@ COPY nx.json ./
 COPY tsconfig.base.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy source code
 COPY apps/frontend ./apps/frontend

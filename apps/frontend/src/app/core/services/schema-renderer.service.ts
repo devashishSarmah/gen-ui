@@ -1,4 +1,11 @@
-import { Injectable, Injector, Type, ComponentRef, ViewContainerRef } from '@angular/core';
+import {
+  Injectable,
+  EnvironmentInjector,
+  Type,
+  ComponentRef,
+  ViewContainerRef,
+  createComponent,
+} from '@angular/core';
 import { ComponentRegistryService } from './component-registry.service';
 
 export interface UISchema {
@@ -21,7 +28,7 @@ export interface RenderResult {
 })
 export class SchemaRendererService {
   constructor(
-    private injector: Injector,
+    private injector: EnvironmentInjector,
     private componentRegistry: ComponentRegistryService
   ) {}
 
@@ -57,8 +64,8 @@ export class SchemaRendererService {
     viewContainer?: ViewContainerRef
   ): ComponentRef<any> {
     const componentRef = viewContainer
-      ? viewContainer.createComponent(component, { injector: this.injector })
-      : this.injector.resolveComponentFactory(component).create(this.injector);
+      ? viewContainer.createComponent(component, { environmentInjector: this.injector })
+      : createComponent(component, { environmentInjector: this.injector });
 
     this.applySchemaProps(componentRef, schema);
     this.wireSchemaEvents(componentRef, schema);
@@ -130,9 +137,9 @@ export class SchemaRendererService {
     }
 
     // Validate children exist if component expects them
-    if (capability.propsSchema?.children && !schema.children?.length) {
+    if (capability.propsSchema?.['children'] && !schema.children?.length) {
       // Some components may require children
-      const childrenSchema = capability.propsSchema.children;
+      const childrenSchema = capability.propsSchema['children'];
       if (childrenSchema.required) {
         errors.push(`Component '${schema.type}' requires children`);
       }

@@ -73,6 +73,7 @@ import { AppService } from './app.service';
         redis: {
           host: configService.get('REDIS_HOST'),
           port: configService.get<number>('REDIS_PORT'),
+          username: configService.get('REDIS_USERNAME'),
           password: configService.get('REDIS_PASSWORD'),
         },
       }),
