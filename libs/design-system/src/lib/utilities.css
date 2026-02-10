@@ -1,0 +1,32 @@
+@layer utilities {
+  .ds-gradient-text {
+    background: linear-gradient(90deg, var(--ds-accent-teal), var(--ds-accent-indigo));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .ds-glow-ring {
+    box-shadow: 0 0 0 1px rgba(8, 255, 243, 0.35), 0 0 30px rgba(77, 58, 255, 0.2);
+  }
+
+  .ds-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .ds-muted {
+    color: var(--ds-text-secondary);
+  }
+
+  .ds-glass {
+    background: var(--ds-surface-glass);
+    border: 1px solid var(--ds-border);
+    backdrop-filter: blur(14px);
+  }
+
+  .ds-focus-ring:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(8, 255, 243, 0.5), 0 0 0 5px rgba(8, 255, 243, 0.15);
+  }
+}

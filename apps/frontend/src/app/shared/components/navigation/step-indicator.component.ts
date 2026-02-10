@@ -8,7 +8,7 @@ import { WizardFlowService } from '../../../core/services/wizard-flow.service';
   imports: [CommonModule],
   template: `
     <div class="step-indicator">
-      <div class="progress-bar">
+      <div class="progress-bar" role="progressbar" [attr.aria-valuenow]="wizardService.progressPercentage()" aria-valuemin="0" aria-valuemax="100">
         <div
           class="progress-fill"
           [style.width.%]="wizardService.progressPercentage()"
@@ -16,13 +16,16 @@ import { WizardFlowService } from '../../../core/services/wizard-flow.service';
       </div>
 
       <div class="steps">
-        <div
+        <button
           *ngFor="let step of wizardService.steps(); let i = index"
           class="step"
           [class.active]="i === wizardService.currentStepIndex()"
           [class.completed]="step.completed"
           [class.clickable]="canNavigateToStep(i)"
           (click)="navigateToStep(i)"
+          [disabled]="!canNavigateToStep(i)"
+          [attr.aria-current]="i === wizardService.currentStepIndex() ? 'step' : null"
+          type="button"
         >
           <div class="step-circle">
             <span *ngIf="step.completed" class="check">✓</span>
@@ -34,7 +37,7 @@ import { WizardFlowService } from '../../../core/services/wizard-flow.service';
               {{ step.description }}
             </span>
           </div>
-        </div>
+        </button>
       </div>
     </div>
   `,
@@ -42,14 +45,15 @@ import { WizardFlowService } from '../../../core/services/wizard-flow.service';
     `
       .step-indicator {
         padding: 1rem;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        background: var(--ds-surface-glass);
+        border-radius: var(--ds-radius-lg);
+        border: 1px solid var(--ds-border);
+        box-shadow: var(--ds-shadow-soft);
       }
 
       .progress-bar {
         height: 4px;
-        background: #e0e0e0;
+        background: rgba(255, 255, 255, 0.08);
         border-radius: 2px;
         overflow: hidden;
         margin-bottom: 1rem;
@@ -57,7 +61,7 @@ import { WizardFlowService } from '../../../core/services/wizard-flow.service';
 
       .progress-fill {
         height: 100%;
-        background: #4caf50;
+        background: linear-gradient(90deg, var(--ds-accent-teal), var(--ds-accent-indigo));
         transition: width 0.3s ease;
       }
 
@@ -75,6 +79,9 @@ import { WizardFlowService } from '../../../core/services/wizard-flow.service';
         min-width: 0;
         opacity: 0.5;
         transition: opacity 0.2s;
+        background: transparent;
+        border: none;
+        color: inherit;
 
         &.active,
         &.completed {
@@ -88,13 +95,18 @@ import { WizardFlowService } from '../../../core/services/wizard-flow.service';
             transform: scale(1.1);
           }
         }
+
+        &:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 2px rgba(8, 255, 243, 0.4), 0 0 0 5px rgba(8, 255, 243, 0.12);
+        }
       }
 
       .step-circle {
         width: 32px;
         height: 32px;
         border-radius: 50%;
-        background: #e0e0e0;
+        background: rgba(255, 255, 255, 0.08);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -102,15 +114,16 @@ import { WizardFlowService } from '../../../core/services/wizard-flow.service';
         font-size: 0.875rem;
         margin-bottom: 0.5rem;
         transition: all 0.2s;
+        color: var(--ds-text-primary);
 
         .step.active & {
-          background: #1976d2;
-          color: white;
+          background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
+          color: #0a0b0f;
         }
 
         .step.completed & {
-          background: #4caf50;
-          color: white;
+          background: linear-gradient(135deg, #2eff8b, #08fff3);
+          color: #0a0b0f;
         }
       }
 
@@ -126,7 +139,7 @@ import { WizardFlowService } from '../../../core/services/wizard-flow.service';
         display: block;
         font-size: 0.75rem;
         font-weight: 500;
-        color: #333;
+        color: var(--ds-text-primary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -136,7 +149,7 @@ import { WizardFlowService } from '../../../core/services/wizard-flow.service';
       .step-description {
         display: none;
         font-size: 0.625rem;
-        color: #666;
+        color: var(--ds-text-secondary);
       }
 
       @media (min-width: 640px) {

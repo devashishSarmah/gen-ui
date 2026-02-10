@@ -64,6 +64,7 @@ export class WebSocketService {
     this.socket.on('disconnect', (reason) => this.onDisconnect(reason));
     this.socket.on('reconnect_attempt', () => this.onReconnectAttempt());
     this.socket.on('error', (error) => this.onError(error));
+    this.socket.on('connect_error', (error) => this.onError(error));
 
     // WebSocket stream events
     this.socket.on('ui-stream', (chunk: UIStreamChunk) => {
@@ -73,6 +74,24 @@ export class WebSocketService {
     this.socket.on('connected', (data) => {
       console.log('✅ Connected to gateway:', data);
       this.lastError.set(null);
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      const handleConnect = () => {
+        cleanup();
+        resolve();
+      };
+      const handleConnectError = (error: any) => {
+        cleanup();
+        reject(error);
+      };
+      const cleanup = () => {
+        this.socket?.off('connect', handleConnect);
+        this.socket?.off('connect_error', handleConnectError);
+      };
+
+      this.socket?.on('connect', handleConnect);
+      this.socket?.on('connect_error', handleConnectError);
     });
   }
 

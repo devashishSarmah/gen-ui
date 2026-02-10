@@ -5,89 +5,117 @@ import {
   SimpleChanges,
   signal,
   ChangeDetectionStrategy,
-  ViewChild,
-  ViewContainerRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Tabs, TabList, Tab, TabPanel, TabContent } from '@angular/aria/tabs';
 
-export interface Tab {
+export interface TabItem {
   label: string;
   value: string;
+  disabled?: boolean;
   contentTemplate?: any;
 }
 
 @Component({
   selector: 'app-tabs',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, Tabs, TabList, Tab, TabPanel, TabContent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="tabs-wrapper">
-      <div class="tabs-header">
-        <button
+    <div ngTabs class="tabs-wrapper">
+      <div
+        ngTabList
+        [selectionMode]="selectionMode"
+        [selectedTab]="activeTab()"
+        [orientation]="orientation"
+        [wrap]="wrap"
+        class="tabs-header"
+      >
+        <div
           *ngFor="let tab of tabs"
-          (click)="selectTab(tab.value)"
-          [class.tab-active]="activeTab() === tab.value"
+          ngTab
+          [value]="tab.value"
+          [disabled]="tab.disabled ?? false"
           class="tab-button"
         >
           {{ tab.label }}
-        </button>
+        </div>
       </div>
-      <div class="tabs-content">
-        <ng-container *ngFor="let tab of tabs">
-          <div *ngIf="activeTab() === tab.value" class="tab-pane">
-            <ng-container *ngIf="tab.contentTemplate; else dynamicTabContent">
+      <ng-container *ngFor="let tab of tabs">
+        <div ngTabPanel [value]="tab.value" class="tab-pane">
+          <ng-template ngTabContent>
+            <ng-container *ngIf="tab.contentTemplate; else defaultContent">
               <ng-container *ngTemplateOutlet="tab.contentTemplate"></ng-container>
             </ng-container>
-            <ng-template #dynamicTabContent>
-              <ng-container #tabsHost></ng-container>
+            <ng-template #defaultContent>
+              <ng-content></ng-content>
             </ng-template>
-          </div>
-        </ng-container>
-      </div>
+          </ng-template>
+        </div>
+      </ng-container>
     </div>
   `,
   styles: [
     `
       .tabs-wrapper {
         width: 100%;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-lg);
         overflow: hidden;
+        background: var(--ds-surface-glass);
+        backdrop-filter: blur(14px);
       }
 
-      .tabs-header {
+      :host ::ng-deep [ngTabList] {
         display: flex;
-        border-bottom: 1px solid #e0e0e0;
-        background-color: #fafafa;
+        border-bottom: 1px solid var(--ds-border);
+        background: rgba(255, 255, 255, 0.03);
+        list-style: none;
+        padding: 0;
+        margin: 0;
       }
 
-      .tab-button {
+      :host ::ng-deep [ngTabList][aria-orientation='vertical'] {
+        flex-direction: column;
+        border-bottom: none;
+        border-right: 1px solid var(--ds-border);
+      }
+
+      :host ::ng-deep [ngTab] {
         flex: 1;
         padding: 1rem;
         border: none;
         background: transparent;
         cursor: pointer;
-        font-size: 1rem;
+        font-size: 0.95rem;
+        color: var(--ds-text-secondary);
         transition: all 0.2s ease;
-        border-bottom: 3px solid transparent;
+        border-bottom: 2px solid transparent;
+        text-align: center;
       }
 
-      .tab-button:hover {
-        background-color: #f0f0f0;
+      :host ::ng-deep [ngTab]:hover {
+        background-color: rgba(255, 255, 255, 0.05);
       }
 
-      .tab-active {
-        border-bottom-color: #2196f3;
-        color: #2196f3;
+      :host ::ng-deep [ngTab][aria-selected='true'] {
+        border-bottom-color: var(--ds-accent-teal);
+        color: var(--ds-text-primary);
         font-weight: 600;
       }
 
-      .tabs-content {
-        padding: 1rem;
+      :host ::ng-deep [ngTab][aria-disabled='true'] {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      :host ::ng-deep [ngTab]:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(8, 255, 243, 0.4), 0 0 0 5px rgba(8, 255, 243, 0.12);
       }
 
       .tab-pane {
+        padding: 1.25rem;
         animation: fadeIn 0.2s ease;
       }
 
@@ -103,10 +131,11 @@ export interface Tab {
   ],
 })
 export class TabsComponent implements OnChanges {
-  @Input() tabs: Tab[] = [];
+  @Input() tabs: TabItem[] = [];
   @Input() defaultTab = '';
-
-  @ViewChild('tabsHost', { read: ViewContainerRef }) tabsHost!: ViewContainerRef;
+  @Input() selectionMode: 'follow' | 'explicit' = 'follow';
+  @Input() orientation: 'horizontal' | 'vertical' = 'horizontal';
+  @Input() wrap = true;
 
   activeTab = signal('');
 
@@ -116,10 +145,6 @@ export class TabsComponent implements OnChanges {
     }
   }
 
-  selectTab(tabValue: string) {
-    this.activeTab.set(tabValue);
-  }
-
   private updateActiveTab() {
     if (!this.tabs || this.tabs.length === 0) {
       this.activeTab.set('');
@@ -127,8 +152,8 @@ export class TabsComponent implements OnChanges {
     }
 
     if (this.defaultTab) {
-      const defaultTabExists = this.tabs.some((tab) => tab.value === this.defaultTab);
-      if (defaultTabExists) {
+      const exists = this.tabs.some((t) => t.value === this.defaultTab);
+      if (exists) {
         this.activeTab.set(this.defaultTab);
         return;
       }

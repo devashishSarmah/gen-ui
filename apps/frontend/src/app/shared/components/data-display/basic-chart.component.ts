@@ -29,6 +29,8 @@ export interface ChartDataPoint {
           #canvas
           [attr.width]="width"
           [attr.height]="height"
+          role="img"
+          [attr.aria-label]="ariaLabel || title || 'Chart'"
           class="chart-canvas"
         ></canvas>
       </div>
@@ -44,16 +46,18 @@ export interface ChartDataPoint {
         margin: 0 0 1rem 0;
         font-size: 1.125rem;
         font-weight: 600;
+        color: var(--ds-text-primary);
       }
 
       .chart-container {
         display: flex;
         justify-content: center;
         align-items: center;
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
-        padding: 1rem;
+        background: var(--ds-surface-glass);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-lg);
+        padding: 1.25rem;
+        box-shadow: var(--ds-shadow-soft);
       }
 
       .chart-canvas {
@@ -69,6 +73,7 @@ export class BasicChartComponent implements OnInit, AfterViewInit, OnChanges {
   @Input() type: 'bar' | 'line' | 'pie' = 'bar';
   @Input() width = 400;
   @Input() height = 300;
+  @Input() ariaLabel = '';
 
   @ViewChild('canvas', { static: false }) canvasRef!: ElementRef<HTMLCanvasElement>;
 
@@ -122,7 +127,7 @@ export class BasicChartComponent implements OnInit, AfterViewInit, OnChanges {
     const spacing = chartWidth / this.data.length;
 
     // Draw axes
-    ctx.strokeStyle = '#333';
+    ctx.strokeStyle = this.getCanvasColor('--ds-border-strong', '#333');
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(padding, canvas.height - padding);
@@ -135,7 +140,7 @@ export class BasicChartComponent implements OnInit, AfterViewInit, OnChanges {
     ctx.stroke();
 
     // Draw bars
-    ctx.fillStyle = '#2196f3';
+    ctx.fillStyle = this.getCanvasColor('--ds-accent-teal', '#2196f3');
     this.data.forEach((item, index) => {
       const barHeight = (item.value / maxValue) * chartHeight;
       const x = padding + index * spacing + (spacing - barWidth) / 2;
@@ -143,8 +148,8 @@ export class BasicChartComponent implements OnInit, AfterViewInit, OnChanges {
       ctx.fillRect(x, y, barWidth, barHeight);
 
       // Draw label
-      ctx.fillStyle = '#333';
-      ctx.font = '12px Arial';
+      ctx.fillStyle = this.getCanvasColor('--ds-text-secondary', '#666');
+      ctx.font = '12px Inter, system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(item.label, x + barWidth / 2, canvas.height - padding + 20);
     });
@@ -158,7 +163,7 @@ export class BasicChartComponent implements OnInit, AfterViewInit, OnChanges {
     const step = chartWidth / (this.data.length - 1 || 1);
 
     // Draw axes
-    ctx.strokeStyle = '#333';
+    ctx.strokeStyle = this.getCanvasColor('--ds-border-strong', '#333');
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(padding, canvas.height - padding);
@@ -171,7 +176,7 @@ export class BasicChartComponent implements OnInit, AfterViewInit, OnChanges {
     ctx.stroke();
 
     // Draw line
-    ctx.strokeStyle = '#2196f3';
+    ctx.strokeStyle = this.getCanvasColor('--ds-accent-teal', '#2196f3');
     ctx.lineWidth = 2;
     ctx.beginPath();
 
@@ -189,7 +194,7 @@ export class BasicChartComponent implements OnInit, AfterViewInit, OnChanges {
     ctx.stroke();
 
     // Draw points
-    ctx.fillStyle = '#2196f3';
+    ctx.fillStyle = this.getCanvasColor('--ds-accent-teal', '#2196f3');
     this.data.forEach((item, index) => {
       const x = padding + index * step;
       const y = canvas.height - padding - (item.value / maxValue) * chartHeight;
@@ -205,7 +210,13 @@ export class BasicChartComponent implements OnInit, AfterViewInit, OnChanges {
     const radius = Math.min(canvas.width, canvas.height) / 2 - 20;
 
     const total = this.data.reduce((sum, d) => sum + d.value, 0);
-    const colors = ['#2196f3', '#ff9800', '#4caf50', '#f44336', '#9c27b0'];
+    const colors = [
+      this.getCanvasColor('--ds-accent-teal', '#2196f3'),
+      this.getCanvasColor('--ds-accent-indigo', '#4d3aff'),
+      this.getCanvasColor('--ds-accent-lime', '#b6ff8a'),
+      '#ff7a7a',
+      '#8b6dff',
+    ];
 
     let currentAngle = -Math.PI / 2;
 
@@ -225,8 +236,8 @@ export class BasicChartComponent implements OnInit, AfterViewInit, OnChanges {
       const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
       const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
 
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 12px Arial';
+      ctx.fillStyle = '#0a0b0f';
+      ctx.font = '600 12px Inter, system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(
@@ -237,5 +248,13 @@ export class BasicChartComponent implements OnInit, AfterViewInit, OnChanges {
 
       currentAngle += sliceAngle;
     });
+  }
+
+  private getCanvasColor(variable: string, fallback: string): string {
+    if (typeof window === 'undefined') {
+      return fallback;
+    }
+    const value = getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
+    return value || fallback;
   }
 }

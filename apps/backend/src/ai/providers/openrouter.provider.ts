@@ -7,6 +7,7 @@ import {
   AIGenerationContext,
   UISchemaChunk,
 } from './ai-provider.interface';
+import { PromptLoader } from '../prompt-loader';
 
 @Injectable()
 export class OpenRouterProvider extends AIProvider {
@@ -140,26 +141,7 @@ export class OpenRouterProvider extends AIProvider {
   }
 
   private buildSystemPrompt(): string {
-    return `You are a UI generation assistant. Generate JSON schemas for Angular components based on user requests.
-
-Your responses must be valid JSON with this structure:
-{
-  "schemaVersion": "1.0",
-  "type": "form" | "dashboard" | "wizard" | "list" | "detail",
-  "components": [...],
-  "layout": {...},
-  "validation": {...},
-  "events": {...}
-}
-
-Available component types:
-- text-input, number-input, select, checkbox, radio, textarea
-- button, link
-- card, panel, grid, flexbox
-- table, list
-- heading, paragraph, divider
-
-Always include proper validation, event handlers, and accessibility attributes.`;
+    return PromptLoader.getSystemPrompt();
   }
 
   private buildUserPrompt(context: AIGenerationContext): string {
@@ -169,17 +151,30 @@ Always include proper validation, event handlers, and accessibility attributes.`
       prompt += `Current UI state: ${JSON.stringify(context.currentUiState)}\n\n`;
     }
 
+    if (context.searchResults?.summary) {
+      const sources = (context.searchResults.sources || [])
+        .map((source) => `- ${source.title ? source.title + ' ' : ''}(${source.url})`)
+        .join('\n');
+      prompt += `Web search summary:\n${context.searchResults.summary}\n\nSources:\n${sources}\n\n`;
+    }
+
     prompt += 'Generate a UI schema to fulfill this request.';
 
     return prompt;
   }
 
   private buildUpdatePrompt(currentSchema: any, interaction: any, context: AIGenerationContext): string {
+    const searchContext = context.searchResults?.summary
+      ? `\n\nWeb search summary:\n${context.searchResults.summary}\n\nSources:\n${(context.searchResults.sources || [])
+          .map((source) => `- ${source.title ? source.title + ' ' : ''}(${source.url})`)
+          .join('\n')}`
+      : '';
+
     return `Current UI schema: ${JSON.stringify(currentSchema)}
 
 User interaction: ${JSON.stringify(interaction)}
 
-User request: ${context.userPrompt}
+User request: ${context.userPrompt}${searchContext}
 
 Update the UI schema based on the interaction and request.`;
   }

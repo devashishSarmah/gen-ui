@@ -30,6 +30,7 @@ export interface ListItem {
           (click)="item.action()"
           class="list-item-action"
           type="button"
+          [attr.aria-label]="'Open ' + item.label"
         >
           →
         </button>
@@ -46,15 +47,15 @@ export interface ListItem {
       }
 
       .list-styled {
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
+        background: var(--ds-surface-glass);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-lg);
         overflow: hidden;
       }
 
       .list-item {
         padding: 1rem;
-        border-bottom: 1px solid #e0e0e0;
+        border-bottom: 1px solid var(--ds-border);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -70,7 +71,7 @@ export interface ListItem {
       }
 
       .list-item:hover.list-item-clickable {
-        background-color: #f9f9f9;
+        background-color: rgba(255, 255, 255, 0.04);
       }
 
       .list-item-content {
@@ -93,11 +94,12 @@ export interface ListItem {
       .list-item-label {
         font-weight: 500;
         margin-bottom: 0.25rem;
+        color: var(--ds-text-primary);
       }
 
       .list-item-description {
         font-size: 0.875rem;
-        color: #666;
+        color: var(--ds-text-secondary);
       }
 
       .list-item-action {
@@ -105,18 +107,18 @@ export interface ListItem {
         border: none;
         cursor: pointer;
         font-size: 1.25rem;
-        color: #666;
+        color: var(--ds-text-secondary);
         transition: color 0.2s ease;
       }
 
       .list-item-action:hover {
-        color: #2196f3;
+        color: var(--ds-accent-teal);
       }
 
       .list-empty {
         padding: 2rem;
         text-align: center;
-        color: #999;
+        color: var(--ds-text-secondary);
       }
     `,
   ],

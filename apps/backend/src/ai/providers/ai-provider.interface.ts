@@ -11,6 +11,10 @@ export interface AIGenerationContext {
   currentUiState?: any;
   userPrompt: string;
   lastInteraction?: any;
+  searchResults?: {
+    summary: string;
+    sources: { url: string; title?: string }[];
+  };
 }
 
 export interface UISchemaChunk {

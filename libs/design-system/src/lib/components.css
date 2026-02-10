@@ -1,0 +1,83 @@
+@layer components {
+  .ds-card {
+    background: linear-gradient(180deg, rgba(16, 18, 25, 0.92), rgba(10, 12, 18, 0.94));
+    border: 1px solid var(--ds-border);
+    border-radius: var(--ds-radius-lg);
+    box-shadow: var(--ds-shadow-soft);
+    padding: 1.5rem;
+    backdrop-filter: blur(14px);
+  }
+
+  .ds-card-glow {
+    box-shadow: var(--ds-shadow-soft), var(--ds-shadow-glow);
+  }
+
+  .ds-surface {
+    background-color: var(--ds-surface);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--ds-radius-md);
+  }
+
+  .ds-heading {
+    font-family: var(--ds-font-display);
+    letter-spacing: -0.02em;
+    margin: 0 0 0.5rem;
+  }
+
+  .ds-display {
+    font-size: clamp(2.5rem, 4vw, 4rem);
+    font-weight: 600;
+  }
+
+  .ds-subtle {
+    color: var(--ds-text-secondary);
+  }
+
+  .ds-button {
+    border: none;
+    border-radius: 999px;
+    padding: 0.75rem 1.75rem;
+    font-weight: 600;
+    font-family: var(--ds-font-display);
+    color: #0b0d10;
+    background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
+    box-shadow: 0 10px 30px rgba(8, 255, 243, 0.2), 0 6px 20px rgba(77, 58, 255, 0.2);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .ds-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 38px rgba(8, 255, 243, 0.3), 0 8px 28px rgba(77, 58, 255, 0.3);
+  }
+
+  .ds-button-ghost {
+    color: var(--ds-text-primary);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: none;
+  }
+
+  .ds-input {
+    width: 100%;
+    background: var(--ds-surface-glass);
+    border: 1px solid var(--ds-border);
+    border-radius: 999px;
+    padding: 0.75rem 1.25rem;
+    color: var(--ds-text-primary);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .ds-input:focus {
+    border-color: rgba(8, 255, 243, 0.6);
+    box-shadow: 0 0 0 3px rgba(8, 255, 243, 0.15);
+  }
+
+  .ds-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    border: none;
+    margin: 1rem 0;
+  }
+}

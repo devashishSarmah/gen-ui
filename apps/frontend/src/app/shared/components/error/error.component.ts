@@ -1,21 +1,37 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { A11yModule, LiveAnnouncer } from '@angular/cdk/a11y';
 import { ButtonComponent } from '../form/button.component';
 
 @Component({
   selector: 'app-error',
   standalone: true,
-  imports: [CommonModule, ButtonComponent],
+  imports: [CommonModule, ButtonComponent, A11yModule],
   template: `
     <div class="error-container" *ngIf="visible">
-      <div class="error-content">
+      <div
+        class="error-content"
+        role="alertdialog"
+        aria-modal="true"
+        [attr.aria-labelledby]="titleId"
+        [attr.aria-describedby]="messageId"
+        cdkTrapFocus
+      >
         <div class="error-header">
           <div class="error-icon">⚠️</div>
-          <h3 class="error-title">{{ title }}</h3>
-          <button *ngIf="dismissible" (click)="dismiss()" class="error-close">✕</button>
+          <h3 class="error-title" [id]="titleId">{{ title }}</h3>
+          <button
+            *ngIf="dismissible"
+            (click)="dismiss()"
+            class="error-close"
+            type="button"
+            aria-label="Dismiss error"
+          >
+            ✕
+          </button>
         </div>
 
-        <div class="error-message">{{ message }}</div>
+        <div class="error-message" [id]="messageId">{{ message }}</div>
 
         <div *ngIf="details" class="error-details">
           <details>
@@ -29,6 +45,7 @@ import { ButtonComponent } from '../form/button.component';
             label="Retry"
             variant="primary"
             (click)="onRetry()"
+            cdkFocusInitial
           ></app-button>
           <app-button
             label="Try Different Approach"
@@ -52,7 +69,7 @@ import { ButtonComponent } from '../form/button.component';
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(6, 8, 12, 0.75);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -70,9 +87,10 @@ import { ButtonComponent } from '../form/button.component';
       }
 
       .error-content {
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        background: var(--ds-surface-glass);
+        border-radius: var(--ds-radius-lg);
+        border: 1px solid var(--ds-border);
+        box-shadow: var(--ds-shadow-soft), var(--ds-shadow-glow);
         max-width: 600px;
         width: 90%;
         padding: 2rem;
@@ -95,7 +113,7 @@ import { ButtonComponent } from '../form/button.component';
         margin: 0;
         font-size: 1.25rem;
         font-weight: 600;
-        color: #d32f2f;
+        color: #ff7485;
       }
 
       .error-close {
@@ -106,42 +124,42 @@ import { ButtonComponent } from '../form/button.component';
         border: none;
         font-size: 1.5rem;
         cursor: pointer;
-        color: #999;
+        color: var(--ds-text-secondary);
         transition: color 0.2s ease;
       }
 
       .error-close:hover {
-        color: #333;
+        color: var(--ds-text-primary);
       }
 
       .error-message {
         margin: 1rem 0;
-        color: #333;
+        color: var(--ds-text-primary);
         line-height: 1.5;
       }
 
       .error-details {
         margin: 1rem 0;
         padding: 1rem;
-        background: #f5f5f5;
-        border-radius: 4px;
-        border-left: 4px solid #d32f2f;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 10px;
+        border-left: 3px solid #ff7485;
       }
 
       .error-details summary {
         cursor: pointer;
         font-weight: 500;
-        color: #666;
+        color: var(--ds-text-secondary);
       }
 
       .error-details pre {
         margin: 0.5rem 0 0 0;
         overflow-x: auto;
-        background: #fff;
+        background: rgba(0, 0, 0, 0.3);
         padding: 0.75rem;
-        border-radius: 4px;
+        border-radius: 8px;
         font-size: 0.75rem;
-        color: #333;
+        color: var(--ds-text-primary);
       }
 
       .error-actions {
@@ -158,7 +176,7 @@ import { ButtonComponent } from '../form/button.component';
     `,
   ],
 })
-export class ErrorComponent {
+export class ErrorComponent implements OnChanges {
   @Input() title = 'An Error Occurred';
   @Input() message = 'Something went wrong. Please try again.';
   @Input() details = '';
@@ -169,6 +187,17 @@ export class ErrorComponent {
   @Output() tryDifferent = new EventEmitter<void>();
   @Output() reportIssue = new EventEmitter<void>();
   @Output() close = new EventEmitter<void>();
+
+  private announcer = inject(LiveAnnouncer);
+
+  readonly titleId = `error-title-${Math.random().toString(36).slice(2, 9)}`;
+  readonly messageId = `error-message-${Math.random().toString(36).slice(2, 9)}`;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['visible'] && this.visible) {
+      this.announcer.announce(`${this.title}. ${this.message}`, 'assertive');
+    }
+  }
 
   onRetry() {
     this.retry.emit();

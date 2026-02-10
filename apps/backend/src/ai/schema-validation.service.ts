@@ -1,72 +1,65 @@
 import { Injectable } from '@nestjs/common';
 import Ajv, { ValidateFunction } from 'ajv';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 
 @Injectable()
 export class SchemaValidationService {
   private ajv: Ajv;
   private uiSchemaValidator: ValidateFunction;
+  private uiSchemaTreeValidator: ValidateFunction;
   private componentWhitelist: Set<string>;
 
   constructor() {
     this.ajv = new Ajv({ allErrors: true });
     this.componentWhitelist = new Set([
-      // Input components
-      'text-input',
-      'number-input',
-      'email-input',
-      'password-input',
+      // Frontend supported components (renderer schema)
+      'container',
+      'flexbox',
+      'grid',
+      'card',
+      'tabs',
+      'accordion',
+      'input',
       'select',
       'checkbox',
       'radio',
       'textarea',
-      'date-picker',
-      'file-upload',
-      
-      // Action components
       'button',
-      'link',
-      'icon-button',
-      
-      // Layout components
-      'card',
-      'panel',
-      'grid',
-      'flexbox',
-      'stack',
-      'tabs',
-      'accordion',
-      
-      // Display components
-      'heading',
-      'paragraph',
-      'text',
-      'divider',
-      'image',
-      'icon',
-      'badge',
-      'alert',
-      
-      // Data components
       'table',
       'list',
-      'tree',
-      'chart',
-      
-      // Navigation
-      'stepper',
-      'breadcrumb',
-      'pagination',
+      'listbox',
+      'basic-chart',
+      'wizard-stepper',
+      'step-indicator',
+      'wizard-navigation',
+      'menu',
+      'toolbar',
+      'heading',
+      'paragraph',
+      'divider',
+      'error',
+      // Legacy types (still accepted)
+      'text-input',
+      'number-input',
+      'email-input',
+      'password-input',
+      'link',
+      'panel',
     ]);
 
     this.uiSchemaValidator = this.ajv.compile(this.getUISchemaDefinition());
+    this.uiSchemaTreeValidator = this.ajv.compile(this.getRendererSchemaDefinition());
   }
 
   /**
    * Validate UI schema against JSON Schema and component whitelist
    */
   validate(schema: any): { valid: boolean; errors?: string[] } {
-    // Validate against JSON Schema
-    const valid = this.uiSchemaValidator(schema);
+    const usesLegacySchema = schema?.schemaVersion === '1.0';
+    const valid = usesLegacySchema
+      ? this.uiSchemaValidator(schema)
+      : this.uiSchemaTreeValidator(schema);
 
     if (!valid) {
       return {
@@ -115,8 +108,22 @@ export class SchemaValidationService {
       });
     };
 
-    if (schema.components) {
+    const validateTree = (node: any, path: string = 'root') => {
+      if (!node || typeof node !== 'object') return;
+      if (node.type && !this.componentWhitelist.has(node.type)) {
+        errors.push(`Component type '${node.type}' at ${path} is not whitelisted`);
+      }
+      if (Array.isArray(node.children)) {
+        node.children.forEach((child: any, index: number) =>
+          validateTree(child, `${path}.children[${index}]`)
+        );
+      }
+    };
+
+    if (schema?.schemaVersion === '1.0' && schema.components) {
       validateComponents(schema.components);
+    } else if (schema?.type) {
+      validateTree(schema);
     }
 
     return errors;
@@ -174,5 +181,24 @@ export class SchemaValidationService {
         },
       },
     };
+  }
+
+  private getRendererSchemaDefinition() {
+    const schemaPath = resolve(
+      process.cwd(),
+      'apps',
+      'backend',
+      'src',
+      'ai',
+      'prompts',
+      'renderer-schema.json'
+    );
+
+    try {
+      const raw = readFileSync(schemaPath, 'utf-8');
+      return JSON.parse(raw);
+    } catch {
+      return { type: 'object' };
+    }
   }
 }

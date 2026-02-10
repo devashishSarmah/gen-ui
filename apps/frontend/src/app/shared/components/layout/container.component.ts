@@ -18,7 +18,7 @@ import { CommonModule } from '@angular/common';
     `
       .container {
         width: 100%;
-        padding: 1rem;
+        padding: 1.25rem;
         box-sizing: border-box;
       }
 
@@ -31,10 +31,12 @@ import { CommonModule } from '@angular/common';
       }
 
       .container-card {
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
+        background: var(--ds-surface-glass);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-lg);
         margin: 1rem 0;
+        backdrop-filter: blur(14px);
+        box-shadow: var(--ds-shadow-soft);
       }
     `,
   ],

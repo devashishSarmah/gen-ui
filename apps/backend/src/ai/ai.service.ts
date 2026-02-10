@@ -5,6 +5,8 @@ import { OpenAIProvider } from './providers/openai.provider';
 import { AnthropicProvider } from './providers/anthropic.provider';
 import { OpenRouterProvider } from './providers/openrouter.provider';
 import { SchemaValidationService } from './schema-validation.service';
+import { AgentOrchestratorService } from './agent-orchestrator.service';
+import { ValidatorAgentService } from './validator-agent.service';
 
 @Injectable()
 export class AIService {
@@ -16,7 +18,9 @@ export class AIService {
     private openaiProvider: OpenAIProvider,
     private anthropicProvider: AnthropicProvider,
     private openrouterProvider: OpenRouterProvider,
-    private schemaValidation: SchemaValidationService
+    private schemaValidation: SchemaValidationService,
+    private orchestrator: AgentOrchestratorService,
+    private validatorAgent: ValidatorAgentService
   ) {
     this.providers = new Map();
     this.providers.set('openai', this.openaiProvider);
@@ -48,14 +52,32 @@ export class AIService {
     context: AIGenerationContext,
     providerName?: string
   ): AsyncIterableIterator<UISchemaChunk> {
+    const enrichedContext = await this.orchestrator.enrichContext(context);
     const provider = this.getProvider(providerName);
 
-    for await (const chunk of provider.generateUI(context)) {
+    for await (const chunk of provider.generateUI(enrichedContext)) {
       // Validate complete schemas
       if (chunk.type === 'complete') {
         const validation = this.schemaValidation.validate(chunk.data);
-        
+
         if (!validation.valid) {
+          const fixedSchema = await this.validatorAgent.fixSchema(
+            chunk.data,
+            enrichedContext
+          );
+
+          if (fixedSchema) {
+            const fixedValidation = this.schemaValidation.validate(fixedSchema);
+            if (fixedValidation.valid) {
+              yield {
+                type: 'complete',
+                data: fixedSchema,
+                done: true,
+              };
+              return;
+            }
+          }
+
           yield {
             type: 'error',
             data: { error: 'Schema validation failed', details: validation.errors },
@@ -78,14 +100,32 @@ export class AIService {
     context: AIGenerationContext,
     providerName?: string
   ): AsyncIterableIterator<UISchemaChunk> {
+    const enrichedContext = await this.orchestrator.enrichContext(context);
     const provider = this.getProvider(providerName);
 
-    for await (const chunk of provider.updateUI(currentSchema, interaction, context)) {
+    for await (const chunk of provider.updateUI(currentSchema, interaction, enrichedContext)) {
       // Validate complete schemas
       if (chunk.type === 'complete') {
         const validation = this.schemaValidation.validate(chunk.data);
-        
+
         if (!validation.valid) {
+          const fixedSchema = await this.validatorAgent.fixSchema(
+            chunk.data,
+            enrichedContext
+          );
+
+          if (fixedSchema) {
+            const fixedValidation = this.schemaValidation.validate(fixedSchema);
+            if (fixedValidation.valid) {
+              yield {
+                type: 'complete',
+                data: fixedSchema,
+                done: true,
+              };
+              return;
+            }
+          }
+
           yield {
             type: 'error',
             data: { error: 'Schema validation failed', details: validation.errors },

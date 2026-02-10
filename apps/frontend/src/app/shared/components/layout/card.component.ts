@@ -22,39 +22,41 @@ import { CommonModule } from '@angular/common';
   styles: [
     `
       .card {
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
+        background: linear-gradient(180deg, rgba(16, 18, 25, 0.92), rgba(10, 12, 18, 0.94));
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-lg);
         overflow: hidden;
         transition: all 0.2s ease;
+        box-shadow: var(--ds-shadow-soft);
       }
 
       .card-elevated {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--ds-shadow-soft), var(--ds-shadow-glow);
       }
 
       .card-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid #e0e0e0;
-        padding: 1rem;
+        border-bottom: 1px solid var(--ds-border);
+        padding: 1.25rem;
       }
 
       .card-title {
         margin: 0;
-        font-size: 1.125rem;
+        font-size: 1.15rem;
         font-weight: 600;
+        color: var(--ds-text-primary);
       }
 
       .card-content {
-        padding: 1rem;
+        padding: 1.25rem;
       }
 
       .card-footer {
-        border-top: 1px solid #e0e0e0;
-        padding: 1rem;
-        background-color: #fafafa;
+        border-top: 1px solid var(--ds-border);
+        padding: 1.25rem;
+        background-color: rgba(255, 255, 255, 0.03);
       }
     `,
   ],

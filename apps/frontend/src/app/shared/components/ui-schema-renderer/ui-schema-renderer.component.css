@@ -1,0 +1,10 @@
+.ui-schema-renderer {
+  display: block;
+  width: 100%;
+}
+
+.render-error {
+  margin-top: 0.5rem;
+  color: #c62828;
+  font-size: 0.875rem;
+}

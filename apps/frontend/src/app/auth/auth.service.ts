@@ -21,6 +21,17 @@ export class AuthService {
   currentUser = signal<UserDto | null>(null);
   isAuthenticatedSignal = signal<boolean>(false);
 
+  initAuth(): void {
+    const token = this.getToken();
+    if (token) {
+      this.isAuthenticatedSignal.set(true);
+      this.loadProfile();
+    } else {
+      this.isAuthenticatedSignal.set(false);
+      this.currentUser.set(null);
+    }
+  }
+
   register(data: RegisterDto): Observable<UserDto> {
     return this.http.post<UserDto>(`${this.apiUrl}/auth/register`, data);
   }

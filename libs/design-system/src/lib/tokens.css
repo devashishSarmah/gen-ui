@@ -1,0 +1,57 @@
+@layer base {
+  :root {
+    --ds-bg: #0a0b0f;
+    --ds-surface: #101219;
+    --ds-surface-elevated: #151824;
+    --ds-surface-glass: rgba(12, 14, 18, 0.86);
+    --ds-text-primary: #e8edf2;
+    --ds-text-secondary: #98a3b3;
+    --ds-border: rgba(255, 255, 255, 0.08);
+    --ds-border-strong: rgba(255, 255, 255, 0.16);
+
+    --ds-accent-teal: #08fff3;
+    --ds-accent-indigo: #4d3aff;
+    --ds-accent-violet: #7c4dff;
+    --ds-accent-lime: #b6ff8a;
+
+    --ds-glow-teal: rgba(8, 255, 243, 0.25);
+    --ds-glow-indigo: rgba(77, 58, 255, 0.28);
+
+    --ds-radius-sm: 8px;
+    --ds-radius-md: 14px;
+    --ds-radius-lg: 22px;
+
+    --ds-shadow-soft: 0 12px 38px rgba(0, 0, 0, 0.38);
+    --ds-shadow-glow: 0 0 36px var(--ds-glow-teal), 0 0 52px var(--ds-glow-indigo);
+
+    --ds-font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --ds-font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--ds-bg);
+    color: var(--ds-text-primary);
+    font-family: var(--ds-font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(780px 360px at 12% 18%, rgba(8, 255, 243, 0.2), transparent 62%),
+      radial-gradient(920px 420px at 88% 28%, rgba(77, 58, 255, 0.26), transparent 65%),
+      radial-gradient(680px 380px at 50% 85%, rgba(124, 77, 255, 0.18), transparent 70%),
+      linear-gradient(180deg, #0a0b0f 0%, #090a0f 100%);
+    pointer-events: none;
+  }
+
+  a {
+    color: inherit;
+  }
+}

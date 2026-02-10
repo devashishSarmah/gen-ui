@@ -8,7 +8,9 @@ import { CommonModule } from '@angular/common';
   template: `
     <button
       [type]="type"
-      [disabled]="disabled"
+      [disabled]="disabled || loading"
+      [attr.aria-busy]="loading ? 'true' : null"
+      [attr.aria-label]="ariaLabel || label"
       (click)="onClick()"
       [class]="'button button-' + variant + ' button-size-' + size"
     >
@@ -19,10 +21,10 @@ import { CommonModule } from '@angular/common';
   styles: [
     `
       .button {
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 4px;
-        font-size: 1rem;
+        padding: 0.65rem 1.5rem;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        font-size: 0.95rem;
         cursor: pointer;
         font-weight: 500;
         transition: all 0.2s ease;
@@ -30,11 +32,14 @@ import { CommonModule } from '@angular/common';
         align-items: center;
         gap: 0.5rem;
         justify-content: center;
+        color: var(--ds-text-primary);
+        background: var(--ds-surface-glass);
+        box-shadow: var(--ds-shadow-soft);
       }
 
       .button:hover:not(:disabled) {
         transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: var(--ds-shadow-soft), var(--ds-shadow-glow);
       }
 
       .button:active:not(:disabled) {
@@ -46,60 +51,51 @@ import { CommonModule } from '@angular/common';
         cursor: not-allowed;
       }
 
-      .button-primary {
-        background-color: #2196f3;
-        color: white;
+      .button:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(8, 255, 243, 0.5), 0 0 0 5px rgba(8, 255, 243, 0.15);
       }
 
-      .button-primary:hover:not(:disabled) {
-        background-color: #1976d2;
+      .button-primary {
+        background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
+        color: #0a0b0f;
+        border: none;
       }
 
       .button-secondary {
-        background-color: #f5f5f5;
-        color: #333;
-        border: 1px solid #ddd;
-      }
-
-      .button-secondary:hover:not(:disabled) {
-        background-color: #eeeeee;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--ds-border-strong);
       }
 
       .button-danger {
-        background-color: #d32f2f;
-        color: white;
-      }
-
-      .button-danger:hover:not(:disabled) {
-        background-color: #b71c1c;
+        background: linear-gradient(135deg, #ff5c5c, #ff2d6f);
+        color: #0a0b0f;
+        border: none;
       }
 
       .button-success {
-        background-color: #388e3c;
-        color: white;
-      }
-
-      .button-success:hover:not(:disabled) {
-        background-color: #2e7d32;
+        background: linear-gradient(135deg, #2eff8b, #08fff3);
+        color: #0a0b0f;
+        border: none;
       }
 
       .button-size-small {
-        padding: 0.25rem 0.75rem;
-        font-size: 0.875rem;
+        padding: 0.35rem 0.9rem;
+        font-size: 0.8rem;
       }
 
       .button-size-large {
-        padding: 0.75rem 1.5rem;
-        font-size: 1.125rem;
+        padding: 0.85rem 2rem;
+        font-size: 1rem;
       }
 
       .button-spinner {
         display: inline-block;
         width: 1rem;
         height: 1rem;
-        border: 2px solid rgba(255, 255, 255, 0.3);
+        border: 2px solid rgba(10, 11, 15, 0.2);
         border-radius: 50%;
-        border-top-color: white;
+        border-top-color: rgba(10, 11, 15, 0.7);
         animation: spin 0.8s linear infinite;
       }
 
@@ -118,6 +114,7 @@ export class ButtonComponent {
   @Input() loading = false;
   @Input() variant: 'primary' | 'secondary' | 'danger' | 'success' = 'primary';
   @Input() size: 'small' | 'medium' | 'large' = 'medium';
+  @Input() ariaLabel = '';
 
   @Output() click = new EventEmitter<void>();
 

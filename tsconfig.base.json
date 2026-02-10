@@ -16,7 +16,9 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@gen-ui/shared": ["libs/shared/src/index.ts"]
+      "@gen-ui/shared": ["libs/shared/src/index.ts"],
+      "@gen-ui/design-system": ["libs/design-system/src/index.ts"],
+      "@gen-ui/design-system/styles": ["libs/design-system/src/lib/index.css"]
     }
   },
   "exclude": ["node_modules", "tmp"]

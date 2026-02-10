@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -10,12 +10,13 @@ import { UIStateStore } from '../core/stores/ui.store';
 import { WebSocketService } from '../core/services/websocket.service';
 import { ConversationApiService } from '../core/services/conversation-api.service';
 import { SkeletonLoaderComponent } from '../shared/components/skeleton-loader.component';
+import { UiSchemaRendererComponent } from '../shared/components/ui-schema-renderer/ui-schema-renderer.component';
 import { DynamicUIService } from '../core/services/dynamic-ui.service';
 
 @Component({
   selector: 'app-conversation-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, SkeletonLoaderComponent],
+  imports: [CommonModule, FormsModule, SkeletonLoaderComponent, UiSchemaRendererComponent],
   template: `
     <div class="conversation-container">
       <div class="messages-area">
@@ -29,7 +30,24 @@ import { DynamicUIService } from '../core/services/dynamic-ui.service';
                 [class.assistant]="message.role === 'assistant'"
               >
                 <div class="message-content">
-                  {{ message.content || '[UI Schema]' }}
+                  <ng-container *ngIf="message.content; else uiSchemaMessage">
+                    {{ message.content }}
+                  </ng-container>
+                  <ng-template #uiSchemaMessage>
+                    <div *ngIf="message.uiSchema; else emptySchema">
+                      <div class="ui-schema-container">
+                        <div class="schema-preview">
+                          <strong>UI Schema Generated</strong>
+                          <pre>{{ message.uiSchema | json }}</pre>
+                        </div>
+                        <div class="schema-rendered">
+                          <strong>Rendered UI</strong>
+                          <app-ui-schema-renderer [schema]="message.uiSchema"></app-ui-schema-renderer>
+                        </div>
+                      </div>
+                    </div>
+                    <ng-template #emptySchema>[UI Schema]</ng-template>
+                  </ng-template>
                 </div>
                 <div class="message-time">
                   {{ message.createdAt | date: 'short' }}
@@ -66,20 +84,6 @@ import { DynamicUIService } from '../core/services/dynamic-ui.service';
           </ng-container>
 
           <!-- Completed UI Schema -->
-          <ng-container *ngIf="uiStateStore.currentSchema() && !uiStateStore.isStreaming()">
-            <div class="message assistant">
-              <div class="ui-schema-container">
-                <div class="schema-preview">
-                  <strong>UI Schema Generated</strong>
-                  <pre>{{ uiStateStore.currentSchema() | json }}</pre>
-                </div>
-                <div class="schema-rendered">
-                  <strong>Rendered UI</strong>
-                  <ng-container #uiHost></ng-container>
-                </div>
-              </div>
-            </div>
-          </ng-container>
 
           <!-- Streaming Error -->
           <ng-container *ngIf="uiStateStore.error()">
@@ -356,14 +360,6 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
 
   messageText = '';
   private conversationId: string = '';
-  private uiHost?: ViewContainerRef;
-
-  @ViewChild('uiHost', { read: ViewContainerRef })
-  set uiHostRef(host: ViewContainerRef | undefined) {
-    this.uiHost = host;
-    this.tryRenderSchema();
-  }
-
   ngOnInit(): void {
     // Get conversation ID from route
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
@@ -390,9 +386,9 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
         if (chunk?.type === 'partial') {
           this.uiStateStore.addStreamingChunk(chunk);
         } else if (chunk?.type === 'complete') {
-          this.uiStateStore.completeStreaming(chunk.data);
           this.dynamicUIService.loadSchema(chunk.data);
-          this.tryRenderSchema();
+          const normalizedSchema = this.dynamicUIService.getCurrentSchema() ?? chunk.data;
+          this.uiStateStore.completeStreaming(normalizedSchema);
           this.loadMessages(); // Reload messages to show assistant response
         } else if (chunk?.type === 'error') {
           this.uiStateStore.setStreamingError(chunk.data?.message || 'Error');
@@ -432,6 +428,15 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
         next: (messages) => {
           this.conversationStore.setMessages(messages);
           this.conversationStore.setIsLoadingMessages(false);
+          const latestSchemaMessage = [...messages]
+            .reverse()
+            .find((message) => message.role === 'assistant' && message.uiSchema);
+          if (latestSchemaMessage?.uiSchema) {
+            this.dynamicUIService.loadSchema(latestSchemaMessage.uiSchema as any);
+            const normalizedSchema =
+              this.dynamicUIService.getCurrentSchema() ?? latestSchemaMessage.uiSchema;
+            this.uiStateStore.completeStreaming(normalizedSchema as any);
+          }
           this.scrollToBottom();
         },
         error: (error) => {
@@ -515,15 +520,4 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
     }, 100);
   }
 
-  private tryRenderSchema(): void {
-    if (!this.uiHost) {
-      return;
-    }
-
-    if (!this.dynamicUIService.getCurrentSchema()) {
-      return;
-    }
-
-    this.dynamicUIService.renderCurrentSchema(this.uiHost);
-  }
 }

@@ -170,15 +170,18 @@ export class SchemaRendererService {
       // Check type
       if (value !== undefined && value !== null && propSchema.type) {
         const actualType = Array.isArray(value) ? 'array' : typeof value;
-        if (actualType !== propSchema.type) {
+        const allowedTypes = Array.isArray(propSchema.type)
+          ? propSchema.type
+          : [propSchema.type];
+        if (!allowedTypes.includes(actualType)) {
           errors.push(
-            `Property '${propName}' should be type ${propSchema.type}, got ${actualType}`
+            `Property '${propName}' should be type ${allowedTypes.join(' | ')}, got ${actualType}`
           );
         }
       }
 
       // Check enum values
-      if (propSchema.enum && !propSchema.enum.includes(value)) {
+      if (value !== undefined && value !== null && propSchema.enum && !propSchema.enum.includes(value)) {
         errors.push(
           `Property '${propName}' value '${value}' not in allowed values: ${propSchema.enum.join(
             ', '

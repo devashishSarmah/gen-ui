@@ -561,14 +561,7 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 
   selectConversation(conversationId: string): void {
     this.conversationStore.setCurrentConversation(conversationId);
-    this.router.navigate([
-      {
-        outlets: {
-          primary: ['conversations', conversationId],
-          list: ['conversations'],
-        },
-      },
-    ]);
+    this.router.navigate(['/conversations', conversationId]);
   }
 
   createNewConversation(): void {

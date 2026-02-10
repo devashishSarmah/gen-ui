@@ -7,6 +7,7 @@ import {
   AIGenerationContext,
   UISchemaChunk,
 } from './ai-provider.interface';
+import { PromptLoader } from '../prompt-loader';
 
 @Injectable()
 export class OpenAIProvider extends AIProvider {
@@ -41,6 +42,30 @@ export class OpenAIProvider extends AIProvider {
   async *generateUI(context: AIGenerationContext): AsyncIterableIterator<UISchemaChunk> {
     const systemPrompt = this.buildSystemPrompt();
     const userPrompt = this.buildUserPrompt(context);
+
+    if (this.useWebSearch()) {
+      try {
+        const uiSchema = await this.generateWithWebSearch([
+          { role: 'system', content: systemPrompt },
+          ...this.formatConversationHistory(context.conversationHistory),
+          { role: 'user', content: userPrompt },
+        ]);
+
+        yield {
+          type: 'complete',
+          data: uiSchema,
+          done: true,
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        yield {
+          type: 'error',
+          data: { error: message },
+          done: true,
+        };
+      }
+      return;
+    }
 
     try {
       const stream = await this.client.chat.completions.create({
@@ -94,6 +119,29 @@ export class OpenAIProvider extends AIProvider {
     const systemPrompt = this.buildSystemPrompt();
     const updatePrompt = this.buildUpdatePrompt(currentSchema, interaction, context);
 
+    if (this.useWebSearch()) {
+      try {
+        const updatedSchema = await this.generateWithWebSearch([
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: updatePrompt },
+        ]);
+
+        yield {
+          type: 'complete',
+          data: updatedSchema,
+          done: true,
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        yield {
+          type: 'error',
+          data: { error: message },
+          done: true,
+        };
+      }
+      return;
+    }
+
     try {
       const stream = await this.client.chat.completions.create({
         model: this.model,
@@ -137,26 +185,62 @@ export class OpenAIProvider extends AIProvider {
   }
 
   private buildSystemPrompt(): string {
-    return `You are a UI generation assistant. Generate JSON schemas for Angular components based on user requests.
+    return PromptLoader.getSystemPrompt();
+  }
 
-Your responses must be valid JSON with this structure:
-{
-  "schemaVersion": "1.0",
-  "type": "form" | "dashboard" | "wizard" | "list" | "detail",
-  "components": [...],
-  "layout": {...},
-  "validation": {...},
-  "events": {...}
-}
+  private useWebSearch(): boolean {
+    return this.configService.get('OPENAI_WEB_SEARCH') === 'true';
+  }
 
-Available component types:
-- text-input, number-input, select, checkbox, radio, textarea
-- button, link
-- card, panel, grid, flexbox
-- table, list
-- heading, paragraph, divider
+  private buildWebSearchTool(): any {
+    const allowlistRaw = this.configService.get('OPENAI_WEB_SEARCH_ALLOWLIST') || '';
+    const allowlist = allowlistRaw
+      .split(',')
+      .map((domain: string) => domain.trim())
+      .filter((domain: string) => domain.length > 0);
 
-Always include proper validation, event handlers, and accessibility attributes.`;
+    const external = this.configService.get('OPENAI_WEB_SEARCH_EXTERNAL');
+
+    const tool: any = { type: 'web_search' };
+    if (allowlist.length > 0) {
+      tool.filters = { allowed_domains: allowlist };
+    }
+    if (external === 'false') {
+      tool.external_web_access = false;
+    }
+
+    return tool;
+  }
+
+  private async generateWithWebSearch(messages: any[]): Promise<any> {
+    const response = await this.client.responses.create({
+      model: this.model,
+      tools: [this.buildWebSearchTool()],
+      tool_choice: 'auto',
+      input: messages,
+    });
+
+    const text = this.extractResponseText(response);
+    return JSON.parse(text);
+  }
+
+  private extractResponseText(response: any): string {
+    if (response?.output_text) {
+      return response.output_text;
+    }
+
+    const output = response?.output || [];
+    for (const item of output) {
+      if (item?.type === 'message') {
+        const content = item.content || [];
+        const outputText = content.find((entry: any) => entry.type === 'output_text');
+        if (outputText?.text) {
+          return outputText.text;
+        }
+      }
+    }
+
+    throw new Error('No output text returned from web search response');
   }
 
   private buildUserPrompt(context: AIGenerationContext): string {
@@ -166,17 +250,30 @@ Always include proper validation, event handlers, and accessibility attributes.`
       prompt += `Current UI state: ${JSON.stringify(context.currentUiState)}\n\n`;
     }
 
+    if (context.searchResults?.summary) {
+      const sources = (context.searchResults.sources || [])
+        .map((source) => `- ${source.title ? source.title + ' ' : ''}(${source.url})`)
+        .join('\n');
+      prompt += `Web search summary:\n${context.searchResults.summary}\n\nSources:\n${sources}\n\n`;
+    }
+
     prompt += 'Generate a UI schema to fulfill this request.';
 
     return prompt;
   }
 
   private buildUpdatePrompt(currentSchema: any, interaction: any, context: AIGenerationContext): string {
+    const searchContext = context.searchResults?.summary
+      ? `\n\nWeb search summary:\n${context.searchResults.summary}\n\nSources:\n${(context.searchResults.sources || [])
+          .map((source) => `- ${source.title ? source.title + ' ' : ''}(${source.url})`)
+          .join('\n')}`
+      : '';
+
     return `Current UI schema: ${JSON.stringify(currentSchema)}
 
 User interaction: ${JSON.stringify(interaction)}
 
-User request: ${context.userPrompt}
+User request: ${context.userPrompt}${searchContext}
 
 Update the UI schema based on the interaction and request.`;
   }

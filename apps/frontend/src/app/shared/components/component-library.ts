@@ -9,16 +9,24 @@ import { ContainerComponent } from './layout/container.component';
 import { GridComponent } from './layout/grid.component';
 import { CardComponent } from './layout/card.component';
 import { TabsComponent } from './layout/tabs.component';
+import { FlexboxComponent } from './layout/flexbox.component';
+import { AccordionComponent } from './layout/accordion.component';
 import { TableComponent } from './data-display/table.component';
 import { ListComponent } from './data-display/list.component';
+import { ListboxComponent } from './data-display/listbox.component';
 import { BasicChartComponent } from './data-display/basic-chart.component';
 import { WizardStepperComponent } from './navigation/wizard-stepper.component';
+import { MenuComponent } from './navigation/menu.component';
+import { ToolbarComponent } from './navigation/toolbar.component';
 import { ErrorComponent } from './error/error.component';
+import { HeadingComponent } from './typography/heading.component';
+import { ParagraphComponent } from './typography/paragraph.component';
+import { DividerComponent } from './typography/divider.component';
 
 export interface ComponentLibrary {
   name: string;
   component: Type<any>;
-  category: 'form' | 'layout' | 'data-display' | 'navigation' | 'error';
+  category: 'form' | 'layout' | 'data-display' | 'navigation' | 'typography' | 'error';
   description: string;
   propsSchema: Record<string, any>;
 }
@@ -199,7 +207,7 @@ export const COMPONENT_LIBRARY: ComponentLibrary[] = [
     name: 'tabs',
     component: TabsComponent,
     category: 'layout',
-    description: 'Tabbed interface component',
+    description: 'Tabbed interface using Angular Aria headless directives',
     propsSchema: {
       tabs: {
         type: 'array',
@@ -208,12 +216,76 @@ export const COMPONENT_LIBRARY: ComponentLibrary[] = [
           properties: {
             label: { type: 'string' },
             value: { type: 'string' },
-            completed: { type: 'boolean' },
+            disabled: { type: 'boolean' },
           },
         },
         description: 'Array of tab definitions',
       },
       defaultTab: { type: 'string', description: 'Default active tab' },
+      selectionMode: {
+        type: 'string',
+        enum: ['follow', 'explicit'],
+        default: 'follow',
+        description: 'Tab activation mode',
+      },
+      orientation: {
+        type: 'string',
+        enum: ['horizontal', 'vertical'],
+        default: 'horizontal',
+      },
+    },
+  },
+  {
+    name: 'accordion',
+    component: AccordionComponent,
+    category: 'layout',
+    description: 'Expandable/collapsible sections using Angular Aria accordion directives',
+    propsSchema: {
+      items: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            title: { type: 'string' },
+            content: { type: 'string' },
+            disabled: { type: 'boolean' },
+            expanded: { type: 'boolean' },
+          },
+        },
+        description: 'Array of accordion items',
+      },
+      multiExpandable: { type: 'boolean', default: true, description: 'Allow multiple panels open' },
+    },
+  },
+  {
+    name: 'flexbox',
+    component: FlexboxComponent,
+    category: 'layout',
+    description: 'Flexbox layout component',
+    propsSchema: {
+      direction: {
+        type: 'string',
+        enum: ['row', 'column', 'row-reverse', 'column-reverse'],
+        default: 'column',
+      },
+      alignItems: {
+        type: 'string',
+        enum: ['stretch', 'flex-start', 'center', 'flex-end', 'baseline'],
+        default: 'stretch',
+      },
+      justifyContent: {
+        type: 'string',
+        enum: ['flex-start', 'center', 'flex-end', 'space-between', 'space-around', 'space-evenly'],
+        default: 'flex-start',
+      },
+      wrap: {
+        type: 'string',
+        enum: ['nowrap', 'wrap', 'wrap-reverse'],
+        default: 'nowrap',
+      },
+      gap: { type: ['number', 'string'], default: 0 },
+      padding: { type: ['number', 'string'], default: 0 },
     },
   },
 
@@ -269,6 +341,71 @@ export const COMPONENT_LIBRARY: ComponentLibrary[] = [
     },
   },
   {
+    name: 'listbox',
+    component: ListboxComponent,
+    category: 'data-display',
+    description: 'Accessible listbox using Angular Aria with keyboard navigation and selection',
+    propsSchema: {
+      options: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            value: { type: 'string' },
+            label: { type: 'string' },
+            description: { type: 'string' },
+            icon: { type: 'string' },
+            disabled: { type: 'boolean' },
+          },
+        },
+        description: 'Array of listbox options',
+      },
+      label: { type: 'string', description: 'Listbox label' },
+      multi: { type: 'boolean', default: false, description: 'Allow multiple selection' },
+      orientation: {
+        type: 'string',
+        enum: ['vertical', 'horizontal'],
+        default: 'vertical',
+      },
+      selectionMode: {
+        type: 'string',
+        enum: ['follow', 'explicit'],
+        default: 'explicit',
+      },
+    },
+  },
+  // Typography Components
+  {
+    name: 'heading',
+    component: HeadingComponent,
+    category: 'typography',
+    description: 'Heading text with configurable level',
+    propsSchema: {
+      text: { type: 'string', description: 'Heading text' },
+      level: { type: 'number', default: 2, description: 'Heading level (1-6)' },
+      ariaLabel: { type: 'string', description: 'Accessibility label' },
+    },
+  },
+  {
+    name: 'paragraph',
+    component: ParagraphComponent,
+    category: 'typography',
+    description: 'Paragraph text',
+    propsSchema: {
+      text: { type: 'string', description: 'Paragraph text' },
+      ariaLabel: { type: 'string', description: 'Accessibility label' },
+    },
+  },
+  {
+    name: 'divider',
+    component: DividerComponent,
+    category: 'typography',
+    description: 'Horizontal divider line',
+    propsSchema: {
+      ariaLabel: { type: 'string', description: 'Accessibility label' },
+    },
+  },
+  {
     name: 'basic-chart',
     component: BasicChartComponent,
     category: 'data-display',
@@ -316,6 +453,43 @@ export const COMPONENT_LIBRARY: ComponentLibrary[] = [
         },
         description: 'Array of wizard steps',
       },
+    },
+  },
+  {
+    name: 'menu',
+    component: MenuComponent,
+    category: 'navigation',
+    description: 'Dropdown menu using Angular Aria with keyboard navigation and groups',
+    propsSchema: {
+      actions: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            value: { type: 'string' },
+            label: { type: 'string' },
+            icon: { type: 'string' },
+            disabled: { type: 'boolean' },
+            group: { type: 'string' },
+          },
+        },
+        description: 'Array of menu actions',
+      },
+      triggerLabel: { type: 'string', default: 'Menu', description: 'Trigger button text' },
+    },
+  },
+  {
+    name: 'toolbar',
+    component: ToolbarComponent,
+    category: 'navigation',
+    description: 'Accessible toolbar using Angular Aria with keyboard navigation',
+    propsSchema: {
+      orientation: {
+        type: 'string',
+        enum: ['horizontal', 'vertical'],
+        default: 'horizontal',
+      },
+      ariaLabel: { type: 'string', default: 'Toolbar', description: 'Accessible label' },
     },
   },
 

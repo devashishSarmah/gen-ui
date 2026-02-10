@@ -1,0 +1,634 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Renderer UI Schema",
+  "type": "object",
+  "oneOf": [
+    { "$ref": "#/definitions/container" },
+    { "$ref": "#/definitions/flexbox" },
+    { "$ref": "#/definitions/grid" },
+    { "$ref": "#/definitions/card" },
+    { "$ref": "#/definitions/tabs" },
+    { "$ref": "#/definitions/input" },
+    { "$ref": "#/definitions/select" },
+    { "$ref": "#/definitions/checkbox" },
+    { "$ref": "#/definitions/radio" },
+    { "$ref": "#/definitions/textarea" },
+    { "$ref": "#/definitions/button" },
+    { "$ref": "#/definitions/table" },
+    { "$ref": "#/definitions/list" },
+    { "$ref": "#/definitions/basicChart" },
+    { "$ref": "#/definitions/wizardStepper" },
+    { "$ref": "#/definitions/heading" },
+    { "$ref": "#/definitions/paragraph" },
+    { "$ref": "#/definitions/divider" },
+    { "$ref": "#/definitions/error" }
+  ],
+  "definitions": {
+    "node": {
+      "oneOf": [
+        { "$ref": "#/definitions/container" },
+        { "$ref": "#/definitions/flexbox" },
+        { "$ref": "#/definitions/grid" },
+        { "$ref": "#/definitions/card" },
+        { "$ref": "#/definitions/tabs" },
+        { "$ref": "#/definitions/input" },
+        { "$ref": "#/definitions/select" },
+        { "$ref": "#/definitions/checkbox" },
+        { "$ref": "#/definitions/radio" },
+        { "$ref": "#/definitions/textarea" },
+        { "$ref": "#/definitions/button" },
+        { "$ref": "#/definitions/table" },
+        { "$ref": "#/definitions/list" },
+        { "$ref": "#/definitions/basicChart" },
+        { "$ref": "#/definitions/wizardStepper" },
+        { "$ref": "#/definitions/heading" },
+        { "$ref": "#/definitions/paragraph" },
+        { "$ref": "#/definitions/divider" },
+        { "$ref": "#/definitions/error" }
+      ]
+    },
+    "events": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "container": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "container" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "maxWidth": { "type": "number" },
+            "variant": { "type": "string", "enum": ["default", "fluid", "card"] }
+          },
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/node" }
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "flexbox": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "flexbox" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "direction": { "type": "string", "enum": ["row", "column", "row-reverse", "column-reverse"] },
+            "alignItems": { "type": "string", "enum": ["stretch", "flex-start", "center", "flex-end", "baseline"] },
+            "justifyContent": { "type": "string", "enum": ["flex-start", "center", "flex-end", "space-between", "space-around", "space-evenly"] },
+            "wrap": { "type": "string", "enum": ["nowrap", "wrap", "wrap-reverse"] },
+            "gap": { "anyOf": [{ "type": "number" }, { "type": "string" }] },
+            "padding": { "anyOf": [{ "type": "number" }, { "type": "string" }] }
+          },
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/node" }
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "grid": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "grid" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "columns": { "anyOf": [{ "type": "number" }, { "type": "string" }] },
+            "gap": { "type": "number" }
+          },
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/node" }
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "card": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "card" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "padding": { "type": "number" },
+            "elevated": { "type": "boolean" },
+            "footer": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/node" }
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "tabs": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "tabs" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "tabs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": { "type": "string" },
+                  "value": { "type": "string" },
+                  "completed": { "type": "boolean" }
+                },
+                "additionalProperties": false
+              }
+            },
+            "defaultTab": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/node" }
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "input": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "input" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "type": { "type": "string", "enum": ["text", "email", "password", "number", "tel", "url"] },
+            "label": { "type": "string" },
+            "placeholder": { "type": "string" },
+            "value": { "type": "string" },
+            "disabled": { "type": "boolean" },
+            "required": { "type": "boolean" },
+            "pattern": { "type": "string" },
+            "error": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "select": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "select" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "label": { "type": "string" },
+            "placeholder": { "type": "string" },
+            "value": {},
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": { "type": "string" },
+                  "value": {}
+                },
+                "additionalProperties": false
+              }
+            },
+            "disabled": { "type": "boolean" },
+            "required": { "type": "boolean" },
+            "error": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "checkbox": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "checkbox" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "label": { "type": "string" },
+            "checked": { "type": "boolean" },
+            "disabled": { "type": "boolean" },
+            "error": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "radio": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "radio" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "groupLabel": { "type": "string" },
+            "value": {},
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": { "type": "string" },
+                  "value": {}
+                },
+                "additionalProperties": false
+              }
+            },
+            "disabled": { "type": "boolean" },
+            "error": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "textarea": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "textarea" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "label": { "type": "string" },
+            "placeholder": { "type": "string" },
+            "value": { "type": "string" },
+            "rows": { "type": "number" },
+            "cols": { "type": "number" },
+            "maxLength": { "type": "number" },
+            "disabled": { "type": "boolean" },
+            "required": { "type": "boolean" },
+            "error": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "button": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "button" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "label": { "type": "string" },
+            "type": { "type": "string", "enum": ["button", "submit", "reset"] },
+            "variant": { "type": "string", "enum": ["primary", "secondary", "danger", "success"] },
+            "size": { "type": "string", "enum": ["small", "medium", "large"] },
+            "disabled": { "type": "boolean" },
+            "loading": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "table": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "table" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "key": { "type": "string" },
+                  "label": { "type": "string" },
+                  "width": { "type": "string" },
+                  "sortable": { "type": "boolean" }
+                },
+                "additionalProperties": false
+              }
+            },
+            "data": { "type": "array" },
+            "striped": { "type": "boolean" },
+            "bordered": { "type": "boolean" },
+            "hoverable": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "list": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "list" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "label": { "type": "string" },
+                  "description": { "type": "string" },
+                  "icon": { "type": "string" }
+                },
+                "additionalProperties": false
+              }
+            },
+            "styled": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "basicChart": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "basic-chart" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": { "type": "string" },
+                  "value": { "type": "number" }
+                },
+                "additionalProperties": false
+              }
+            },
+            "title": { "type": "string" },
+            "type": { "type": "string", "enum": ["bar", "line", "pie"] },
+            "width": { "type": "number" },
+            "height": { "type": "number" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "wizardStepper": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "wizard-stepper" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "label": { "type": "string" },
+                  "description": { "type": "string" },
+                  "completed": { "type": "boolean" }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "heading": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "heading" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "string" },
+            "level": { "type": "number", "minimum": 1, "maximum": 6 },
+            "ariaLabel": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "paragraph": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "paragraph" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "string" },
+            "ariaLabel": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "divider": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "divider" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "ariaLabel": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "error" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "message": { "type": "string" },
+            "details": { "type": "string" },
+            "dismissible": { "type": "boolean" },
+            "visible": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "accordion": {
+      "type": "object",
+      "required": ["type", "props"],
+      "properties": {
+        "type": { "const": "accordion" },
+        "props": {
+          "type": "object",
+          "required": ["items"],
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "title"],
+                "properties": {
+                  "id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "content": { "type": "string" },
+                  "disabled": { "type": "boolean" },
+                  "expanded": { "type": "boolean" }
+                }
+              }
+            },
+            "multiExpandable": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "listbox": {
+      "type": "object",
+      "required": ["type", "props"],
+      "properties": {
+        "type": { "const": "listbox" },
+        "props": {
+          "type": "object",
+          "required": ["options"],
+          "properties": {
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["value", "label"],
+                "properties": {
+                  "value": { "type": "string" },
+                  "label": { "type": "string" },
+                  "description": { "type": "string" },
+                  "icon": { "type": "string" },
+                  "disabled": { "type": "boolean" }
+                }
+              }
+            },
+            "label": { "type": "string" },
+            "multi": { "type": "boolean" },
+            "orientation": { "type": "string", "enum": ["vertical", "horizontal"] },
+            "selectionMode": { "type": "string", "enum": ["follow", "explicit"] }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "menu": {
+      "type": "object",
+      "required": ["type", "props"],
+      "properties": {
+        "type": { "const": "menu" },
+        "props": {
+          "type": "object",
+          "required": ["actions"],
+          "properties": {
+            "actions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["value", "label"],
+                "properties": {
+                  "value": { "type": "string" },
+                  "label": { "type": "string" },
+                  "icon": { "type": "string" },
+                  "disabled": { "type": "boolean" },
+                  "group": { "type": "string" }
+                }
+              }
+            },
+            "triggerLabel": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "toolbar": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "toolbar" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "orientation": { "type": "string", "enum": ["horizontal", "vertical"] },
+            "ariaLabel": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

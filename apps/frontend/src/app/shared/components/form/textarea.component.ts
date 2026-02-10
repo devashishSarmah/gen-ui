@@ -19,10 +19,14 @@ import { CommonModule } from '@angular/common';
         [required]="required"
         [rows]="rows"
         [cols]="cols"
+        [attr.aria-label]="label || ariaLabel"
+        [attr.aria-required]="required ? 'true' : null"
+        [attr.aria-invalid]="error ? 'true' : null"
+        [attr.aria-describedby]="describedBy"
         class="textarea-field"
       ></textarea>
-      <span *ngIf="error" class="textarea-error">{{ error }}</span>
-      <span *ngIf="maxLength" class="textarea-counter">
+      <span *ngIf="error" [id]="errorId" class="textarea-error">{{ error }}</span>
+      <span *ngIf="maxLength" [id]="counterId" class="textarea-counter">
         {{ value.length }} / {{ maxLength }}
       </span>
     </div>
@@ -37,31 +41,36 @@ import { CommonModule } from '@angular/common';
       .textarea-label {
         font-weight: 500;
         font-size: 0.875rem;
+        color: var(--ds-text-secondary);
       }
       .textarea-field {
-        padding: 0.5rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 1rem;
+        padding: 0.75rem 1.25rem;
+        border: 1px solid var(--ds-border);
+        border-radius: 18px;
+        font-size: 0.95rem;
         font-family: inherit;
         resize: vertical;
+        color: var(--ds-text-primary);
+        background: var(--ds-surface-glass);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
       }
       .textarea-field:focus {
         outline: none;
-        border-color: #2196f3;
-        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        border-color: rgba(8, 255, 243, 0.6);
+        box-shadow: 0 0 0 3px rgba(8, 255, 243, 0.15);
       }
       .textarea-field:disabled {
-        background-color: #f5f5f5;
+        background-color: rgba(255, 255, 255, 0.04);
         cursor: not-allowed;
+        opacity: 0.7;
       }
       .textarea-error {
-        color: #d32f2f;
+        color: #ff7485;
         font-size: 0.75rem;
       }
       .textarea-counter {
         font-size: 0.75rem;
-        color: #999;
+        color: var(--ds-text-secondary);
         text-align: right;
       }
     `,
@@ -78,6 +87,7 @@ export class TextareaComponent {
   @Input() maxLength = 0;
   @Input() error = '';
   @Input() value = '';
+  @Input() ariaLabel = '';
 
   @Output() valueChange = new EventEmitter<string>();
   @Output() change = new EventEmitter<string>();
@@ -90,5 +100,24 @@ export class TextareaComponent {
 
   onBlur() {
     this.blur.emit();
+  }
+
+  get errorId(): string {
+    return `${this.id}-error`;
+  }
+
+  get counterId(): string {
+    return `${this.id}-counter`;
+  }
+
+  get describedBy(): string | null {
+    const ids = [] as string[];
+    if (this.error) {
+      ids.push(this.errorId);
+    }
+    if (this.maxLength) {
+      ids.push(this.counterId);
+    }
+    return ids.length > 0 ? ids.join(' ') : null;
   }
 }

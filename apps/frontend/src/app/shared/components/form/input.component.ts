@@ -19,9 +19,13 @@ import { CommonModule } from '@angular/common';
         [disabled]="disabled"
         [required]="required"
         [pattern]="pattern"
+        [attr.aria-label]="label || ariaLabel"
+        [attr.aria-required]="required ? 'true' : null"
+        [attr.aria-invalid]="error ? 'true' : null"
+        [attr.aria-describedby]="describedBy"
         class="input-field"
       />
-      <span *ngIf="error" class="input-error">{{ error }}</span>
+      <span *ngIf="error" [id]="errorId" class="input-error">{{ error }}</span>
     </div>
   `,
   styles: [
@@ -34,24 +38,29 @@ import { CommonModule } from '@angular/common';
       .input-label {
         font-weight: 500;
         font-size: 0.875rem;
+        color: var(--ds-text-secondary);
       }
       .input-field {
-        padding: 0.5rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 1rem;
+        padding: 0.75rem 1.25rem;
+        border: 1px solid var(--ds-border);
+        border-radius: 999px;
+        font-size: 0.95rem;
+        color: var(--ds-text-primary);
+        background: var(--ds-surface-glass);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
       }
       .input-field:focus {
         outline: none;
-        border-color: #2196f3;
-        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        border-color: rgba(8, 255, 243, 0.6);
+        box-shadow: 0 0 0 3px rgba(8, 255, 243, 0.15);
       }
       .input-field:disabled {
-        background-color: #f5f5f5;
+        background-color: rgba(255, 255, 255, 0.04);
         cursor: not-allowed;
+        opacity: 0.7;
       }
       .input-error {
-        color: #d32f2f;
+        color: #ff7485;
         font-size: 0.75rem;
       }
     `,
@@ -67,6 +76,7 @@ export class InputComponent {
   @Input() pattern = '';
   @Input() error = '';
   @Input() value = '';
+  @Input() ariaLabel = '';
 
   @Output() valueChange = new EventEmitter<string>();
   @Output() change = new EventEmitter<string>();
@@ -79,5 +89,16 @@ export class InputComponent {
 
   onBlur() {
     this.blur.emit();
+  }
+
+  get errorId(): string {
+    return `${this.id}-error`;
+  }
+
+  get describedBy(): string | null {
+    if (this.error) {
+      return this.errorId;
+    }
+    return null;
   }
 }

@@ -17,7 +17,12 @@ export interface TableColumn {
       <table class="table" [class.table-striped]="striped" [class.table-bordered]="bordered">
         <thead>
           <tr>
-            <th *ngFor="let column of columns" [style.width]="column.width">
+            <th
+              *ngFor="let column of columns"
+              [style.width]="column.width"
+              scope="col"
+              [attr.aria-sort]="column.sortable ? 'none' : null"
+            >
               {{ column.label }}
               <span *ngIf="column.sortable" class="sortable-indicator">⇅</span>
             </th>
@@ -46,31 +51,32 @@ export interface TableColumn {
       .table {
         width: 100%;
         border-collapse: collapse;
+        color: var(--ds-text-primary);
       }
 
       .table-striped tbody tr:nth-child(odd) {
-        background-color: #f9f9f9;
+        background-color: rgba(255, 255, 255, 0.02);
       }
 
       .table-bordered {
-        border: 1px solid #ddd;
+        border: 1px solid var(--ds-border);
       }
 
       .table-bordered th,
       .table-bordered td {
-        border: 1px solid #ddd;
+        border: 1px solid var(--ds-border);
       }
 
       th {
-        background-color: #f5f5f5;
-        padding: 1rem;
+        background-color: rgba(255, 255, 255, 0.04);
+        padding: 1rem 1.25rem;
         text-align: left;
         font-weight: 600;
-        border-bottom: 2px solid #ddd;
+        border-bottom: 1px solid var(--ds-border);
       }
 
       td {
-        padding: 1rem;
+        padding: 1rem 1.25rem;
       }
 
       .sortable-indicator {
@@ -80,13 +86,13 @@ export interface TableColumn {
       }
 
       .table-row-hover tbody tr:hover {
-        background-color: #f0f0f0;
+        background-color: rgba(255, 255, 255, 0.05);
       }
 
       .table-empty {
         text-align: center;
         padding: 2rem;
-        color: #999;
+        color: var(--ds-text-secondary);
       }
     `,
   ],

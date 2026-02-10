@@ -36,6 +36,9 @@ export class ComponentRegistryService {
       grid: { isContainer: true, contentHost: 'gridHost' },
       card: { isContainer: true, contentHost: 'cardContent' },
       tabs: { isContainer: true, contentHost: 'tabsHost' },
+      flexbox: { isContainer: true, contentHost: 'flexHost' },
+      accordion: { isContainer: true, contentHost: 'accordionHost' },
+      toolbar: { isContainer: true, contentHost: 'toolbarHost' },
     };
 
     COMPONENT_LIBRARY.forEach((libComponent) => {

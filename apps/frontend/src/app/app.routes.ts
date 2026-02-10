@@ -31,11 +31,6 @@ export const appRoutes: Route[] = [
     children: [
       {
         path: '',
-        component: ConversationListComponent,
-        outlet: 'list',
-      },
-      {
-        path: '',
         component: WelcomeScreenComponent,
         outlet: 'primary',
       },
@@ -53,6 +48,7 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'home',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./home/home.component').then((m) => m.HomeComponent),
   },

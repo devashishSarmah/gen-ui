@@ -1,5 +1,5 @@
 import { Injectable, Injector, ViewContainerRef } from '@angular/core';
-import { SchemaRendererService, UISchema } from './schema-renderer.service';
+import { SchemaRendererService, UISchema, RenderResult } from './schema-renderer.service';
 import { ComponentRegistryService } from './component-registry.service';
 import { signal } from '@angular/core';
 
@@ -33,8 +33,9 @@ export class DynamicUIService {
    */
   loadSchema(schema: UISchema): void {
     try {
+      const normalizedSchema = this.normalizeSchema(schema);
       // Validate schema first
-      const validation = this.schemaRenderer.validateSchema(schema);
+      const validation = this.schemaRenderer.validateSchema(normalizedSchema);
       if (!validation.valid) {
         const errorMsg = `Schema validation failed: ${validation.errors.join(', ')}`;
         this.setError(errorMsg);
@@ -44,8 +45,8 @@ export class DynamicUIService {
       // Update state
       this.uiState.update((state) => ({
         ...state,
-        currentSchema: schema,
-        schemaHistory: [...state.schemaHistory, schema],
+        currentSchema: normalizedSchema,
+        schemaHistory: [...state.schemaHistory, normalizedSchema],
         error: null,
       }));
     } catch (error) {
@@ -124,6 +125,149 @@ export class DynamicUIService {
     }));
   }
 
+  normalizeExternalSchema(schema: UISchema): UISchema {
+    return this.normalizeSchema(schema);
+  }
+
+  private normalizeSchema(schema: UISchema): UISchema {
+    const maybeAiSchema = schema as unknown as {
+      schemaVersion?: string;
+      components?: any[];
+      layout?: any;
+    };
+
+    if (maybeAiSchema.schemaVersion && Array.isArray(maybeAiSchema.components)) {
+      return this.adaptAiSchema(maybeAiSchema);
+    }
+
+    return schema;
+  }
+
+  private adaptAiSchema(aiSchema: {
+    components?: any[];
+    layout?: any;
+  }): UISchema {
+    const layout = aiSchema.layout || {};
+    const rootType = this.mapLayoutType(layout.type);
+
+    return {
+      type: rootType,
+      props: this.mapLayoutProps(layout, rootType),
+      children: (aiSchema.components ?? []).map((component) => this.mapComponent(component)),
+    };
+  }
+
+  private mapLayoutType(type?: string): string {
+    const normalized = (type || '').toLowerCase();
+    if (normalized === 'flexbox' || normalized === 'grid' || normalized === 'card') {
+      return normalized;
+    }
+    return 'container';
+  }
+
+  private mapLayoutProps(layout: any, rootType: string): Record<string, any> {
+    if (rootType === 'flexbox') {
+      return {
+        direction: layout.direction,
+        gap: layout.gap,
+        padding: layout.padding,
+        alignItems: layout.alignItems,
+        justifyContent: layout.justifyContent,
+      };
+    }
+
+    if (rootType === 'grid') {
+      return {
+        columns: layout.columns || 1,
+        gap: layout.gap ?? 16,
+      };
+    }
+
+    if (rootType === 'card') {
+      return {
+        title: layout.title || '',
+      };
+    }
+
+    return {
+      maxWidth: layout.maxWidth || 1200,
+      variant: layout.variant || 'default',
+    };
+  }
+
+  private mapComponent(component: any): UISchema {
+    const type = (component?.type || '').toLowerCase();
+
+    if (type === 'heading') {
+      return {
+        type: 'heading',
+        props: {
+          text: component.text || '',
+          level: component.level || 2,
+          ariaLabel: component.ariaLabel || '',
+        },
+      };
+    }
+
+    if (type === 'paragraph') {
+      return {
+        type: 'paragraph',
+        props: {
+          text: component.text || '',
+          ariaLabel: component.ariaLabel || '',
+        },
+      };
+    }
+
+    if (type === 'divider') {
+      return {
+        type: 'divider',
+        props: {
+          ariaLabel: component.ariaLabel || '',
+        },
+      };
+    }
+
+    if (type === 'text-input' || type === 'number-input') {
+      return {
+        type: 'input',
+        props: {
+          id: component.id,
+          type: type === 'number-input' ? 'number' : 'text',
+          label: component.label,
+          placeholder: component.placeholder,
+          value: component.value,
+          disabled: component.disabled,
+          required: component.required,
+          pattern: component.pattern,
+          error: component.error,
+        },
+      };
+    }
+
+    if (['select', 'checkbox', 'radio', 'textarea', 'button', 'card', 'grid', 'list'].includes(type)) {
+      return {
+        type,
+        props: {
+          ...component,
+          type: undefined,
+        },
+        children: component.components?.map((child: any) => this.mapComponent(child)),
+      };
+    }
+
+    return {
+      type: 'error',
+      props: {
+        title: 'Unsupported component',
+        message: `Component type '${component?.type}' is not supported yet.`,
+        details: JSON.stringify(component),
+        dismissible: false,
+        visible: true,
+      },
+    };
+  }
+
   /**
    * Get schema history
    */
@@ -167,7 +311,7 @@ export class DynamicUIService {
    * Clears the container before rendering to prevent memory leaks
    * Returns the rendered root component or null if rendering failed
    */
-  renderCurrentSchema(viewContainer: ViewContainerRef): any {
+  renderCurrentSchema(viewContainer: ViewContainerRef): RenderResult | null {
     if (!viewContainer) {
       this.setError('Missing ViewContainerRef for rendering');
       return null;
@@ -186,10 +330,10 @@ export class DynamicUIService {
 
       if (result.error) {
         this.setError(result.error);
-        return null;
+        return result;
       }
 
-      return result.component;
+      return result;
     } catch (error) {
       this.setError(`Failed to render schema: ${error}`);
       return null;

@@ -149,7 +149,7 @@ export class LoginComponent {
       this.authService.login(this.loginForm.value as any).subscribe({
         next: () => {
           this.isLoading = false;
-          this.router.navigate(['/home']);
+          this.router.navigate(['/conversations']);
         },
         error: (error) => {
           this.isLoading = false;

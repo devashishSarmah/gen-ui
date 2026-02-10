@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-home',
@@ -12,8 +13,12 @@ import { RouterModule } from '@angular/router';
       <p>AI-Generated Angular Components for Conversational UI</p>
       
       <div class="actions">
-        <a routerLink="/login" class="btn btn-primary">Login</a>
-        <a routerLink="/register" class="btn btn-secondary">Register</a>
+        @if (isAuthenticated()) {
+          <a routerLink="/conversations" class="btn btn-primary">Go to conversations</a>
+        } @else {
+          <a routerLink="/login" class="btn btn-primary">Login</a>
+          <a routerLink="/register" class="btn btn-secondary">Register</a>
+        }
       </div>
     </div>
   `,
@@ -59,4 +64,7 @@ import { RouterModule } from '@angular/router';
     }
   `],
 })
-export class HomeComponent {}
+export class HomeComponent {
+  private authService = inject(AuthService);
+  isAuthenticated = this.authService.isAuthenticatedSignal;
+}

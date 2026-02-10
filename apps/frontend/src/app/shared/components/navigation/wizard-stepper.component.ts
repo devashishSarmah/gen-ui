@@ -15,17 +15,25 @@ export interface WizardStep {
   imports: [CommonModule],
   template: `
     <div class="wizard-wrapper">
-      <div class="wizard-steps">
+      <div class="wizard-steps" role="list">
         <div
           *ngFor="let step of steps; let i = index"
           class="wizard-step"
           [class.step-active]="currentStep() === i"
           [class.step-completed]="step.completed"
+          role="listitem"
+          [attr.aria-current]="currentStep() === i ? 'step' : null"
         >
-          <div class="step-circle" (click)="goToStep(i)">
+          <button
+            type="button"
+            class="step-circle"
+            (click)="goToStep(i)"
+            [disabled]="disabledStep(i)"
+            [attr.aria-label]="'Go to step ' + (i + 1) + ': ' + step.label"
+          >
             <span *ngIf="!step.completed" class="step-number">{{ i + 1 }}</span>
             <span *ngIf="step.completed" class="step-check">✓</span>
-          </div>
+          </button>
           <div class="step-label">
             <div class="step-title">{{ step.label }}</div>
             <div *ngIf="step.description" class="step-description">
@@ -49,6 +57,7 @@ export interface WizardStep {
           (click)="previousStep()"
           [disabled]="currentStep() === 0"
           class="action-button"
+          type="button"
         >
           ← Back
         </button>
@@ -59,6 +68,7 @@ export interface WizardStep {
           (click)="nextStep()"
           [disabled]="currentStep() === steps.length - 1"
           class="action-button"
+          type="button"
         >
           Next →
         </button>
@@ -69,10 +79,11 @@ export interface WizardStep {
     `
       .wizard-wrapper {
         width: 100%;
-        padding: 1.5rem;
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
+        padding: 1.75rem;
+        background: var(--ds-surface-glass);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-lg);
+        box-shadow: var(--ds-shadow-soft);
       }
 
       .wizard-steps {
@@ -93,8 +104,8 @@ export interface WizardStep {
         width: 2.5rem;
         height: 2.5rem;
         border-radius: 50%;
-        background: #f0f0f0;
-        border: 2px solid #ddd;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--ds-border-strong);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -102,18 +113,29 @@ export interface WizardStep {
         cursor: pointer;
         transition: all 0.2s ease;
         z-index: 2;
+        color: var(--ds-text-primary);
       }
 
       .step-active .step-circle {
-        background: #2196f3;
-        border-color: #2196f3;
-        color: white;
+        background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
+        border-color: transparent;
+        color: #0a0b0f;
       }
 
       .step-completed .step-circle {
-        background: #4caf50;
-        border-color: #4caf50;
-        color: white;
+        background: linear-gradient(135deg, #2eff8b, #08fff3);
+        border-color: transparent;
+        color: #0a0b0f;
+      }
+
+      .step-circle:disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+      }
+
+      .step-circle:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(8, 255, 243, 0.5), 0 0 0 5px rgba(8, 255, 243, 0.15);
       }
 
       .step-circle:hover {
@@ -128,11 +150,12 @@ export interface WizardStep {
       .step-title {
         font-weight: 500;
         font-size: 0.875rem;
+        color: var(--ds-text-primary);
       }
 
       .step-description {
         font-size: 0.75rem;
-        color: #666;
+        color: var(--ds-text-secondary);
         margin-top: 0.25rem;
       }
 
@@ -142,7 +165,7 @@ export interface WizardStep {
         left: 50%;
         width: 100%;
         height: 2px;
-        background: #ddd;
+        background: rgba(255, 255, 255, 0.12);
         z-index: 1;
       }
 
@@ -176,21 +199,22 @@ export interface WizardStep {
         align-items: center;
         gap: 1rem;
         padding-top: 1rem;
-        border-top: 1px solid #e0e0e0;
+        border-top: 1px solid var(--ds-border);
       }
 
       .action-button {
         padding: 0.5rem 1rem;
-        background: #f0f0f0;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--ds-border-strong);
+        border-radius: 999px;
         cursor: pointer;
         font-size: 0.95rem;
         transition: all 0.2s ease;
+        color: var(--ds-text-primary);
       }
 
       .action-button:hover:not(:disabled) {
-        background: #e0e0e0;
+        background: rgba(255, 255, 255, 0.12);
       }
 
       .action-button:disabled {
@@ -200,7 +224,7 @@ export interface WizardStep {
 
       .step-counter {
         font-size: 0.875rem;
-        color: #666;
+        color: var(--ds-text-secondary);
       }
     `,
   ],
@@ -230,5 +254,9 @@ export class WizardStepperComponent {
       this.currentStep.update((s) => s - 1);
       this.stepChange.emit(this.currentStep());
     }
+  }
+
+  disabledStep(step: number): boolean {
+    return step > this.currentStep();
   }
 }

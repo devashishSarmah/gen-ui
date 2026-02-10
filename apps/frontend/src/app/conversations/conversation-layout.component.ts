@@ -1,11 +1,12 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { ConversationListComponent } from './conversation-list.component';
 
 @Component({
   selector: 'app-conversation-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ConversationListComponent],
   template: `
     <div class="conversation-layout">
       <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
@@ -13,7 +14,7 @@ import { RouterModule } from '@angular/router';
           <span class="toggle-icon">{{ sidebarCollapsed() ? '→' : '←' }}</span>
         </button>
         <div class="sidebar-content" *ngIf="!sidebarCollapsed()">
-          <router-outlet name="list"></router-outlet>
+          <app-conversation-list></app-conversation-list>
         </div>
       </aside>
       <main class="main">
