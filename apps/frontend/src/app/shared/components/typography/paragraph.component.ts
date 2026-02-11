@@ -17,7 +17,8 @@ import { CommonModule } from '@angular/common';
 
       p {
         margin: 0;
-        line-height: 1.5;
+        line-height: 1.4;
+        font-size: 0.82rem;
         color: var(--ds-text-secondary);
       }
     `,

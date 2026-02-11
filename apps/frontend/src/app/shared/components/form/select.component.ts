@@ -40,36 +40,49 @@ export interface SelectOption {
       .select-wrapper {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.625rem;
       }
       .select-label {
-        font-weight: 500;
+        font-weight: 600;
         font-size: 0.875rem;
+        letter-spacing: 0.02em;
         color: var(--ds-text-secondary);
       }
       .select-field {
-        padding: 0.75rem 1.25rem;
+        padding: 0.875rem 1.5rem;
         border: 1px solid var(--ds-border);
-        border-radius: 999px;
+        border-radius: var(--ds-radius-pill);
         font-size: 0.95rem;
         color: var(--ds-text-primary);
         background: var(--ds-surface-glass);
+        backdrop-filter: blur(20px) saturate(180%);
         cursor: pointer;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.06);
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300fff5' d='M3.35 4.48a.56.56 0 0 1 .8 0L6 6.33l1.85-1.85a.56.56 0 1 1 .8.8l-2.25 2.24a.56.56 0 0 1-.8 0L3.35 5.27a.56.56 0 0 1 0-.8Z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1.25rem center;
+        padding-right: 3rem;
+      }
+      .select-field:hover:not(:disabled) {
+        border-color: var(--ds-border-strong);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
       }
       .select-field:focus {
         outline: none;
-        border-color: rgba(8, 255, 243, 0.6);
-        box-shadow: 0 0 0 3px rgba(8, 255, 243, 0.15);
+        border-color: var(--ds-border-glow);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(0, 255, 245, 0.2), 0 0 32px rgba(0, 255, 245, 0.15);
       }
       .select-field:disabled {
-        background-color: rgba(255, 255, 255, 0.04);
+        background-color: rgba(255, 255, 255, 0.03);
         cursor: not-allowed;
-        opacity: 0.7;
+        opacity: 0.6;
       }
       .select-error {
         color: #ff7485;
         font-size: 0.75rem;
+        font-weight: 500;
       }
     `,
   ],

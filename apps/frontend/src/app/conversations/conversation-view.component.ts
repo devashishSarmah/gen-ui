@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -24,7 +24,7 @@ import { DynamicUIService } from '../core/services/dynamic-ui.service';
           <ng-container *ngIf="!conversationStore.isLoadingMessages()">
             <ng-container *ngIf="conversationStore.messages().length > 0">
               <div
-                *ngFor="let message of conversationStore.messages()"
+                *ngFor="let message of conversationStore.messages(); trackBy: trackByMessageId"
                 class="message"
                 [class.user]="message.role === 'user'"
                 [class.assistant]="message.role === 'assistant'"
@@ -36,12 +36,12 @@ import { DynamicUIService } from '../core/services/dynamic-ui.service';
                   <ng-template #uiSchemaMessage>
                     <div *ngIf="message.uiSchema; else emptySchema">
                       <div class="ui-schema-container">
-                        <div class="schema-preview">
+                        <!-- <div class="schema-preview">
                           <strong>UI Schema Generated</strong>
                           <pre>{{ message.uiSchema | json }}</pre>
-                        </div>
+                        </div> -->
                         <div class="schema-rendered">
-                          <strong>Rendered UI</strong>
+                          <!-- <strong>Rendered UI</strong> -->
                           <app-ui-schema-renderer [schema]="message.uiSchema"></app-ui-schema-renderer>
                         </div>
                       </div>
@@ -138,17 +138,27 @@ import { DynamicUIService } from '../core/services/dynamic-ui.service';
   `,
   styles: [
     `
+      :host {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+
       .conversation-container {
         display: flex;
         flex-direction: column;
-        height: 100%;
-        background: white;
+        flex: 1;
+        min-height: 0;
+        background: transparent;
       }
 
       .messages-area {
         flex: 1;
+        min-height: 0;
         overflow-y: auto;
-        padding: 2rem;
+        padding: 1rem 1.25rem;
         display: flex;
         flex-direction: column;
       }
@@ -156,65 +166,90 @@ import { DynamicUIService } from '../core/services/dynamic-ui.service';
       .messages {
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
+        gap: 0.5rem;
       }
 
       .message {
         display: flex;
         flex-direction: column;
         max-width: 70%;
-        animation: fadeIn 0.3s ease;
+        animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
         &.user {
           align-self: flex-end;
-          background: #1976d2;
-          color: white;
-          padding: 1rem;
-          border-radius: 12px 12px 0 12px;
+          background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
+          color: #0a0b0f;
+          padding: 0.6rem 0.85rem;
+          border-radius: var(--ds-radius-lg) var(--ds-radius-lg) 4px var(--ds-radius-lg);
+          box-shadow: 0 4px 16px rgba(0, 255, 245, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1);
+          font-weight: 500;
+          font-size: 0.875rem;
         }
 
         &.assistant {
           align-self: flex-start;
-          background: #f5f5f5;
-          padding: 1rem;
-          border-radius: 12px 12px 12px 0;
+          background: transparent;
+          backdrop-filter: none;
+          border: none;
+          padding: 0;
+          border-radius: 0;
+          box-shadow: none;
+          color: var(--ds-text-primary);
+          max-width: 85%;
 
           &.streaming {
-            background: #e3f2fd;
+            background: var(--ds-surface-glass);
+            backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--ds-border-glow);
+            border-radius: var(--ds-radius-lg);
+            padding: 0.75rem;
+            animation: pulse 2s ease-in-out infinite;
           }
         }
 
         &.error {
           align-self: flex-start;
-          background: #ffebee;
-          color: #c62828;
-          padding: 1rem;
-          border-radius: 12px;
+          background: linear-gradient(135deg, rgba(255, 77, 125, 0.18), rgba(255, 45, 111, 0.18));
+          border: 1px solid rgba(255, 77, 125, 0.3);
+          color: #ff7485;
+          padding: 0.6rem 0.85rem;
+          border-radius: var(--ds-radius-lg);
+          box-shadow: 0 2px 8px rgba(255, 77, 125, 0.15);
+          font-weight: 500;
+          font-size: 0.875rem;
         }
       }
 
       .message-content {
         word-wrap: break-word;
+        line-height: 1.4;
+        font-size: 0.875rem;
       }
 
       .streaming-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 1rem;
-        font-weight: 500;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: var(--ds-accent-teal);
 
         .progress {
           font-size: 0.875rem;
-          color: #666;
+          padding: 0.25rem 0.625rem;
+          background: rgba(0, 255, 245, 0.15);
+          border-radius: var(--ds-radius-sm);
+          font-weight: 600;
         }
       }
 
       .ui-schema-container {
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 1rem;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        backdrop-filter: none;
       }
 
       .schema-preview {
@@ -223,23 +258,31 @@ import { DynamicUIService } from '../core/services/dynamic-ui.service';
 
         strong {
           display: block;
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.75rem;
+          color: var(--ds-accent-teal);
+          font-weight: 600;
+          font-size: 0.875rem;
+          letter-spacing: 0.02em;
         }
 
         pre {
-          background: #fafafa;
-          padding: 0.5rem;
-          border-radius: 4px;
+          background: rgba(0, 0, 0, 0.3);
+          padding: 1rem;
+          border-radius: var(--ds-radius-md);
           font-size: 0.75rem;
           overflow-x: auto;
           margin: 0;
+          border: 1px solid var(--ds-border);
+          color: var(--ds-text-secondary);
         }
       }
 
       .message-time {
-        font-size: 0.75rem;
-        opacity: 0.7;
-        margin-top: 0.5rem;
+        font-size: 0.65rem;
+        opacity: 0.6;
+        margin-top: 0.25rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
       }
 
       .empty-conversation {
@@ -247,89 +290,136 @@ import { DynamicUIService } from '../core/services/dynamic-ui.service';
         align-items: center;
         justify-content: center;
         flex: 1;
-        color: #999;
+        color: var(--ds-text-secondary);
         text-align: center;
+        font-size: 0.9rem;
       }
 
       .input-area {
-        border-top: 1px solid #e0e0e0;
-        padding: 1.5rem;
-        background: white;
+        border-top: 1px solid var(--ds-border);
+        padding: 0.75rem 1rem;
+        background: var(--ds-surface-glass-strong);
+        backdrop-filter: blur(32px) saturate(180%);
       }
 
       .connection-status {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        font-size: 0.875rem;
-        margin-bottom: 1rem;
-        padding: 0.5rem;
-        background: #f5f5f5;
-        border-radius: 4px;
+        font-size: 0.7rem;
+        margin-bottom: 0.5rem;
+        padding: 0.4rem 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-md);
+        font-weight: 500;
+        letter-spacing: 0.02em;
 
         .status-indicator {
           width: 10px;
           height: 10px;
           border-radius: 50%;
+          box-shadow: 0 0 8px currentColor;
 
           &.connected {
-            background: #4caf50;
-            animation: pulse 2s infinite;
+            background: var(--ds-accent-teal);
+            animation: pulse-glow 2s infinite;
           }
 
           &.disconnected {
-            background: #f44336;
+            background: #ff4d7d;
           }
         }
       }
 
       .message-form {
         display: flex;
-        gap: 0.5rem;
+        gap: 0.75rem;
       }
 
       .message-input {
         flex: 1;
-        padding: 0.75rem;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
-        font-size: 1rem;
+        padding: 0.6rem 1rem;
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-pill);
+        font-size: 0.85rem;
+        color: var(--ds-text-primary);
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px) saturate(180%);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.06);
+
+        &::placeholder {
+          color: var(--ds-text-secondary);
+          opacity: 0.6;
+        }
+
+        &:hover:not(:disabled) {
+          border-color: var(--ds-border-strong);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
 
         &:focus {
           outline: none;
-          border-color: #1976d2;
-          box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+          border-color: var(--ds-border-glow);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(0, 255, 245, 0.2), 0 0 32px rgba(0, 255, 245, 0.15);
         }
 
         &:disabled {
-          background: #f5f5f5;
+          background: rgba(255, 255, 255, 0.02);
           cursor: not-allowed;
+          opacity: 0.5;
         }
       }
 
       .send-btn {
-        padding: 0.75rem 1.5rem;
-        background: #1976d2;
-        color: white;
+        padding: 0.6rem 1.25rem;
+        background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
+        color: #0a0b0f;
         border: none;
-        border-radius: 4px;
+        border-radius: var(--ds-radius-pill);
         cursor: pointer;
-        font-weight: 500;
+        font-weight: 700;
+        font-size: 0.85rem;
+        letter-spacing: 0.02em;
+        box-shadow: 0 8px 24px rgba(0, 255, 245, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
 
         &:hover:not(:disabled) {
-          background: #1565c0;
+          transform: translateY(-2px);
+          box-shadow: 0 12px 32px rgba(0, 255, 245, 0.4), 0 0 48px rgba(91, 74, 255, 0.3);
+        }
+
+        &:hover:not(:disabled)::before {
+          opacity: 1;
+        }
+
+        &:active:not(:disabled) {
+          transform: translateY(0);
         }
 
         &:disabled {
-          background: #ccc;
+          opacity: 0.4;
           cursor: not-allowed;
+          transform: none;
         }
       }
 
       @keyframes fadeIn {
         from {
           opacity: 0;
-          transform: translateY(10px);
+          transform: translateY(16px);
         }
         to {
           opacity: 1;
@@ -338,12 +428,22 @@ import { DynamicUIService } from '../core/services/dynamic-ui.service';
       }
 
       @keyframes pulse {
-        0%,
-        100% {
-          opacity: 1;
+        0%, 100% {
+          opacity: 0.9;
+          transform: scale(1);
         }
         50% {
-          opacity: 0.5;
+          opacity: 1;
+          transform: scale(1.01);
+        }
+      }
+
+      @keyframes pulse-glow {
+        0%, 100% {
+          box-shadow: 0 0 8px currentColor;
+        }
+        50% {
+          box-shadow: 0 0 16px currentColor, 0 0 24px currentColor;
         }
       }
     `,
@@ -357,9 +457,15 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
   private dynamicUIService = inject(DynamicUIService);
   private route = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
+  private cdr = inject(ChangeDetectorRef);
 
   messageText = '';
   private conversationId: string = '';
+
+  trackByMessageId(index: number, message: Message): string {
+    return message.id;
+  }
+
   ngOnInit(): void {
     // Get conversation ID from route
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
@@ -389,9 +495,14 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
           this.dynamicUIService.loadSchema(chunk.data);
           const normalizedSchema = this.dynamicUIService.getCurrentSchema() ?? chunk.data;
           this.uiStateStore.completeStreaming(normalizedSchema);
-          this.loadMessages(); // Reload messages to show assistant response
+          // Add a small delay to ensure the message is saved to the database
+          setTimeout(() => {
+            this.loadMessages(); // Reload messages to show assistant response
+            this.cdr.detectChanges(); // Force change detection
+          }, 300);
         } else if (chunk?.type === 'error') {
-          this.uiStateStore.setStreamingError(chunk.data?.message || 'Error');
+          this.uiStateStore.setStreamingError(chunk.data?.error || chunk.data?.message || 'Unknown error');
+          this.cdr.detectChanges();
         }
       });
   }
@@ -438,6 +549,7 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
             this.uiStateStore.completeStreaming(normalizedSchema as any);
           }
           this.scrollToBottom();
+          this.cdr.detectChanges(); // Force change detection after messages load
         },
         error: (error) => {
           console.error('Failed to load messages:', error);

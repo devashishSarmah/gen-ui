@@ -1,19 +1,15 @@
-import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ConversationListComponent } from './conversation-list.component';
 
 @Component({
   selector: 'app-conversation-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, ConversationListComponent],
+  imports: [RouterModule, ConversationListComponent],
   template: `
     <div class="conversation-layout">
-      <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
-        <button class="toggle-btn" (click)="toggleSidebar()" [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'">
-          <span class="toggle-icon">{{ sidebarCollapsed() ? '→' : '←' }}</span>
-        </button>
-        <div class="sidebar-content" *ngIf="!sidebarCollapsed()">
+      <aside class="sidebar">
+        <div class="sidebar-content">
           <app-conversation-list></app-conversation-list>
         </div>
       </aside>
@@ -26,47 +22,19 @@ import { ConversationListComponent } from './conversation-list.component';
     `
       .conversation-layout {
         display: flex;
-        height: 100%;
+        height: calc(100vh - var(--app-header-height, 80px));
         width: 100%;
+        overflow: hidden;
       }
 
       .sidebar {
-        width: 300px;
-        border-right: 1px solid #e0e0e0;
+        width: 260px;
+        border-right: 1px solid var(--ds-border);
         overflow: hidden;
-        transition: width 0.3s ease;
-        position: relative;
         display: flex;
         flex-direction: column;
-      }
-
-      .sidebar.collapsed {
-        width: 48px;
-      }
-
-      .toggle-btn {
-        position: absolute;
-        top: 1rem;
-        right: 0.5rem;
-        width: 32px;
-        height: 32px;
-        border: 1px solid #e0e0e0;
-        background: white;
-        border-radius: 4px;
-        cursor: pointer;
-        z-index: 10;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background-color 0.2s;
-      }
-
-      .toggle-btn:hover {
-        background: #f5f5f5;
-      }
-
-      .sidebar.collapsed .toggle-btn {
-        right: 8px;
+        background: var(--ds-surface-glass);
+        backdrop-filter: blur(24px) saturate(180%);
       }
 
       .sidebar-content {
@@ -81,6 +49,7 @@ import { ConversationListComponent } from './conversation-list.component';
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        background: transparent;
       }
 
       @media (max-width: 768px) {
@@ -91,13 +60,8 @@ import { ConversationListComponent } from './conversation-list.component';
         .sidebar {
           width: 100%;
           border-right: none;
-          border-bottom: 1px solid #e0e0e0;
+          border-bottom: 1px solid var(--ds-border);
           max-height: 200px;
-        }
-
-        .sidebar.collapsed {
-          width: 100%;
-          max-height: 48px;
         }
 
         .main {
@@ -107,10 +71,4 @@ import { ConversationListComponent } from './conversation-list.component';
     `,
   ],
 })
-export class ConversationLayoutComponent {
-  sidebarCollapsed = signal(false);
-
-  toggleSidebar(): void {
-    this.sidebarCollapsed.update((v) => !v);
-  }
-}
+export class ConversationLayoutComponent {}

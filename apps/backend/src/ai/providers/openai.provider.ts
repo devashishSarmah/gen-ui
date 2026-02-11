@@ -77,7 +77,7 @@ export class OpenAIProvider extends AIProvider {
         ],
         response_format: { type: 'json_object' },
         stream: true,
-        temperature: 0.7,
+        temperature: 1,
       });
 
       let accumulatedContent = '';

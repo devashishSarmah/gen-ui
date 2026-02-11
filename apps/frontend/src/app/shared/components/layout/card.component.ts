@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="card" [class.card-elevated]="elevated" [style.padding.rem]="padding">
+    <div class="card" [class.card-elevated]="elevated" [style.padding.px]="padding">
       <div *ngIf="title" class="card-header">
         <h3 class="card-title">{{ title }}</h3>
         <!-- Optional header content can be placed here -->
@@ -22,16 +22,38 @@ import { CommonModule } from '@angular/common';
   styles: [
     `
       .card {
-        background: linear-gradient(180deg, rgba(16, 18, 25, 0.92), rgba(10, 12, 18, 0.94));
+        background: linear-gradient(135deg, rgba(18, 20, 28, 0.7), rgba(10, 12, 18, 0.85));
+        backdrop-filter: blur(24px) saturate(180%);
         border: 1px solid var(--ds-border);
-        border-radius: var(--ds-radius-lg);
+        border-radius: var(--ds-radius-xl);
         overflow: hidden;
-        transition: all 0.2s ease;
-        box-shadow: var(--ds-shadow-soft);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: var(--ds-shadow-soft), 0 0 0 1px rgba(255, 255, 255, 0.08);
+        position: relative;
+      }
+
+      .card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(0, 255, 245, 0.03), transparent 50%, rgba(91, 74, 255, 0.03));
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        pointer-events: none;
+      }
+
+      .card:hover::before {
+        opacity: 1;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+        border-color: var(--ds-border-strong);
+        box-shadow: var(--ds-shadow-medium), 0 0 48px rgba(0, 255, 245, 0.08);
       }
 
       .card-elevated {
-        box-shadow: var(--ds-shadow-soft), var(--ds-shadow-glow);
+        box-shadow: var(--ds-shadow-medium), var(--ds-shadow-glow-sm);
       }
 
       .card-header {
@@ -39,31 +61,37 @@ import { CommonModule } from '@angular/common';
         justify-content: space-between;
         align-items: center;
         border-bottom: 1px solid var(--ds-border);
-        padding: 1.25rem;
+        padding: 0.6rem 0.75rem;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
       }
 
       .card-title {
         margin: 0;
-        font-size: 1.15rem;
-        font-weight: 600;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
         color: var(--ds-text-primary);
+        background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
       }
 
       .card-content {
-        padding: 1.25rem;
+        padding: 0.6rem 0.75rem;
       }
 
       .card-footer {
         border-top: 1px solid var(--ds-border);
-        padding: 1.25rem;
-        background-color: rgba(255, 255, 255, 0.03);
+        padding: 0.6rem 0.75rem;
+        background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.02));
       }
     `,
   ],
 })
 export class CardComponent {
   @Input() title = '';
-  @Input() padding = 1;
+  @Input() padding = 12;
   @Input() elevated = true;
   @Input() footer = false;
   @Input() contentTemplate: any;

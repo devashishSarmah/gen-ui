@@ -39,6 +39,19 @@ export class SchemaValidationService {
       'paragraph',
       'divider',
       'error',
+      // Data display components
+      'timeline',
+      'carousel',
+      'stats-card',
+      'flow-diagram',
+      'chart-bar',
+      'progress-ring',
+      // Feedback components
+      'badge',
+      'alert',
+      'progress-bar',
+      // Navigation components
+      'stepper',
       // Legacy types (still accepted)
       'text-input',
       'number-input',

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, SimpleChanges, ViewChild, ViewContainerRef, inject } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, SimpleChanges, ViewChild, ViewContainerRef, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SchemaRendererService, UISchema } from '../../../core/services/schema-renderer.service';
 import { DynamicUIService } from '../../../core/services/dynamic-ui.service';
@@ -19,14 +19,32 @@ export class UiSchemaRendererComponent implements AfterViewInit, OnChanges {
 
   private schemaRenderer = inject(SchemaRendererService);
   private dynamicUIService = inject(DynamicUIService);
+  private cdr = inject(ChangeDetectorRef);
 
   ngAfterViewInit(): void {
-    this.renderSchema();
+    // Use setTimeout to ensure the view is fully ready
+    setTimeout(() => {
+      if (this.schema) {
+        this.renderSchema();
+        this.cdr.detectChanges();
+      }
+    }, 0);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['schema']) {
-      this.renderSchema();
+      const currentSchema = changes['schema'].currentValue;
+      
+      // Only render if we have a schema and the view is ready
+      if (currentSchema) {
+        // Use setTimeout to ensure the view is fully initialized
+        setTimeout(() => {
+          if (this.uiHost) {
+            this.renderSchema();
+            this.cdr.detectChanges();
+          }
+        }, 0);
+      }
     }
   }
 
@@ -48,6 +66,16 @@ export class UiSchemaRendererComponent implements AfterViewInit, OnChanges {
     const result = this.schemaRenderer.renderSchemaTree(normalizedSchema, this.uiHost);
     if (result.error) {
       this.errorMessage = result.error;
+    } else {
+      // Trigger change detection after successful render
+      // Use setTimeout to ensure all child components are also rendered
+      setTimeout(() => {
+        this.cdr.detectChanges();
+        // Also trigger detectChanges on the rendered component if it exists
+        if (result.component) {
+          result.component.changeDetectorRef.detectChanges();
+        }
+      }, 0);
     }
   }
 }

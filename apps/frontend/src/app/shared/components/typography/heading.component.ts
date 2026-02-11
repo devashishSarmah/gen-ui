@@ -34,6 +34,13 @@ import { CommonModule } from '@angular/common';
         font-family: var(--ds-font-display);
         letter-spacing: -0.02em;
       }
+
+      h1 { font-size: 1.35rem; }
+      h2 { font-size: 1.1rem; }
+      h3 { font-size: 0.95rem; }
+      h4 { font-size: 0.85rem; }
+      h5 { font-size: 0.8rem; }
+      h6 { font-size: 0.75rem; }
     `,
   ],
 })

@@ -1,28 +1,38 @@
 @layer base {
   :root {
+    --app-header-height: 60px;
+
     --ds-bg: #0a0b0f;
     --ds-surface: #101219;
     --ds-surface-elevated: #151824;
-    --ds-surface-glass: rgba(12, 14, 18, 0.86);
-    --ds-text-primary: #e8edf2;
-    --ds-text-secondary: #98a3b3;
-    --ds-border: rgba(255, 255, 255, 0.08);
-    --ds-border-strong: rgba(255, 255, 255, 0.16);
+    --ds-surface-glass: rgba(12, 14, 18, 0.65);
+    --ds-surface-glass-strong: rgba(12, 14, 18, 0.85);
+    --ds-text-primary: #ffffff;
+    --ds-text-secondary: #a8b3c1;
+    --ds-border: rgba(255, 255, 255, 0.12);
+    --ds-border-strong: rgba(255, 255, 255, 0.22);
+    --ds-border-glow: rgba(8, 255, 243, 0.3);
 
-    --ds-accent-teal: #08fff3;
-    --ds-accent-indigo: #4d3aff;
-    --ds-accent-violet: #7c4dff;
-    --ds-accent-lime: #b6ff8a;
+    --ds-accent-teal: #00fff5;
+    --ds-accent-indigo: #5b4aff;
+    --ds-accent-violet: #8c5dff;
+    --ds-accent-lime: #c4ff9f;
+    --ds-accent-pink: #ff4d9f;
 
-    --ds-glow-teal: rgba(8, 255, 243, 0.25);
-    --ds-glow-indigo: rgba(77, 58, 255, 0.28);
+    --ds-glow-teal: rgba(0, 255, 245, 0.4);
+    --ds-glow-indigo: rgba(91, 74, 255, 0.4);
+    --ds-glow-violet: rgba(140, 93, 255, 0.35);
 
-    --ds-radius-sm: 8px;
-    --ds-radius-md: 14px;
-    --ds-radius-lg: 22px;
+    --ds-radius-sm: 6px;
+    --ds-radius-md: 10px;
+    --ds-radius-lg: 14px;
+    --ds-radius-xl: 18px;
+    --ds-radius-pill: 999px;
 
-    --ds-shadow-soft: 0 12px 38px rgba(0, 0, 0, 0.38);
-    --ds-shadow-glow: 0 0 36px var(--ds-glow-teal), 0 0 52px var(--ds-glow-indigo);
+    --ds-shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --ds-shadow-medium: 0 12px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    --ds-shadow-glow: 0 0 40px var(--ds-glow-teal), 0 0 60px var(--ds-glow-indigo);
+    --ds-shadow-glow-sm: 0 0 20px var(--ds-glow-teal), 0 0 30px var(--ds-glow-indigo);
 
     --ds-font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
     --ds-font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -44,11 +54,17 @@
     inset: 0;
     z-index: -1;
     background:
-      radial-gradient(780px 360px at 12% 18%, rgba(8, 255, 243, 0.2), transparent 62%),
-      radial-gradient(920px 420px at 88% 28%, rgba(77, 58, 255, 0.26), transparent 65%),
-      radial-gradient(680px 380px at 50% 85%, rgba(124, 77, 255, 0.18), transparent 70%),
-      linear-gradient(180deg, #0a0b0f 0%, #090a0f 100%);
+      radial-gradient(900px 400px at 15% 20%, rgba(0, 255, 245, 0.25), transparent 65%),
+      radial-gradient(1000px 500px at 85% 30%, rgba(91, 74, 255, 0.3), transparent 70%),
+      radial-gradient(800px 450px at 50% 90%, rgba(140, 93, 255, 0.22), transparent 75%),
+      linear-gradient(180deg, #0a0b0f 0%, #060708 100%);
     pointer-events: none;
+    animation: ambient-glow 20s ease-in-out infinite alternate;
+  }
+
+  @keyframes ambient-glow {
+    0% { opacity: 0.9; }
+    100% { opacity: 1; }
   }
 
   a {

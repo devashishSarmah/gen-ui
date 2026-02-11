@@ -8,7 +8,7 @@ import { RouterModule } from '@angular/router';
   template: `
     <div class="app-container">
       <header>
-        <h1>Gen UI - Conversational AI</h1>
+        <img class="logo" [src]="'https://res.cloudinary.com/dmm7pipxt/image/upload/w_192,h_128/v1770762472/Gen%20UI/Layer/logo_w1jdum.png'" />
       </header>
       <main>
         <router-outlet></router-outlet>
@@ -23,19 +23,19 @@ import { RouterModule } from '@angular/router';
     }
     
     header {
-      background-color: #1976d2;
       color: white;
-      padding: 1rem 2rem;
-    }
-    
-    header h1 {
-      margin: 0;
-      font-size: 1.5rem;
+      padding: 0.75rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: var(--app-header-height, 60px);
+      display: flex;
+      align-items: center;
     }
     
     main {
       flex: 1;
-      padding: 2rem;
+      overflow: hidden;
     }
   `],
 })

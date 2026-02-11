@@ -21,7 +21,21 @@
     { "$ref": "#/definitions/heading" },
     { "$ref": "#/definitions/paragraph" },
     { "$ref": "#/definitions/divider" },
-    { "$ref": "#/definitions/error" }
+    { "$ref": "#/definitions/error" },
+    { "$ref": "#/definitions/accordion" },
+    { "$ref": "#/definitions/listbox" },
+    { "$ref": "#/definitions/menu" },
+    { "$ref": "#/definitions/toolbar" },
+    { "$ref": "#/definitions/timeline" },
+    { "$ref": "#/definitions/carousel" },
+    { "$ref": "#/definitions/statsCard" },
+    { "$ref": "#/definitions/flowDiagram" },
+    { "$ref": "#/definitions/chartBar" },
+    { "$ref": "#/definitions/progressRing" },
+    { "$ref": "#/definitions/progressBar" },
+    { "$ref": "#/definitions/stepper" },
+    { "$ref": "#/definitions/badge" },
+    { "$ref": "#/definitions/alert" }
   ],
   "definitions": {
     "node": {
@@ -44,7 +58,21 @@
         { "$ref": "#/definitions/heading" },
         { "$ref": "#/definitions/paragraph" },
         { "$ref": "#/definitions/divider" },
-        { "$ref": "#/definitions/error" }
+        { "$ref": "#/definitions/error" },
+        { "$ref": "#/definitions/accordion" },
+        { "$ref": "#/definitions/listbox" },
+        { "$ref": "#/definitions/menu" },
+        { "$ref": "#/definitions/toolbar" },
+        { "$ref": "#/definitions/timeline" },
+        { "$ref": "#/definitions/carousel" },
+        { "$ref": "#/definitions/statsCard" },
+        { "$ref": "#/definitions/flowDiagram" },
+        { "$ref": "#/definitions/chartBar" },
+        { "$ref": "#/definitions/progressRing" },
+        { "$ref": "#/definitions/progressBar" },
+        { "$ref": "#/definitions/stepper" },
+        { "$ref": "#/definitions/badge" },
+        { "$ref": "#/definitions/alert" }
       ]
     },
     "events": {
@@ -623,6 +651,279 @@
           "properties": {
             "orientation": { "type": "string", "enum": ["horizontal", "vertical"] },
             "ariaLabel": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "timeline": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "timeline" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "timestamp": { "type": "string" },
+                  "icon": { "type": "string" },
+                  "status": { "type": "string", "enum": ["completed", "active", "pending", "error"] }
+                },
+                "additionalProperties": false
+              }
+            },
+            "orientation": { "type": "string", "enum": ["vertical", "horizontal"] }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "carousel": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "carousel" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "slides": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "image": { "type": "string" },
+                  "content": { "type": "string" },
+                  "icon": { "type": "string" }
+                },
+                "additionalProperties": false
+              }
+            },
+            "autoplay": { "type": "boolean" },
+            "interval": { "type": "number" },
+            "loop": { "type": "boolean" },
+            "showControls": { "type": "boolean" },
+            "showIndicators": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "statsCard": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "stats-card" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "label": { "type": "string" },
+            "value": { "anyOf": [{ "type": "string" }, { "type": "number" }] },
+            "change": { "type": "number" },
+            "description": { "type": "string" },
+            "icon": { "type": "string" },
+            "elevated": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "flowDiagram": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "flow-diagram" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "nodes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "label": { "type": "string" },
+                  "icon": { "type": "string" },
+                  "description": { "type": "string" },
+                  "type": { "type": "string", "enum": ["start", "end", "process", "decision"] }
+                },
+                "additionalProperties": false
+              }
+            },
+            "connections": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "from": { "type": "string" },
+                  "to": { "type": "string" },
+                  "label": { "type": "string" }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "chartBar": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "chart-bar" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": { "type": "string" },
+                  "value": { "type": "number" },
+                  "color": { "type": "string" }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "progressRing": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "progress-ring" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "value": { "type": "number" },
+            "size": { "type": "number" },
+            "strokeWidth": { "type": "number" },
+            "label": { "type": "string" },
+            "icon": { "type": "string" },
+            "showValue": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "progressBar": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "progress-bar" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "value": { "type": "number" },
+            "label": { "type": "string" },
+            "variant": { "type": "string", "enum": ["primary", "success", "warning", "error"] },
+            "showValue": { "type": "boolean" },
+            "striped": { "type": "boolean" },
+            "animated": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "stepper": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "stepper" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "icon": { "type": "string" },
+                  "status": { "type": "string", "enum": ["completed", "active", "pending", "error"] }
+                },
+                "additionalProperties": false
+              }
+            },
+            "currentStep": { "type": "number" },
+            "orientation": { "type": "string", "enum": ["vertical", "horizontal"] },
+            "clickable": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "badge": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "badge" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "string" },
+            "icon": { "type": "string" },
+            "variant": { "type": "string", "enum": ["primary", "secondary", "success", "warning", "danger", "info"] },
+            "size": { "type": "string", "enum": ["small", "medium", "large"] },
+            "pill": { "type": "boolean" },
+            "dismissible": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "events": { "$ref": "#/definitions/events" }
+      },
+      "additionalProperties": false
+    },
+    "alert": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "alert" },
+        "props": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "message": { "type": "string" },
+            "description": { "type": "string" },
+            "icon": { "type": "string" },
+            "variant": { "type": "string", "enum": ["success", "warning", "error", "info"] },
+            "dismissible": { "type": "boolean" },
+            "visible": { "type": "boolean" }
           },
           "additionalProperties": false
         },

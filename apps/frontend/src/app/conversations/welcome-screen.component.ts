@@ -83,7 +83,7 @@ export interface ExamplePrompt {
         justify-content: center;
         min-height: 100%;
         padding: 2rem;
-        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+        background: transparent;
       }
 
       .welcome-content {
@@ -96,14 +96,17 @@ export interface ExamplePrompt {
         margin-bottom: 2rem;
 
         h1 {
-          font-size: 2.5rem;
-          color: #1976d2;
+          font-size: 2rem;
+          background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
           margin: 0 0 0.5rem;
         }
 
         .subtitle {
-          font-size: 1.125rem;
-          color: #666;
+          font-size: 0.95rem;
+          color: var(--ds-text-secondary);
           margin: 0;
         }
       }
@@ -112,8 +115,8 @@ export interface ExamplePrompt {
         margin-bottom: 2rem;
 
         h2 {
-          font-size: 1.25rem;
-          color: #333;
+          font-size: 1rem;
+          color: var(--ds-text-secondary);
           margin: 0 0 1rem;
           text-align: center;
         }
@@ -129,23 +132,25 @@ export interface ExamplePrompt {
         display: flex;
         align-items: flex-start;
         gap: 0.75rem;
-        padding: 1rem;
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
+        padding: 0.85rem;
+        background: var(--ds-surface-glass);
+        backdrop-filter: blur(16px) saturate(180%);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-md);
         cursor: pointer;
         transition: all 0.2s ease;
         text-align: left;
+        color: var(--ds-text-primary);
 
         &:hover {
-          border-color: #1976d2;
-          box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15);
+          border-color: var(--ds-border-glow);
+          box-shadow: 0 4px 12px rgba(0, 255, 245, 0.15);
           transform: translateY(-2px);
         }
       }
 
       .prompt-icon {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         flex-shrink: 0;
       }
 
@@ -155,14 +160,14 @@ export interface ExamplePrompt {
 
         strong {
           display: block;
-          font-size: 0.9rem;
-          color: #333;
-          margin-bottom: 0.25rem;
+          font-size: 0.85rem;
+          color: var(--ds-text-primary);
+          margin-bottom: 0.2rem;
         }
 
         p {
-          font-size: 0.8rem;
-          color: #666;
+          font-size: 0.78rem;
+          color: var(--ds-text-secondary);
           margin: 0;
           line-height: 1.4;
         }
@@ -174,48 +179,50 @@ export interface ExamplePrompt {
       }
 
       .btn-primary {
-        padding: 1rem 2rem;
-        background: #1976d2;
-        color: white;
+        padding: 0.65rem 1.5rem;
+        background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
+        color: #0a0b0f;
         border: none;
-        border-radius: 8px;
-        font-size: 1.125rem;
-        font-weight: 500;
+        border-radius: var(--ds-radius-pill);
+        font-size: 0.95rem;
+        font-weight: 700;
         cursor: pointer;
-        transition: background-color 0.2s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 6px 20px rgba(0, 255, 245, 0.25);
 
         &:hover {
-          background: #1565c0;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 28px rgba(0, 255, 245, 0.35), 0 0 32px rgba(91, 74, 255, 0.2);
         }
       }
 
       .features {
         display: flex;
         justify-content: center;
-        gap: 2rem;
+        gap: 1.5rem;
         flex-wrap: wrap;
       }
 
       .feature {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.4rem;
       }
 
       .feature-icon {
-        font-size: 1.25rem;
+        font-size: 1rem;
       }
 
       .feature-text {
         strong {
           display: block;
-          font-size: 0.875rem;
-          color: #333;
+          font-size: 0.8rem;
+          color: var(--ds-text-primary);
         }
 
         p {
-          font-size: 0.75rem;
-          color: #666;
+          font-size: 0.7rem;
+          color: var(--ds-text-secondary);
           margin: 0;
         }
       }

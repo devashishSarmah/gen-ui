@@ -15,7 +15,17 @@ import { TableComponent } from './data-display/table.component';
 import { ListComponent } from './data-display/list.component';
 import { ListboxComponent } from './data-display/listbox.component';
 import { BasicChartComponent } from './data-display/basic-chart.component';
+import { TimelineComponent } from './data-display/timeline.component';
+import { CarouselComponent } from './data-display/carousel.component';
+import { StatsCardComponent } from './data-display/stats-card.component';
+import { FlowDiagramComponent } from './data-display/flow-diagram.component';
+import { ChartBarComponent } from './data-display/chart-bar.component';
+import { ProgressRingComponent } from './data-display/progress-ring.component';
 import { WizardStepperComponent } from './navigation/wizard-stepper.component';
+import { StepperComponent } from './navigation/stepper.component';
+import { BadgeComponent } from './feedback/badge.component';
+import { AlertComponent } from './feedback/alert.component';
+import { ProgressBarComponent } from './feedback/progress-bar.component';
 import { MenuComponent } from './navigation/menu.component';
 import { ToolbarComponent } from './navigation/toolbar.component';
 import { ErrorComponent } from './error/error.component';
@@ -26,7 +36,7 @@ import { DividerComponent } from './typography/divider.component';
 export interface ComponentLibrary {
   name: string;
   component: Type<any>;
-  category: 'form' | 'layout' | 'data-display' | 'navigation' | 'typography' | 'error';
+  category: 'form' | 'layout' | 'data-display' | 'navigation' | 'typography' | 'error' | 'feedback';
   description: string;
   propsSchema: Record<string, any>;
 }
@@ -198,7 +208,7 @@ export const COMPONENT_LIBRARY: ComponentLibrary[] = [
     description: 'Card container with header, content, and footer',
     propsSchema: {
       title: { type: 'string', description: 'Card title' },
-      padding: { type: 'number', default: 1, description: 'Padding in rem' },
+      padding: { type: 'number', default: 12, description: 'Padding in pixels' },
       elevated: { type: 'boolean', default: true, description: 'Add shadow' },
       footer: { type: 'boolean', default: false, description: 'Show footer' },
     },
@@ -505,6 +515,239 @@ export const COMPONENT_LIBRARY: ComponentLibrary[] = [
       details: { type: 'string', description: 'Detailed error information' },
       dismissible: { type: 'boolean', default: true },
       visible: { type: 'boolean', default: true },
+    },
+  },
+
+  // Additional Data Display Components
+  {
+    name: 'timeline',
+    component: TimelineComponent,
+    category: 'data-display',
+    description: 'Timeline component showing chronological events with status indicators',
+    propsSchema: {
+      items: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            title: { type: 'string' },
+            description: { type: 'string' },
+            timestamp: { type: 'string' },
+            icon: { type: 'string' },
+            status: { type: 'string', enum: ['completed', 'active', 'pending', 'error'] },
+          },
+        },
+        description: 'Array of timeline items',
+      },
+      orientation: {
+        type: 'string',
+        enum: ['vertical', 'horizontal'],
+        default: 'vertical',
+      },
+    },
+  },
+  {
+    name: 'carousel',
+    component: CarouselComponent,
+    category: 'data-display',
+    description: 'Carousel/slider component for displaying multiple items with navigation',
+    propsSchema: {
+      slides: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            title: { type: 'string' },
+            description: { type: 'string' },
+            image: { type: 'string' },
+            content: { type: 'string' },
+            icon: { type: 'string' },
+          },
+        },
+        description: 'Array of carousel slides',
+      },
+      autoplay: { type: 'boolean', default: false },
+      interval: { type: 'number', default: 5000 },
+      loop: { type: 'boolean', default: true },
+      showControls: { type: 'boolean', default: true },
+      showIndicators: { type: 'boolean', default: true },
+    },
+  },
+  {
+    name: 'stats-card',
+    component: StatsCardComponent,
+    category: 'data-display',
+    description: 'Statistics card displaying key metrics with change indicators',
+    propsSchema: {
+      label: { type: 'string', description: 'Metric label' },
+      value: { type: ['string', 'number'], description: 'Metric value' },
+      change: { type: 'number', description: 'Percentage change' },
+      description: { type: 'string', description: 'Additional description' },
+      icon: { type: 'string', description: 'Icon emoji' },
+      elevated: { type: 'boolean', default: true },
+    },
+  },
+  {
+    name: 'progress-ring',
+    component: ProgressRingComponent,
+    category: 'data-display',
+    description: 'Circular progress indicator with percentage display',
+    propsSchema: {
+      value: { type: 'number', default: 0, description: 'Progress value 0-100' },
+      size: { type: 'number', default: 120, description: 'Size in pixels' },
+      strokeWidth: { type: 'number', default: 8 },
+      label: { type: 'string', description: 'Label text' },
+      icon: { type: 'string', description: 'Icon emoji' },
+      showValue: { type: 'boolean', default: true },
+    },
+  },
+  {
+    name: 'flow-diagram',
+    component: FlowDiagramComponent,
+    category: 'data-display',
+    description: 'Flow diagram showing process steps with connections',
+    propsSchema: {
+      nodes: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            label: { type: 'string' },
+            icon: { type: 'string' },
+            description: { type: 'string' },
+            type: { type: 'string', enum: ['start', 'end', 'process', 'decision'] },
+          },
+        },
+        description: 'Array of flow nodes',
+      },
+      connections: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            from: { type: 'string' },
+            to: { type: 'string' },
+            label: { type: 'string' },
+          },
+        },
+        description: 'Array of connections between nodes',
+      },
+    },
+  },
+  {
+    name: 'chart-bar',
+    component: ChartBarComponent,
+    category: 'data-display',
+    description: 'Modern bar chart for displaying metrics',
+    propsSchema: {
+      title: { type: 'string', description: 'Chart title' },
+      data: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            label: { type: 'string' },
+            value: { type: 'number' },
+            color: { type: 'string' },
+          },
+        },
+        description: 'Array of data points',
+      },
+    },
+  },
+
+  // Feedback Components
+  {
+    name: 'badge',
+    component: BadgeComponent,
+    category: 'feedback',
+    description: 'Badge/tag component for labels and status indicators',
+    propsSchema: {
+      text: { type: 'string', description: 'Badge text' },
+      icon: { type: 'string', description: 'Icon emoji' },
+      variant: {
+        type: 'string',
+        enum: ['primary', 'secondary', 'success', 'warning', 'danger', 'info'],
+        default: 'primary',
+      },
+      size: {
+        type: 'string',
+        enum: ['small', 'medium', 'large'],
+        default: 'medium',
+      },
+      pill: { type: 'boolean', default: false },
+      dismissible: { type: 'boolean', default: false },
+    },
+  },
+  {
+    name: 'alert',
+    component: AlertComponent,
+    category: 'feedback',
+    description: 'Alert notification with different severity levels',
+    propsSchema: {
+      title: { type: 'string', description: 'Alert title' },
+      message: { type: 'string', description: 'Alert message' },
+      description: { type: 'string', description: 'Additional description' },
+      icon: { type: 'string', description: 'Icon emoji' },
+      variant: {
+        type: 'string',
+        enum: ['success', 'warning', 'error', 'info'],
+        default: 'info',
+      },
+      dismissible: { type: 'boolean', default: true },
+      visible: { type: 'boolean', default: true },
+    },
+  },
+  {
+    name: 'progress-bar',
+    component: ProgressBarComponent,
+    category: 'feedback',
+    description: 'Linear progress bar with variants',
+    propsSchema: {
+      value: { type: 'number', default: 0, description: 'Progress value 0-100' },
+      label: { type: 'string', description: 'Label text' },
+      variant: {
+        type: 'string',
+        enum: ['primary', 'success', 'warning', 'error'],
+        default: 'primary',
+      },
+      showValue: { type: 'boolean', default: true },
+      striped: { type: 'boolean', default: false },
+      animated: { type: 'boolean', default: false },
+    },
+  },
+
+  // Additional Navigation Component
+  {
+    name: 'stepper',
+    component: StepperComponent,
+    category: 'navigation',
+    description: 'Step indicator showing progress through a multi-step process',
+    propsSchema: {
+      steps: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            title: { type: 'string' },
+            description: { type: 'string' },
+            icon: { type: 'string' },
+            status: { type: 'string', enum: ['completed', 'active', 'pending', 'error'] },
+          },
+        },
+        description: 'Array of steps',
+      },
+      currentStep: { type: 'number', default: 0 },
+      orientation: {
+        type: 'string',
+        enum: ['vertical', 'horizontal'],
+        default: 'vertical',
+      },
+      clickable: { type: 'boolean', default: false },
     },
   },
 ];

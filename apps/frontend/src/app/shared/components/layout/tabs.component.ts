@@ -60,19 +60,22 @@ export interface TabItem {
       .tabs-wrapper {
         width: 100%;
         border: 1px solid var(--ds-border);
-        border-radius: var(--ds-radius-lg);
+        border-radius: var(--ds-radius-xl);
         overflow: hidden;
         background: var(--ds-surface-glass);
-        backdrop-filter: blur(14px);
+        backdrop-filter: blur(24px) saturate(180%);
+        box-shadow: var(--ds-shadow-soft), 0 0 0 1px rgba(255, 255, 255, 0.06);
       }
 
       :host ::ng-deep [ngTabList] {
         display: flex;
         border-bottom: 1px solid var(--ds-border);
-        background: rgba(255, 255, 255, 0.03);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
         list-style: none;
         padding: 0;
         margin: 0;
+        gap: 0.25rem;
+        padding: 0.5rem;
       }
 
       :host ::ng-deep [ngTabList][aria-orientation='vertical'] {
@@ -83,25 +86,44 @@ export interface TabItem {
 
       :host ::ng-deep [ngTab] {
         flex: 1;
-        padding: 1rem;
+        padding: 1rem 1.5rem;
         border: none;
         background: transparent;
         cursor: pointer;
         font-size: 0.95rem;
+        font-weight: 500;
         color: var(--ds-text-secondary);
-        transition: all 0.2s ease;
-        border-bottom: 2px solid transparent;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: var(--ds-radius-md);
         text-align: center;
+        position: relative;
+      }
+
+      :host ::ng-deep [ngTab]::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%) scaleX(0);
+        width: 80%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--ds-accent-teal), transparent);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       :host ::ng-deep [ngTab]:hover {
-        background-color: rgba(255, 255, 255, 0.05);
+        background-color: rgba(255, 255, 255, 0.08);
+        color: var(--ds-text-primary);
       }
 
       :host ::ng-deep [ngTab][aria-selected='true'] {
-        border-bottom-color: var(--ds-accent-teal);
+        background: linear-gradient(135deg, rgba(0, 255, 245, 0.12), rgba(91, 74, 255, 0.12));
         color: var(--ds-text-primary);
         font-weight: 600;
+      }
+
+      :host ::ng-deep [ngTab][aria-selected='true']::after {
+        transform: translateX(-50%) scaleX(1);
       }
 
       :host ::ng-deep [ngTab][aria-disabled='true'] {
@@ -111,20 +133,22 @@ export interface TabItem {
 
       :host ::ng-deep [ngTab]:focus-visible {
         outline: none;
-        box-shadow: 0 0 0 2px rgba(8, 255, 243, 0.4), 0 0 0 5px rgba(8, 255, 243, 0.12);
+        box-shadow: 0 0 0 2px rgba(0, 255, 245, 0.4), 0 0 24px rgba(0, 255, 245, 0.15);
       }
 
       .tab-pane {
-        padding: 1.25rem;
-        animation: fadeIn 0.2s ease;
+        padding: 1.5rem;
+        animation: fadeIn 0.3s ease;
       }
 
       @keyframes fadeIn {
         from {
           opacity: 0;
+          transform: translateY(8px);
         }
         to {
           opacity: 1;
+          transform: translateY(0);
         }
       }
     `,

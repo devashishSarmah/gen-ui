@@ -65,18 +65,24 @@ export interface AccordionItem {
       .accordion-wrapper {
         width: 100%;
         border: 1px solid var(--ds-border);
-        border-radius: var(--ds-radius-lg);
+        border-radius: var(--ds-radius-xl);
         overflow: hidden;
         background: var(--ds-surface-glass);
-        backdrop-filter: blur(14px);
+        backdrop-filter: blur(24px) saturate(180%);
+        box-shadow: var(--ds-shadow-soft), 0 0 0 1px rgba(255, 255, 255, 0.06);
       }
 
       .accordion-item {
         border-bottom: 1px solid var(--ds-border);
+        transition: background-color 0.3s ease;
       }
 
       .accordion-item:last-child {
         border-bottom: none;
+      }
+
+      .accordion-item:hover {
+        background-color: rgba(255, 255, 255, 0.03);
       }
 
       .accordion-heading {
@@ -88,28 +94,33 @@ export interface AccordionItem {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 1rem 1.25rem;
+        padding: 1.25rem 1.5rem;
         background: transparent;
         border: none;
         cursor: pointer;
         color: var(--ds-text-primary);
-        font-size: 0.95rem;
-        font-weight: 500;
+        font-size: 1rem;
+        font-weight: 600;
         text-align: left;
-        transition: background-color 0.2s ease;
+        transition: all 0.3s ease;
       }
 
       .accordion-trigger:hover {
-        background-color: rgba(255, 255, 255, 0.04);
+        background: linear-gradient(90deg, rgba(0, 255, 245, 0.05), transparent);
       }
 
       .accordion-trigger:focus-visible {
         outline: none;
-        box-shadow: inset 0 0 0 2px rgba(8, 255, 243, 0.4);
+        box-shadow: inset 0 0 0 2px rgba(0, 255, 245, 0.4), inset 0 0 24px rgba(0, 255, 245, 0.1);
+      }
+
+      :host ::ng-deep [ngAccordionTrigger][aria-expanded='true'] .accordion-trigger {
+        background: linear-gradient(90deg, rgba(0, 255, 245, 0.08), transparent);
       }
 
       :host ::ng-deep [ngAccordionTrigger][aria-expanded='true'] .accordion-trigger-icon {
         transform: rotate(180deg);
+        color: var(--ds-accent-teal);
       }
 
       :host ::ng-deep [ngAccordionTrigger][aria-disabled='true'] {
@@ -120,22 +131,23 @@ export interface AccordionItem {
       .accordion-trigger-icon {
         display: flex;
         align-items: center;
-        transition: transform 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         color: var(--ds-text-secondary);
+        filter: drop-shadow(0 0 8px rgba(0, 255, 245, 0.3));
       }
 
       .accordion-content {
-        padding: 0 1.25rem 1rem;
+        padding: 0 1.5rem 1.5rem;
         color: var(--ds-text-secondary);
         font-size: 0.9rem;
-        line-height: 1.6;
-        animation: accordionOpen 0.2s ease;
+        line-height: 1.7;
+        animation: accordionOpen 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       @keyframes accordionOpen {
         from {
           opacity: 0;
-          transform: translateY(-4px);
+          transform: translateY(-8px);
         }
         to {
           opacity: 1;
