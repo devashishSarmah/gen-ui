@@ -1,5 +1,6 @@
 import { Component, Input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DsIconComponent } from '../shared/ds-icon.component';
 
 export interface CarouselSlide {
   id: string;
@@ -13,7 +14,7 @@ export interface CarouselSlide {
 @Component({
   selector: 'app-carousel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DsIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="carousel">
@@ -21,7 +22,7 @@ export interface CarouselSlide {
         <div class="carousel-track" [style.transform]="'translateX(-' + (currentIndex() * 100) + '%)'">
           <div *ngFor="let slide of slides" class="carousel-slide">
             <div class="slide-content">
-              <div class="slide-icon" *ngIf="slide.icon">{{ slide.icon }}</div>
+              <div class="slide-icon" *ngIf="slide.icon"><ds-icon [name]="slide.icon" [size]="24"></ds-icon></div>
               <img *ngIf="slide.image" [src]="slide.image" [alt]="slide.title || 'Slide image'" class="slide-image" />
               <h3 *ngIf="slide.title" class="slide-title">{{ slide.title }}</h3>
               <p *ngIf="slide.description" class="slide-description">{{ slide.description }}</p>
@@ -84,7 +85,7 @@ export interface CarouselSlide {
 
     .carousel-slide {
       min-width: 100%;
-      padding: 3rem 2rem;
+      padding: 1.5rem 1.25rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -97,7 +98,7 @@ export interface CarouselSlide {
 
     .slide-icon {
       font-size: 4rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 0.875rem;
       animation: float 3s ease-in-out infinite;
     }
 
@@ -106,12 +107,12 @@ export interface CarouselSlide {
       height: auto;
       max-height: 300px;
       border-radius: var(--ds-radius-lg);
-      margin-bottom: 1.5rem;
+      margin-bottom: 0.875rem;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
 
     .slide-title {
-      font-size: 1.75rem;
+      font-size: 1.1rem;
       font-weight: 700;
       margin: 0 0 1rem;
       background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
@@ -121,9 +122,9 @@ export interface CarouselSlide {
     }
 
     .slide-description {
-      font-size: 1.125rem;
+      font-size: 0.85rem;
       color: var(--ds-text-secondary);
-      margin: 0 0 1rem;
+      margin: 0 0 0.625rem;
       line-height: 1.6;
     }
 
@@ -137,14 +138,14 @@ export interface CarouselSlide {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      width: 48px;
-      height: 48px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       background: var(--ds-surface-glass-strong);
       backdrop-filter: blur(24px) saturate(180%);
       border: 1px solid var(--ds-border);
       color: var(--ds-text-primary);
-      font-size: 1.5rem;
+      font-size: 1.125rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -176,17 +177,17 @@ export interface CarouselSlide {
 
     .carousel-indicators {
       position: absolute;
-      bottom: 1.5rem;
+      bottom: 0.75rem;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 0.75rem;
+      gap: 0.5rem;
       z-index: 10;
     }
 
     .indicator {
-      width: 12px;
-      height: 12px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.3);
       border: 2px solid rgba(255, 255, 255, 0.5);
@@ -204,8 +205,8 @@ export interface CarouselSlide {
       background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
       border-color: var(--ds-accent-teal);
       box-shadow: 0 0 12px var(--ds-accent-teal);
-      width: 32px;
-      border-radius: 6px;
+      width: 20px;
+      border-radius: 4px;
     }
 
     @keyframes float {

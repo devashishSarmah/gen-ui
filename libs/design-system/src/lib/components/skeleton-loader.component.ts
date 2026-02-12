@@ -20,7 +20,7 @@ import { Component, Input } from '@angular/core';
       <ng-container *ngIf="type === 'card'">
         <div class="skeleton-card">
           <div class="skeleton-card-header">
-            <div class="skeleton-line" style="width: 40%; height: 1.5rem"></div>
+            <div class="skeleton-line" style="width: 40%; height: 1rem"></div>
           </div>
           <div class="skeleton-card-body">
             <div class="skeleton-line" style="width: 100%; margin-bottom: 0.5rem"></div>
@@ -35,9 +35,9 @@ import { Component, Input } from '@angular/core';
       </ng-container>
 
       <ng-container *ngIf="type === 'form'">
-        <div style="display: flex; flex-direction: column; gap: 1rem">
-          <div class="skeleton-line" style="height: 2.5rem; border-radius: 4px"></div>
-          <div class="skeleton-line" style="height: 2.5rem; border-radius: 4px"></div>
+        <div style="display: flex; flex-direction: column; gap: 0.625rem">
+          <div class="skeleton-line" style="height: 2rem; border-radius: 4px"></div>
+          <div class="skeleton-line" style="height: 2rem; border-radius: 4px"></div>
           <div class="skeleton-button"></div>
         </div>
       </ng-container>
@@ -62,12 +62,12 @@ import { Component, Input } from '@angular/core';
       }
 
       .skeleton-line {
-        height: 1rem;
+        height: 0.75rem;
         background: linear-gradient(
           90deg,
-          #e0e0e0 25%,
-          #f0f0f0 50%,
-          #e0e0e0 75%
+          rgba(255, 255, 255, 0.06) 25%,
+          rgba(255, 255, 255, 0.1) 50%,
+          rgba(255, 255, 255, 0.06) 75%
         );
         background-size: 200% 100%;
         animation: skeleton-shimmer 2s infinite;
@@ -76,13 +76,13 @@ import { Component, Input } from '@angular/core';
       }
 
       .skeleton-button {
-        height: 2.5rem;
+        height: 2rem;
         width: 100%;
         background: linear-gradient(
           90deg,
-          #e0e0e0 25%,
-          #f0f0f0 50%,
-          #e0e0e0 75%
+          rgba(255, 255, 255, 0.06) 25%,
+          rgba(255, 255, 255, 0.1) 50%,
+          rgba(255, 255, 255, 0.06) 75%
         );
         background-size: 200% 100%;
         animation: skeleton-shimmer 2s infinite;
@@ -90,25 +90,25 @@ import { Component, Input } from '@angular/core';
       }
 
       .skeleton-card {
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-lg);
         overflow: hidden;
-        background: white;
+        background: var(--ds-surface-glass);
       }
 
       .skeleton-card-header {
-        padding: 1rem;
-        border-bottom: 1px solid #e0e0e0;
-        background: #fafafa;
+        padding: 0.625rem;
+        border-bottom: 1px solid var(--ds-border);
+        background: rgba(255, 255, 255, 0.03);
       }
 
       .skeleton-card-body {
-        padding: 1rem;
+        padding: 0.625rem;
       }
 
       .skeleton-list-item {
-        padding: 1rem;
-        border-bottom: 1px solid #e0e0e0;
+        padding: 0.625rem;
+        border-bottom: 1px solid var(--ds-border);
 
         &:last-child {
           border-bottom: none;

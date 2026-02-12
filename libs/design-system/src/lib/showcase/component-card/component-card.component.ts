@@ -149,6 +149,9 @@ import { generateSampleProps, SAMPLE_OVERRIDES } from '../sample-data';
       background: var(--ds-surface-glass, rgba(255,255,255,0.04));
       border: 1px dashed var(--ds-border, rgba(255,255,255,0.08));
       min-height: 60px;
+      transform: translateZ(0);
+      overflow: hidden;
+      position: relative;
     }
 
     .card-props, .card-json {

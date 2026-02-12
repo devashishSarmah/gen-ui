@@ -94,12 +94,12 @@ export interface AccordionItem {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 1.25rem 1.5rem;
+        padding: 0.625rem 0.875rem;
         background: transparent;
         border: none;
         cursor: pointer;
         color: var(--ds-text-primary);
-        font-size: 1rem;
+        font-size: 0.825rem;
         font-weight: 600;
         text-align: left;
         transition: all 0.3s ease;
@@ -137,9 +137,9 @@ export interface AccordionItem {
       }
 
       .accordion-content {
-        padding: 0 1.5rem 1.5rem;
+        padding: 0 0.875rem 0.875rem;
         color: var(--ds-text-secondary);
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         line-height: 1.7;
         animation: accordionOpen 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }

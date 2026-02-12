@@ -14,7 +14,14 @@ export interface UISchema {
   props?: Record<string, any>;
   children?: UISchema[];
   events?: Record<string, any>;
+  /** Manifest version hash — set by the backend orchestrator */
+  manifestVersion?: string;
+  /** Renderer version — semantic version of the design-system */
+  rendererVersion?: string;
 }
+
+/** Current renderer version. Keep in sync with libs/design-system/package.json. */
+export const RENDERER_VERSION = '0.1.0';
 
 export interface RenderResult {
   component: ComponentRef<any> | null;
@@ -33,13 +40,18 @@ export class SchemaRendererService {
   ) {}
 
   /**
-   * Render a schema to a component
+   * Render a schema to a component.
+   * Logs a version-mismatch warning if the schema's rendererVersion differs
+   * from the current RENDERER_VERSION (non-blocking).
    */
   renderComponent(schema: UISchema, viewContainer?: ViewContainerRef): ComponentRef<any> | null {
     if (!schema || !schema.type) {
       console.error('Invalid schema: missing type', schema);
       return null;
     }
+
+    // Version compatibility check (warning-only, never blocks rendering)
+    this.checkVersionCompat(schema);
 
     const registered = this.componentRegistry.get(schema.type);
     if (!registered) {
@@ -111,6 +123,25 @@ export class SchemaRendererService {
         });
       }
     });
+  }
+
+  /**
+   * Non-blocking version compatibility check.
+   * Warns if the schema was generated for a different renderer version.
+   */
+  private versionWarned = false;
+  private checkVersionCompat(schema: UISchema): void {
+    if (this.versionWarned || !schema.rendererVersion) {
+      return;
+    }
+    if (schema.rendererVersion !== RENDERER_VERSION) {
+      console.warn(
+        `[GenUI] Schema rendererVersion "${schema.rendererVersion}" ` +
+        `differs from current RENDERER_VERSION "${RENDERER_VERSION}". ` +
+        `Some components may render unexpectedly.`
+      );
+      this.versionWarned = true; // warn once per session
+    }
   }
 
   /**

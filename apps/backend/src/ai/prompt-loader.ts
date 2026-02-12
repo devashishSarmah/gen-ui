@@ -32,8 +32,11 @@ Supported component types (type field):
 - error (props: title, message, details, dismissible, visible)
 
 Rules:
-- Root should be a layout component (container, flexbox, grid, card, or tabs).
+- Root MUST be a layout component (flexbox, grid, card, container, or tabs).
+- ALWAYS use flexbox with direction "column" and gap 12 as the root layout.
 - Use children for nesting; do not invent new component types.
+- Every layout container must specify a gap prop for spacing between children.
+- Icon props accept Lucide kebab-case names OR a single emoji character.
 - Provide accessibility via ariaLabel when applicable.
 - Keep JSON strictly valid (double quotes, no trailing commas).`;
 

@@ -37,6 +37,7 @@ export class ComponentRegistryService {
       card: { isContainer: true, contentHost: 'cardContent' },
       tabs: { isContainer: true, contentHost: 'tabsHost' },
       flexbox: { isContainer: true, contentHost: 'flexHost' },
+      'split-layout': { isContainer: true, contentHost: 'splitHost' },
       accordion: { isContainer: true, contentHost: 'accordionHost' },
       toolbar: { isContainer: true, contentHost: 'toolbarHost' },
     };

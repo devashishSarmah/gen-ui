@@ -79,7 +79,7 @@ export interface WizardStep {
     `
       .wizard-wrapper {
         width: 100%;
-        padding: 1.75rem;
+        padding: 1rem;
         background: var(--ds-surface-glass);
         border: 1px solid var(--ds-border);
         border-radius: var(--ds-radius-lg);
@@ -89,7 +89,7 @@ export interface WizardStep {
       .wizard-steps {
         display: flex;
         gap: 0;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
       }
 
       .wizard-step {
@@ -101,8 +101,8 @@ export interface WizardStep {
       }
 
       .step-circle {
-        width: 2.5rem;
-        height: 2.5rem;
+        width: 2rem;
+        height: 2rem;
         border-radius: 50%;
         background: rgba(255, 255, 255, 0.06);
         border: 1px solid var(--ds-border-strong);
@@ -161,7 +161,7 @@ export interface WizardStep {
 
       .step-connector {
         position: absolute;
-        top: 1.25rem;
+        top: 1rem;
         left: 50%;
         width: 100%;
         height: 2px;
@@ -174,8 +174,8 @@ export interface WizardStep {
       }
 
       .wizard-content {
-        padding: 2rem 0;
-        min-height: 200px;
+        padding: 1rem 0;
+        min-height: 100px;
       }
 
       .step-content {
@@ -208,7 +208,7 @@ export interface WizardStep {
         border: 1px solid var(--ds-border-strong);
         border-radius: 999px;
         cursor: pointer;
-        font-size: 0.95rem;
+        font-size: 0.85rem;
         transition: all 0.2s ease;
         color: var(--ds-text-primary);
       }
@@ -223,7 +223,7 @@ export interface WizardStep {
       }
 
       .step-counter {
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         color: var(--ds-text-secondary);
       }
     `,

@@ -4,9 +4,7 @@ import { AIProvider, AIGenerationContext, UISchemaChunk } from './providers/ai-p
 import { OpenAIProvider } from './providers/openai.provider';
 import { AnthropicProvider } from './providers/anthropic.provider';
 import { OpenRouterProvider } from './providers/openrouter.provider';
-import { SchemaValidationService } from './schema-validation.service';
 import { AgentOrchestratorService } from './agent-orchestrator.service';
-import { ValidatorAgentService } from './validator-agent.service';
 
 @Injectable()
 export class AIService {
@@ -18,15 +16,13 @@ export class AIService {
     private openaiProvider: OpenAIProvider,
     private anthropicProvider: AnthropicProvider,
     private openrouterProvider: OpenRouterProvider,
-    private schemaValidation: SchemaValidationService,
     private orchestrator: AgentOrchestratorService,
-    private validatorAgent: ValidatorAgentService
   ) {
     this.providers = new Map();
     this.providers.set('openai', this.openaiProvider);
     this.providers.set('anthropic', this.anthropicProvider);
     this.providers.set('openrouter', this.openrouterProvider);
-    
+
     this.defaultProvider = this.configService.get('DEFAULT_AI_PROVIDER') || 'openai';
   }
 
@@ -46,97 +42,31 @@ export class AIService {
   }
 
   /**
-   * Generate UI from user prompt
+   * Generate UI from user prompt.
+   * The orchestrator handles the full pipeline:
+   *   enrich → UX plan → provider generate → validate → repair
    */
   async *generateUI(
     context: AIGenerationContext,
-    providerName?: string
+    providerName?: string,
   ): AsyncIterableIterator<UISchemaChunk> {
-    const enrichedContext = await this.orchestrator.enrichContext(context);
     const provider = this.getProvider(providerName);
-
-    for await (const chunk of provider.generateUI(enrichedContext)) {
-      // Validate complete schemas
-      if (chunk.type === 'complete') {
-        const validation = this.schemaValidation.validate(chunk.data);
-
-        if (!validation.valid) {
-          const fixedSchema = await this.validatorAgent.fixSchema(
-            chunk.data,
-            enrichedContext
-          );
-
-          if (fixedSchema) {
-            const fixedValidation = this.schemaValidation.validate(fixedSchema);
-            if (fixedValidation.valid) {
-              yield {
-                type: 'complete',
-                data: fixedSchema,
-                done: true,
-              };
-              return;
-            }
-          }
-
-          yield {
-            type: 'error',
-            data: { error: 'Schema validation failed', details: validation.errors },
-            done: true,
-          };
-          return;
-        }
-      }
-
-      yield chunk;
-    }
+    yield* this.orchestrator.generateUI(context, provider);
   }
 
   /**
-   * Update UI based on interaction
+   * Update UI based on interaction.
+   * The orchestrator handles the full pipeline:
+   *   enrich → provider update → validate → repair
    */
   async *updateUI(
     currentSchema: any,
     interaction: any,
     context: AIGenerationContext,
-    providerName?: string
+    providerName?: string,
   ): AsyncIterableIterator<UISchemaChunk> {
-    const enrichedContext = await this.orchestrator.enrichContext(context);
     const provider = this.getProvider(providerName);
-
-    for await (const chunk of provider.updateUI(currentSchema, interaction, enrichedContext)) {
-      // Validate complete schemas
-      if (chunk.type === 'complete') {
-        const validation = this.schemaValidation.validate(chunk.data);
-
-        if (!validation.valid) {
-          const fixedSchema = await this.validatorAgent.fixSchema(
-            chunk.data,
-            enrichedContext
-          );
-
-          if (fixedSchema) {
-            const fixedValidation = this.schemaValidation.validate(fixedSchema);
-            if (fixedValidation.valid) {
-              yield {
-                type: 'complete',
-                data: fixedSchema,
-                done: true,
-              };
-              return;
-            }
-          }
-
-          yield {
-            type: 'error',
-            data: { error: 'Schema validation failed', details: validation.errors },
-            done: true,
-          };
-          return;
-        }
-      }
-
-      yield chunk;
-    }
+    yield* this.orchestrator.updateUI(currentSchema, interaction, context, provider);
   }
 
   private getProvider(providerName?: string): AIProvider {

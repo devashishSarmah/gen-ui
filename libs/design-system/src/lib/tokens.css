@@ -1,6 +1,7 @@
 @layer base {
   :root {
     --app-header-height: 60px;
+    --app-footer-height: 48px;
 
     /* ── Surfaces ── */
     --ds-bg: #0a0b0f;
@@ -90,6 +91,20 @@
     --ds-card-padding: var(--ds-space-9) var(--ds-space-8);  /* 2.5rem 2rem */
     --ds-card-radius: var(--ds-radius-2xl);                  /* 20px */
     --ds-card-bg: rgba(12, 14, 18, 0.55);
+
+    /* ── Density: compact (default for chat-embedded UI) ── */
+    --ds-density-gap: var(--ds-space-2);         /* 6px between items */
+    --ds-density-padding: var(--ds-space-3);     /* 9px inner padding */
+    --ds-density-font-size: var(--ds-text-sm);   /* 0.8rem */
+    --ds-density-line-height: 1.4;
+    --ds-density-radius: var(--ds-radius-sm);    /* 6px */
+    --ds-density-icon-size: 16px;
+
+    /* ── Density: comfortable (opt-in for full-page views) ── */
+    --ds-density-comfortable-gap: var(--ds-space-4);
+    --ds-density-comfortable-padding: var(--ds-space-5);
+    --ds-density-comfortable-font-size: var(--ds-text-base);
+    --ds-density-comfortable-line-height: 1.5;
   }
 
   body {

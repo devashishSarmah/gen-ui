@@ -1,6 +1,7 @@
 import { Component, Input, ChangeDetectionStrategy, model } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Listbox, Option } from '@angular/aria/listbox';
+import { DsIconComponent } from '../shared/ds-icon.component';
 
 export interface ListboxOption {
   value: string;
@@ -13,7 +14,7 @@ export interface ListboxOption {
 @Component({
   selector: 'app-listbox',
   standalone: true,
-  imports: [CommonModule, Listbox, Option],
+  imports: [CommonModule, Listbox, Option, DsIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="listbox-wrapper">
@@ -38,7 +39,7 @@ export interface ListboxOption {
           class="listbox-option"
         >
           <span *ngIf="option.icon" class="listbox-option-icon" aria-hidden="true">
-            {{ option.icon }}
+            <ds-icon [name]="option.icon" [size]="16"></ds-icon>
           </span>
           <div class="listbox-option-content">
             <span class="listbox-option-label">{{ option.label }}</span>
@@ -55,12 +56,12 @@ export interface ListboxOption {
       .listbox-wrapper {
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
+        gap: 0.5rem;
       }
 
       .listbox-label {
         font-weight: 600;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         color: var(--ds-text-primary);
         letter-spacing: 0.02em;
       }
@@ -79,15 +80,15 @@ export interface ListboxOption {
       }
 
       :host ::ng-deep [ngOption] {
-        padding: 1rem 1.25rem;
+        padding: 0.5rem 0.75rem;
         border-radius: var(--ds-radius-lg);
         cursor: pointer;
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.625rem;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         color: var(--ds-text-primary);
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         position: relative;
         margin-bottom: 0.25rem;
       }
@@ -153,9 +154,9 @@ export interface ListboxOption {
       }
 
       .listbox-option-icon {
-        font-size: 1.5rem;
-        min-width: 2rem;
-        height: 2rem;
+        font-size: 1rem;
+        min-width: 1.5rem;
+        height: 1.5rem;
         display: flex;
         align-items: center;
         justify-content: center;

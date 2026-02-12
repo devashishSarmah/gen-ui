@@ -22,7 +22,7 @@ import { ConversationListComponent } from './conversation-list.component';
     `
       .conversation-layout {
         display: flex;
-        height: calc(100vh - var(--app-header-height, 80px));
+        height: calc(100vh - var(--app-header-height, 80px) - var(--app-footer-height, 48px));
         width: 100%;
         overflow: hidden;
       }

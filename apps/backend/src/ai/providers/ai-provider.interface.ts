@@ -15,6 +15,8 @@ export interface AIGenerationContext {
     summary: string;
     sources: { url: string; title?: string }[];
   };
+  /** Structured UX plan from the UX Designer agent */
+  uxPlan?: string;
 }
 
 export interface UISchemaChunk {

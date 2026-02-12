@@ -19,6 +19,7 @@
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
     "docker:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
+    "generate:schema": "npx ts-node --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\"}\" libs/design-system/src/lib/manifest/build-manifest.ts",
     "db:migrate": "TS_NODE_PROJECT=tsconfig.typeorm.json typeorm-ts-node-commonjs migration:run -d apps/backend/src/data-source.ts",
     "db:migrate:generate": "TS_NODE_PROJECT=tsconfig.typeorm.json typeorm-ts-node-commonjs migration:generate -d apps/backend/src/data-source.ts",
     "db:migrate:revert": "TS_NODE_PROJECT=tsconfig.typeorm.json typeorm-ts-node-commonjs migration:revert -d apps/backend/src/data-source.ts",

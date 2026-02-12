@@ -7,7 +7,10 @@ import { OpenRouterProvider } from './providers/openrouter.provider';
 import { SchemaValidationService } from './schema-validation.service';
 import { AgentOrchestratorService } from './agent-orchestrator.service';
 import { WebSearchService } from './tools/web-search.service';
-import { ValidatorAgentService } from './validator-agent.service';
+import { ManifestLoaderService } from './manifest-loader.service';
+import { UXDesignerAgentService } from './agents/ux-designer-agent.service';
+import { ValidatorAgentService } from './agents/validator-agent.service';
+import { RepairAgentService } from './agents/repair-agent.service';
 
 @Module({
   imports: [ConfigModule],
@@ -19,8 +22,11 @@ import { ValidatorAgentService } from './validator-agent.service';
     SchemaValidationService,
     AgentOrchestratorService,
     WebSearchService,
+    ManifestLoaderService,
+    UXDesignerAgentService,
     ValidatorAgentService,
+    RepairAgentService,
   ],
-  exports: [AIService],
+  exports: [AIService, ManifestLoaderService],
 })
 export class AIModule {}

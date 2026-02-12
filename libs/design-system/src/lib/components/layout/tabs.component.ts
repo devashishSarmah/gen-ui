@@ -86,11 +86,11 @@ export interface TabItem {
 
       :host ::ng-deep [ngTab] {
         flex: 1;
-        padding: 1rem 1.5rem;
+        padding: 0.5rem 0.875rem;
         border: none;
         background: transparent;
         cursor: pointer;
-        font-size: 0.95rem;
+        font-size: 0.8rem;
         font-weight: 500;
         color: var(--ds-text-secondary);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -137,7 +137,7 @@ export interface TabItem {
       }
 
       .tab-pane {
-        padding: 1.5rem;
+        padding: 0.75rem;
         animation: fadeIn 0.3s ease;
       }
 

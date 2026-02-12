@@ -11,11 +11,11 @@ import { CommonModule } from '@angular/common';
         <h3 class="card-title">{{ title }}</h3>
         <!-- Optional header content can be placed here -->
       </div>
-      <div class="card-content" #cardContent>
-        <!-- Children will be rendered here by dynamic UI system -->
+      <div class="card-content">
+        <ng-container #cardContent></ng-container>
       </div>
-      <div *ngIf="footer" class="card-footer" #cardFooter>
-        <!-- Footer content will be rendered here -->
+      <div *ngIf="footer" class="card-footer">
+        <ng-container #cardFooter></ng-container>
       </div>
     </div>
   `,

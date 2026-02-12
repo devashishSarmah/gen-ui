@@ -40,14 +40,14 @@ import { CommonModule } from '@angular/common';
       }
       .textarea-label {
         font-weight: 500;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         color: var(--ds-text-secondary);
       }
       .textarea-field {
-        padding: 0.75rem 1.25rem;
+        padding: 0.55rem 0.875rem;
         border: 1px solid var(--ds-border);
-        border-radius: 18px;
-        font-size: 0.95rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
         font-family: inherit;
         resize: vertical;
         color: var(--ds-text-primary);

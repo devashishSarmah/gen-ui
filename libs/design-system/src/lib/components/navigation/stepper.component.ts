@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DsIconComponent } from '../shared/ds-icon.component';
 
 export interface Step {
   id: string;
@@ -12,7 +13,7 @@ export interface Step {
 @Component({
   selector: 'app-stepper',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DsIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="stepper" [class.vertical]="orientation === 'vertical'" [class.horizontal]="orientation === 'horizontal'">
@@ -28,11 +29,11 @@ export interface Step {
       >
         <div class="step-indicator">
           <div class="step-number">
-            <span *ngIf="step.icon && (step.status === 'active' || i === currentStep)">{{ step.icon }}</span>
-            <span *ngIf="step.status === 'completed' || i < currentStep">✓</span>
-            <span *ngIf="step.status === 'error'">✗</span>
+            <span *ngIf="step.icon && (step.status === 'active' || i === currentStep)"><ds-icon [name]="step.icon" [size]="16"></ds-icon></span>
+            <span *ngIf="step.status === 'completed' || i < currentStep"><ds-icon name="check" [size]="16"></ds-icon></span>
+            <span *ngIf="step.status === 'error'"><ds-icon name="x" [size]="16"></ds-icon></span>
             <span *ngIf="!step.icon && step.status !== 'completed' && step.status !== 'error' && i >= currentStep">{{ i + 1 }}</span>
-            <span *ngIf="step.icon && !step.status && i > currentStep">{{ step.icon }}</span>
+            <span *ngIf="step.icon && !step.status && i > currentStep"><ds-icon [name]="step.icon" [size]="16"></ds-icon></span>
           </div>
           <div class="step-connector" *ngIf="!last"></div>
         </div>
@@ -61,7 +62,7 @@ export interface Step {
 
     .step {
       display: flex;
-      gap: 1.25rem;
+      gap: 0.75rem;
       flex: 1;
       position: relative;
     }
@@ -76,7 +77,7 @@ export interface Step {
     }
 
     .stepper.vertical .step {
-      padding-bottom: 2rem;
+      padding-bottom: 1.25rem;
     }
 
     .stepper.horizontal .step {
@@ -99,16 +100,16 @@ export interface Step {
     }
 
     .step-number {
-      width: 52px;
-      height: 52px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.25rem;
+      font-size: 0.875rem;
       font-weight: 700;
       background: var(--ds-surface-glass);
-      border: 3px solid var(--ds-border);
+      border: 2px solid var(--ds-border);
       color: var(--ds-text-secondary);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 2;
@@ -143,15 +144,15 @@ export interface Step {
     }
 
     .stepper.vertical .step-connector {
-      width: 3px;
+      width: 2px;
       flex: 1;
-      min-height: 24px;
+      min-height: 20px;
       margin-top: 8px;
       margin-bottom: 8px;
     }
 
     .stepper.horizontal .step-connector {
-      height: 3px;
+      height: 2px;
       flex: 1;
       margin-left: 8px;
       margin-right: 8px;
@@ -173,7 +174,7 @@ export interface Step {
     }
 
     .step-title {
-      font-size: 1rem;
+      font-size: 0.825rem;
       font-weight: 700;
       color: var(--ds-text-secondary);
       margin-bottom: 0.375rem;
@@ -193,7 +194,7 @@ export interface Step {
     }
 
     .step-description {
-      font-size: 0.875rem;
+      font-size: 0.775rem;
       color: var(--ds-text-secondary);
       line-height: 1.5;
       opacity: 0.8;

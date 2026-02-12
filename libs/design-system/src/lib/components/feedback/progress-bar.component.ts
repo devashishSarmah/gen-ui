@@ -35,18 +35,18 @@ import { CommonModule } from '@angular/common';
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.625rem;
+      margin-bottom: 0.375rem;
     }
 
     .progress-label {
-      font-size: 0.875rem;
+      font-size: 0.8rem;
       font-weight: 600;
       color: var(--ds-text-primary);
       letter-spacing: 0.01em;
     }
 
     .progress-value {
-      font-size: 0.875rem;
+      font-size: 0.8rem;
       font-weight: 700;
       background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
       -webkit-background-clip: text;
@@ -55,7 +55,7 @@ import { CommonModule } from '@angular/common';
     }
 
     .progress-bar {
-      height: 12px;
+      height: 8px;
       background: rgba(255, 255, 255, 0.05);
       border-radius: var(--ds-radius-pill);
       overflow: hidden;

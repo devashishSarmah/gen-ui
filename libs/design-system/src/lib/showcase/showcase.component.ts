@@ -7,13 +7,14 @@ import {
 import { CommonModule } from '@angular/common';
 import { COMPONENT_LIBRARY, ComponentLibrary } from '../component-library';
 import { ComponentCardComponent } from './component-card/component-card.component';
+import { DsIconComponent } from '../components/shared/ds-icon.component';
 
 type Category = ComponentLibrary['category'] | 'all';
 
 @Component({
   selector: 'ds-showcase',
   standalone: true,
-  imports: [CommonModule, ComponentCardComponent],
+  imports: [CommonModule, ComponentCardComponent, DsIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="showcase-shell">
@@ -52,7 +53,7 @@ type Category = ComponentLibrary['category'] | 'all';
             [class.active]="activeCategory() === cat.key"
             (click)="setCategory(cat.key)"
           >
-            <span class="category-icon">{{ cat.icon }}</span>
+            <span class="category-icon"><ds-icon [name]="cat.icon" [size]="16"></ds-icon></span>
             <span class="category-label">{{ cat.label }}</span>
             <span class="category-count">{{ cat.count }}</span>
           </li>
@@ -80,7 +81,7 @@ type Category = ComponentLibrary['category'] | 'all';
         </div>
 
         <div *ngIf="filteredComponents().length === 0" class="empty-state">
-          <span class="empty-icon">🔍</span>
+          <span class="empty-icon"><ds-icon name="search" [size]="40"></ds-icon></span>
           <p>No components match your search.</p>
         </div>
       </main>
@@ -214,9 +215,10 @@ type Category = ComponentLibrary['category'] | 'all';
     }
 
     .category-icon {
-      font-size: 1rem;
-      width: 1.5rem;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.25rem;
     }
 
     .category-label {
@@ -279,9 +281,11 @@ type Category = ComponentLibrary['category'] | 'all';
     }
 
     .empty-icon {
-      font-size: 3rem;
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       margin-bottom: 1rem;
+      opacity: 0.5;
     }
   `],
 })
@@ -295,7 +299,7 @@ export class ShowcaseComponent {
   readonly activeCategory = signal<Category>('all');
 
   readonly categories: { key: Category; label: string; icon: string; count: number }[] = [
-    { key: 'all', label: 'All Components', icon: '📦', count: this.library.length },
+    { key: 'all', label: 'All Components', icon: 'layers', count: this.library.length },
     ...this.buildCategories(),
   ];
 
@@ -324,20 +328,20 @@ export class ShowcaseComponent {
 
   private buildCategories() {
     const iconMap: Record<string, string> = {
-      form: '📝',
-      layout: '📐',
-      'data-display': '📊',
-      navigation: '🧭',
-      typography: '🔤',
-      feedback: '💬',
-      error: '⚠️',
+      form: 'text-cursor-input',
+      layout: 'layout-grid',
+      'data-display': 'bar-chart-3',
+      navigation: 'compass',
+      typography: 'type',
+      feedback: 'message-circle',
+      error: 'alert-triangle',
     };
     const counts = new Map<string, number>();
     this.library.forEach(c => counts.set(c.category, (counts.get(c.category) ?? 0) + 1));
     return Array.from(counts.entries()).map(([key, count]) => ({
       key: key as Category,
       label: key.replace('-', ' '),
-      icon: iconMap[key] ?? '📦',
+      icon: iconMap[key] ?? 'layers',
       count,
     }));
   }

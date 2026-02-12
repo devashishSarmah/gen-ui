@@ -40,22 +40,22 @@ export interface MetricData {
       backdrop-filter: blur(32px) saturate(180%);
       border: 1px solid var(--ds-border);
       border-radius: var(--ds-radius-xl);
-      padding: 1.75rem;
+      padding: 1rem;
       box-shadow: var(--ds-shadow-medium);
     }
 
     .chart-title {
-      font-size: 1.25rem;
+      font-size: 0.9rem;
       font-weight: 700;
       color: var(--ds-text-primary);
-      margin: 0 0 1.5rem;
+      margin: 0 0 0.875rem;
       letter-spacing: 0.01em;
     }
 
     .chart-bars {
       display: flex;
       flex-direction: column;
-      gap: 1.25rem;
+      gap: 0.75rem;
     }
 
     .bar-item {
@@ -71,19 +71,19 @@ export interface MetricData {
     }
 
     .bar-label {
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       font-weight: 600;
       color: var(--ds-text-primary);
     }
 
     .bar-value {
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       font-weight: 700;
       color: var(--ds-accent-teal);
     }
 
     .bar-track {
-      height: 28px;
+      height: 16px;
       background: rgba(255, 255, 255, 0.05);
       border-radius: var(--ds-radius-lg);
       overflow: hidden;

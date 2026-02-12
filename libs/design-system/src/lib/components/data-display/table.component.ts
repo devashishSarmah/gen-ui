@@ -69,14 +69,16 @@ export interface TableColumn {
 
       th {
         background-color: rgba(255, 255, 255, 0.04);
-        padding: 1rem 1.25rem;
+        padding: 0.5rem 0.75rem;
         text-align: left;
         font-weight: 600;
+        font-size: 0.8rem;
         border-bottom: 1px solid var(--ds-border);
       }
 
       td {
-        padding: 1rem 1.25rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.825rem;
       }
 
       .sortable-indicator {

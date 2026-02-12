@@ -9,16 +9,15 @@ import { CommonModule } from '@angular/common';
     <div
       [class]="'container container-' + variant"
       [style.max-width.px]="maxWidth"
-      #containerHost
     >
-      <!-- Children will be rendered here by dynamic UI system -->
+      <ng-container #containerHost></ng-container>
     </div>
   `,
   styles: [
     `
       .container {
         width: 100%;
-        padding: 1.25rem;
+        padding: 0.75rem;
         box-sizing: border-box;
       }
 

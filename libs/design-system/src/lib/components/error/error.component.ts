@@ -2,11 +2,12 @@ import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, injec
 import { CommonModule } from '@angular/common';
 import { A11yModule, LiveAnnouncer } from '@angular/cdk/a11y';
 import { ButtonComponent } from '../form/button.component';
+import { DsIconComponent } from '../shared/ds-icon.component';
 
 @Component({
   selector: 'app-error',
   standalone: true,
-  imports: [CommonModule, ButtonComponent, A11yModule],
+  imports: [CommonModule, ButtonComponent, A11yModule, DsIconComponent],
   template: `
     <div class="error-container" *ngIf="visible">
       <div
@@ -18,7 +19,7 @@ import { ButtonComponent } from '../form/button.component';
         cdkTrapFocus
       >
         <div class="error-header">
-          <div class="error-icon">⚠️</div>
+          <div class="error-icon"><ds-icon name="alert-triangle" [size]="28"></ds-icon></div>
           <h3 class="error-title" [id]="titleId">{{ title }}</h3>
           <button
             *ngIf="dismissible"
@@ -93,25 +94,25 @@ import { ButtonComponent } from '../form/button.component';
         box-shadow: var(--ds-shadow-soft), var(--ds-shadow-glow);
         max-width: 600px;
         width: 90%;
-        padding: 2rem;
+        padding: 1.25rem;
       }
 
       .error-header {
         display: flex;
         align-items: flex-start;
-        gap: 1rem;
-        margin-bottom: 1rem;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
         position: relative;
       }
 
       .error-icon {
-        font-size: 2rem;
+        font-size: 1.5rem;
         flex-shrink: 0;
       }
 
       .error-title {
         margin: 0;
-        font-size: 1.25rem;
+        font-size: 1rem;
         font-weight: 600;
         color: #ff7485;
       }
@@ -133,7 +134,7 @@ import { ButtonComponent } from '../form/button.component';
       }
 
       .error-message {
-        margin: 1rem 0;
+        margin: 0.75rem 0;
         color: var(--ds-text-primary);
         line-height: 1.5;
       }
@@ -165,7 +166,7 @@ import { ButtonComponent } from '../form/button.component';
       .error-actions {
         display: flex;
         gap: 0.5rem;
-        margin-top: 1.5rem;
+        margin-top: 1rem;
         flex-wrap: wrap;
       }
 

@@ -33,7 +33,7 @@ export class DynamicUIService {
    */
   loadSchema(schema: UISchema): void {
     try {
-      const normalizedSchema = this.normalizeSchema(schema);
+      const normalizedSchema = this.ensureLayoutSpacing(this.normalizeSchema(schema));
       // Validate schema first
       const validation = this.schemaRenderer.validateSchema(normalizedSchema);
       if (!validation.valid) {
@@ -126,10 +126,21 @@ export class DynamicUIService {
   }
 
   normalizeExternalSchema(schema: UISchema): UISchema {
-    return this.normalizeSchema(schema);
+    return this.ensureLayoutSpacing(this.normalizeSchema(schema));
   }
 
   private normalizeSchema(schema: UISchema): UISchema {
+    // Unwrap the { ui: {...}, mode, manifestVersion, rendererVersion } envelope
+    // that some models return (as instructed by the Output Contract in the prompt).
+    const raw = schema as any;
+    if (raw.ui && typeof raw.ui === 'object' && raw.ui.type) {
+      const unwrapped = raw.ui as UISchema;
+      // Preserve version metadata on the root node so checkVersionCompat still works
+      if (raw.manifestVersion) unwrapped.manifestVersion = raw.manifestVersion;
+      if (raw.rendererVersion) unwrapped.rendererVersion = raw.rendererVersion;
+      return this.normalizeSchema(unwrapped);
+    }
+
     const maybeAiSchema = schema as unknown as {
       schemaVersion?: string;
       components?: any[];
@@ -141,6 +152,37 @@ export class DynamicUIService {
     }
 
     return schema;
+  }
+
+  /**
+   * Recursively ensure layout components have a sensible gap so children
+   * never render jammed together even if the AI omits the gap prop.
+   */
+  private ensureLayoutSpacing(schema: UISchema): UISchema {
+    const LAYOUT_TYPES = new Set(['flexbox', 'grid', 'container', 'card', 'split-layout']);
+    const DEFAULT_GAP = 12; // px
+
+    if (!schema) return schema;
+
+    const result = { ...schema };
+
+    if (LAYOUT_TYPES.has(result.type)) {
+      result.props = { ...result.props };
+      // Inject default gap when missing or zero
+      if (
+        (result.type === 'flexbox' || result.type === 'grid') &&
+        (!result.props['gap'] || result.props['gap'] === 0)
+      ) {
+        result.props['gap'] = DEFAULT_GAP;
+      }
+    }
+
+    // Recurse into children
+    if (result.children?.length) {
+      result.children = result.children.map((child) => this.ensureLayoutSpacing(child));
+    }
+
+    return result;
   }
 
   private adaptAiSchema(aiSchema: {
@@ -162,14 +204,15 @@ export class DynamicUIService {
     if (normalized === 'flexbox' || normalized === 'grid' || normalized === 'card') {
       return normalized;
     }
-    return 'container';
+    // Default to flexbox (column) instead of bare container for better spacing
+    return 'flexbox';
   }
 
   private mapLayoutProps(layout: any, rootType: string): Record<string, any> {
     if (rootType === 'flexbox') {
       return {
-        direction: layout.direction,
-        gap: layout.gap,
+        direction: layout.direction || 'column',
+        gap: layout.gap ?? 12,
         padding: layout.padding,
         alignItems: layout.alignItems,
         justifyContent: layout.justifyContent,
@@ -192,6 +235,16 @@ export class DynamicUIService {
     return {
       maxWidth: layout.maxWidth || 1200,
       variant: layout.variant || 'default',
+    };
+  }
+
+  /**
+   * Default fallback when an unknown layout type maps to 'flexbox'
+   */
+  private defaultFlexProps(): Record<string, any> {
+    return {
+      direction: 'column',
+      gap: 12,
     };
   }
 

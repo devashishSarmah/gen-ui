@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DsIconComponent } from '../shared/ds-icon.component';
 
 export interface ListItem {
   id: string;
@@ -12,12 +13,12 @@ export interface ListItem {
 @Component({
   selector: 'app-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DsIconComponent],
   template: `
     <ul class="list" [class.list-styled]="styled">
       <li *ngFor="let item of items" class="list-item" [class.list-item-clickable]="item.action">
         <div class="list-item-content">
-          <span *ngIf="item.icon" class="list-item-icon">{{ item.icon }}</span>
+          <span *ngIf="item.icon" class="list-item-icon"><ds-icon [name]="item.icon" [size]="16"></ds-icon></span>
           <div class="list-item-text">
             <div class="list-item-label">{{ item.label }}</div>
             <div *ngIf="item.description" class="list-item-description">
@@ -56,7 +57,7 @@ export interface ListItem {
       }
 
       .list-item {
-        padding: 1.25rem 1.5rem;
+        padding: 0.625rem 0.875rem;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         display: flex;
         justify-content: space-between;
@@ -102,14 +103,14 @@ export interface ListItem {
       .list-item-content {
         display: flex;
         align-items: center;
-        gap: 1.25rem;
+        gap: 0.625rem;
         flex: 1;
       }
 
       .list-item-icon {
-        font-size: 1.75rem;
-        min-width: 2.5rem;
-        height: 2.5rem;
+        font-size: 1rem;
+        min-width: 1.75rem;
+        height: 1.75rem;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -132,9 +133,9 @@ export interface ListItem {
 
       .list-item-label {
         font-weight: 600;
-        margin-bottom: 0.375rem;
+        margin-bottom: 0.25rem;
         color: var(--ds-text-primary);
-        font-size: 1rem;
+        font-size: 0.825rem;
         letter-spacing: 0.01em;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
@@ -184,10 +185,10 @@ export interface ListItem {
       }
 
       .list-empty {
-        padding: 3rem;
+        padding: 1.5rem;
         text-align: center;
         color: var(--ds-text-secondary);
-        font-size: 1.1rem;
+        font-size: 0.85rem;
         font-weight: 500;
         background: linear-gradient(135deg, rgba(0, 255, 245, 0.03), rgba(91, 74, 255, 0.03));
         border-radius: var(--ds-radius-lg);

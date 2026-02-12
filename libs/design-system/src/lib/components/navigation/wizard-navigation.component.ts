@@ -40,9 +40,9 @@ import { WizardFlowService } from '../../services/wizard-flow.service';
       .wizard-navigation {
         display: flex;
         align-items: center;
-        padding: 1rem;
-        border-top: 1px solid #e0e0e0;
-        background: white;
+        padding: 0.625rem;
+        border-top: 1px solid var(--ds-border);
+        background: var(--ds-surface-glass);
       }
 
       .spacer {
@@ -50,9 +50,9 @@ import { WizardFlowService } from '../../services/wizard-flow.service';
       }
 
       button {
-        padding: 0.75rem 1.5rem;
-        border-radius: 4px;
-        font-size: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: var(--ds-radius-md);
+        font-size: 0.85rem;
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s;
@@ -65,31 +65,31 @@ import { WizardFlowService } from '../../services/wizard-flow.service';
 
       .btn-back {
         background: transparent;
-        border: 1px solid #e0e0e0;
-        color: #666;
+        border: 1px solid var(--ds-border);
+        color: var(--ds-text-secondary);
 
         &:hover:not(:disabled) {
-          background: #f5f5f5;
+          background: rgba(255, 255, 255, 0.06);
         }
       }
 
       .btn-next {
-        background: #1976d2;
+        background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
         border: none;
-        color: white;
+        color: #0a0b0f;
 
         &:hover:not(:disabled) {
-          background: #1565c0;
+          opacity: 0.9;
         }
       }
 
       .btn-finish {
-        background: #4caf50;
+        background: linear-gradient(135deg, #10b981, #059669);
         border: none;
-        color: white;
+        color: #0a0b0f;
 
         &:hover:not(:disabled) {
-          background: #43a047;
+          opacity: 0.9;
         }
       }
     `,

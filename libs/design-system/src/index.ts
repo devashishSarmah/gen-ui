@@ -13,6 +13,7 @@ export type { DesignTokens, ColorScale, SpacingScale } from './lib/tokens';
 
 // ─── Component Exports ──────────────────────────────────────────────────────
 export * from './lib/components';
+export * from './lib/component-metadata';
 export * from './lib/component-library';
 export * from './lib/services/wizard-flow.service';
 

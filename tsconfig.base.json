@@ -47,6 +47,7 @@
       "@gen-ui/design-system/card": ["libs/design-system/src/lib/components/layout/card.component.ts"],
       "@gen-ui/design-system/flexbox": ["libs/design-system/src/lib/components/layout/flexbox.component.ts"],
       "@gen-ui/design-system/grid": ["libs/design-system/src/lib/components/layout/grid.component.ts"],
+      "@gen-ui/design-system/split-layout": ["libs/design-system/src/lib/components/layout/split-layout.component.ts"],
       "@gen-ui/design-system/tabs": ["libs/design-system/src/lib/components/layout/tabs.component.ts"],
       "@gen-ui/design-system/accordion": ["libs/design-system/src/lib/components/layout/accordion.component.ts"],
       "@gen-ui/design-system/container": ["libs/design-system/src/lib/components/layout/container.component.ts"],

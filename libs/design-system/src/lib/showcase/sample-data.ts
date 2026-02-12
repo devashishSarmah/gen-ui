@@ -54,7 +54,7 @@ function inferStringValue(key: string, _schema: any): string {
   if (keyLower.includes('text') || keyLower.includes('message')) return 'Sample text content';
   if (keyLower.includes('description')) return 'A brief description of this item';
   if (keyLower.includes('placeholder')) return 'Enter value...';
-  if (keyLower.includes('icon')) return '✨';
+  if (keyLower.includes('icon')) return 'sparkles';
   if (keyLower.includes('id')) return 'sample-1';
   if (keyLower.includes('value')) return 'sample';
   if (keyLower.includes('arialabel') || keyLower.includes('aria')) return 'Accessible label';
@@ -94,9 +94,9 @@ function inferArrayValue(key: string, schema: any): any[] {
 
   if (keyLower.includes('item')) {
     return [
-      { id: '1', label: 'First item', description: 'Description for first item', icon: '📌' },
-      { id: '2', label: 'Second item', description: 'Description for second item', icon: '📎' },
-      { id: '3', label: 'Third item', description: 'Description for third item', icon: '📍' },
+      { id: '1', label: 'First item', description: 'Description for first item', icon: 'map-pin' },
+      { id: '2', label: 'Second item', description: 'Description for second item', icon: 'link' },
+      { id: '3', label: 'Third item', description: 'Description for third item', icon: 'bookmark' },
     ];
   }
 
@@ -109,9 +109,9 @@ function inferArrayValue(key: string, schema: any): any[] {
 
   if (keyLower.includes('step')) {
     return [
-      { id: '1', title: 'Step 1', description: 'First step', icon: '1️⃣', status: 'completed' },
-      { id: '2', title: 'Step 2', description: 'Second step', icon: '2️⃣', status: 'active' },
-      { id: '3', title: 'Step 3', description: 'Third step', icon: '3️⃣', status: 'pending' },
+      { id: '1', title: 'Step 1', description: 'First step', icon: 'check-circle', status: 'completed' },
+      { id: '2', title: 'Step 2', description: 'Second step', icon: 'loader', status: 'active' },
+      { id: '3', title: 'Step 3', description: 'Third step', icon: 'clock', status: 'pending' },
     ];
   }
 
@@ -126,17 +126,17 @@ function inferArrayValue(key: string, schema: any): any[] {
 
   if (keyLower.includes('slide')) {
     return [
-      { id: '1', title: 'Slide 1', description: 'First slide', icon: '🌟' },
-      { id: '2', title: 'Slide 2', description: 'Second slide', icon: '🌈' },
-      { id: '3', title: 'Slide 3', description: 'Third slide', icon: '🎯' },
+      { id: '1', title: 'Slide 1', description: 'First slide', icon: 'star' },
+      { id: '2', title: 'Slide 2', description: 'Second slide', icon: 'palette' },
+      { id: '3', title: 'Slide 3', description: 'Third slide', icon: 'target' },
     ];
   }
 
   if (keyLower.includes('node')) {
     return [
-      { id: '1', label: 'Start', icon: '▶️', type: 'start' },
-      { id: '2', label: 'Process', icon: '⚙️', type: 'process' },
-      { id: '3', label: 'End', icon: '🏁', type: 'end' },
+      { id: '1', label: 'Start', icon: 'play', type: 'start' },
+      { id: '2', label: 'Process', icon: 'settings', type: 'process' },
+      { id: '3', label: 'End', icon: 'flag', type: 'end' },
     ];
   }
 
@@ -182,15 +182,15 @@ export const SAMPLE_OVERRIDES: Record<string, Record<string, any>> = {
     label: 'Active Users',
     value: '8,234',
     change: 12.5,
-    icon: '👥',
+    icon: 'users',
     description: 'Compared to last month',
     elevated: true,
   },
   'flow-diagram': {
     nodes: [
-      { id: '1', label: 'Request', icon: '📨', description: 'Client request', type: 'start' },
-      { id: '2', label: 'Authenticate', icon: '🔐', description: 'Verify token', type: 'decision' },
-      { id: '3', label: 'Response', icon: '✅', description: 'Send data', type: 'end' },
+      { id: '1', label: 'Request', icon: 'send', description: 'Client request', type: 'start' },
+      { id: '2', label: 'Authenticate', icon: 'lock', description: 'Verify token', type: 'decision' },
+      { id: '3', label: 'Response', icon: 'check-circle', description: 'Send data', type: 'end' },
     ],
     connections: [
       { from: '1', to: '2', label: 'HTTP' },
@@ -210,12 +210,12 @@ export const SAMPLE_OVERRIDES: Record<string, Record<string, any>> = {
   alert: {
     title: 'Success!',
     message: 'Operation completed.',
-    icon: '✅',
+    icon: 'check-circle',
     variant: 'success',
     visible: true,
     dismissible: true,
   },
-  badge: { text: 'NEW', icon: '✨', variant: 'primary', pill: true, size: 'medium' },
-  'progress-ring': { value: 72, label: 'Complete', icon: '✓', size: 120 },
+  badge: { text: 'NEW', icon: 'sparkles', variant: 'primary', pill: true, size: 'medium' },
+  'progress-ring': { value: 72, label: 'Complete', icon: 'check', size: 120 },
   'progress-bar': { value: 65, label: 'Uploading...', variant: 'primary', striped: true, animated: true, showValue: true },
 };

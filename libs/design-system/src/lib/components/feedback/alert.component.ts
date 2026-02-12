@@ -1,10 +1,11 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DsIconComponent } from '../shared/ds-icon.component';
 
 @Component({
   selector: 'app-alert',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DsIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div 
@@ -16,7 +17,7 @@ import { CommonModule } from '@angular/common';
       [class.info]="variant === 'info'"
       role="alert"
     >
-      <div class="alert-icon" *ngIf="icon">{{ icon }}</div>
+      <div class="alert-icon" *ngIf="icon"><ds-icon [name]="icon" [size]="20"></ds-icon></div>
       <div class="alert-content">
         <div class="alert-title" *ngIf="title">{{ title }}</div>
         <div class="alert-message">{{ message }}</div>
@@ -35,8 +36,8 @@ import { CommonModule } from '@angular/common';
     .alert {
       display: flex;
       align-items: flex-start;
-      gap: 1rem;
-      padding: 1.25rem;
+      gap: 0.625rem;
+      padding: 0.75rem;
       border-radius: var(--ds-radius-lg);
       backdrop-filter: blur(24px) saturate(180%);
       border: 1px solid;
@@ -69,7 +70,7 @@ import { CommonModule } from '@angular/common';
     }
 
     .alert-icon {
-      font-size: 1.5rem;
+      font-size: 1rem;
       flex-shrink: 0;
       margin-top: 0.125rem;
     }
@@ -79,21 +80,21 @@ import { CommonModule } from '@angular/common';
     }
 
     .alert-title {
-      font-size: 1rem;
+      font-size: 0.825rem;
       font-weight: 700;
-      margin-bottom: 0.375rem;
+      margin-bottom: 0.25rem;
       letter-spacing: 0.01em;
     }
 
     .alert-message {
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       font-weight: 600;
-      margin-bottom: 0.375rem;
+      margin-bottom: 0.25rem;
       opacity: 0.95;
     }
 
     .alert-description {
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       opacity: 0.85;
       line-height: 1.5;
     }
@@ -102,7 +103,7 @@ import { CommonModule } from '@angular/common';
       background: none;
       border: none;
       color: currentColor;
-      font-size: 1.75rem;
+      font-size: 1.25rem;
       line-height: 1;
       cursor: pointer;
       padding: 0;

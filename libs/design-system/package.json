@@ -157,6 +157,11 @@
       "import": "./src/lib/components/layout/grid.component.ts",
       "default": "./src/lib/components/layout/grid.component.ts"
     },
+    "./split-layout": {
+      "types": "./src/lib/components/layout/split-layout.component.ts",
+      "import": "./src/lib/components/layout/split-layout.component.ts",
+      "default": "./src/lib/components/layout/split-layout.component.ts"
+    },
     "./tabs": {
       "types": "./src/lib/components/layout/tabs.component.ts",
       "import": "./src/lib/components/layout/tabs.component.ts",

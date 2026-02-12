@@ -14,9 +14,8 @@ import { CommonModule } from '@angular/common';
       [style.flex-wrap]="wrap"
       [style.gap]="normalizeSpacing(gap)"
       [style.padding]="normalizeSpacing(padding)"
-      #flexHost
     >
-      <!-- Children will be rendered here by dynamic UI system -->
+      <ng-container #flexHost></ng-container>
     </div>
   `,
   styles: [
@@ -45,7 +44,7 @@ export class FlexboxComponent {
     | 'space-around'
     | 'space-evenly' = 'flex-start';
   @Input() wrap: 'nowrap' | 'wrap' | 'wrap-reverse' = 'nowrap';
-  @Input() gap: string | number = 0;
+  @Input() gap: string | number = 12;
   @Input() padding: string | number = 0;
   @Input() contentTemplate: any;
 

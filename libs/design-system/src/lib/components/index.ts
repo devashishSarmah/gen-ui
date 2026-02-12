@@ -13,6 +13,7 @@ export { CardComponent } from './layout/card.component';
 export { TabsComponent, type TabItem } from './layout/tabs.component';
 export { AccordionComponent, type AccordionItem } from './layout/accordion.component';
 export { FlexboxComponent } from './layout/flexbox.component';
+export { SplitLayoutComponent } from './layout/split-layout.component';
 
 // Data Display Components
 export { TableComponent, type TableColumn } from './data-display/table.component';
@@ -47,6 +48,9 @@ export { DividerComponent } from './typography/divider.component';
 // Utility Components
 export { SkeletonLoaderComponent } from './skeleton-loader.component';
 export { ErrorComponent } from './error/error.component';
+
+// Shared Components
+export { DsIconComponent } from './shared/ds-icon.component';
 
 // Component Library & Registry
 export {

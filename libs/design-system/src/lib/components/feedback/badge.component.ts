@@ -1,10 +1,11 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DsIconComponent } from '../shared/ds-icon.component';
 
 @Component({
   selector: 'app-badge',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DsIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <span 
@@ -20,7 +21,7 @@ import { CommonModule } from '@angular/common';
       [class.large]="size === 'large'"
       [class.pill]="pill"
     >
-      <span class="badge-icon" *ngIf="icon">{{ icon }}</span>
+      <span class="badge-icon" *ngIf="icon"><ds-icon [name]="icon" [size]="14"></ds-icon></span>
       <span class="badge-text">{{ text }}</span>
       <button 
         *ngIf="dismissible" 

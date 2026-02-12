@@ -1,5 +1,6 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DsIconComponent } from '../shared/ds-icon.component';
 
 export interface TimelineItem {
   id: string;
@@ -14,7 +15,7 @@ export interface TimelineItem {
 @Component({
   selector: 'app-timeline',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DsIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="timeline" [class.vertical]="orientation === 'vertical'" [class.horizontal]="orientation === 'horizontal'">
@@ -27,7 +28,7 @@ export interface TimelineItem {
         [class.error]="item.status === 'error'"
       >
         <div class="timeline-marker">
-          <div class="timeline-icon" *ngIf="item.icon">{{ item.icon }}</div>
+          <div class="timeline-icon" *ngIf="item.icon"><ds-icon [name]="item.icon" [size]="16"></ds-icon></div>
           <div class="timeline-dot" *ngIf="!item.icon"></div>
         </div>
         <div class="timeline-connector" *ngIf="!last"></div>
@@ -55,22 +56,22 @@ export interface TimelineItem {
       align-items: flex-start;
       gap: 0;
       overflow-x: auto;
-      padding: 2rem 0;
+      padding: 1rem 0;
     }
 
     .timeline-item {
       position: relative;
       display: flex;
-      gap: 1.5rem;
-      padding-bottom: 2.5rem;
+      gap: 0.875rem;
+      padding-bottom: 1.5rem;
     }
 
     .timeline.horizontal .timeline-item {
       flex-direction: column;
       align-items: center;
       padding-bottom: 0;
-      padding-right: 3rem;
-      min-width: 200px;
+      padding-right: 2rem;
+      min-width: 160px;
     }
 
     .timeline-marker {
@@ -82,24 +83,24 @@ export interface TimelineItem {
     }
 
     .timeline-icon {
-      width: 48px;
-      height: 48px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
+      font-size: 1rem;
       background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
       box-shadow: 0 8px 24px rgba(0, 255, 245, 0.3), 0 0 0 4px rgba(0, 255, 245, 0.1);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .timeline-dot {
-      width: 16px;
-      height: 16px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
       background: var(--ds-surface-glass);
-      border: 3px solid var(--ds-border);
+      border: 2px solid var(--ds-border);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -148,16 +149,16 @@ export interface TimelineItem {
     }
 
     .timeline.vertical .timeline-connector {
-      left: 23px;
-      top: 48px;
-      bottom: -2.5rem;
+      left: 15px;
+      top: 32px;
+      bottom: -1.5rem;
       width: 2px;
     }
 
     .timeline.horizontal .timeline-connector {
-      top: 23px;
-      left: 48px;
-      right: -3rem;
+      top: 15px;
+      left: 32px;
+      right: -2rem;
       height: 2px;
     }
 
@@ -172,14 +173,14 @@ export interface TimelineItem {
       backdrop-filter: blur(24px) saturate(180%);
       border: 1px solid var(--ds-border);
       border-radius: var(--ds-radius-lg);
-      padding: 1.25rem;
+      padding: 0.75rem;
       box-shadow: var(--ds-shadow-soft);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .timeline.horizontal .timeline-content {
-      margin-top: 1.5rem;
-      min-height: 120px;
+      margin-top: 1rem;
+      min-height: 80px;
     }
 
     .timeline-item.active .timeline-content {
@@ -193,16 +194,16 @@ export interface TimelineItem {
     }
 
     .timeline-title {
-      margin: 0 0 0.5rem;
-      font-size: 1rem;
+      margin: 0 0 0.25rem;
+      font-size: 0.825rem;
       font-weight: 700;
       color: var(--ds-text-primary);
       letter-spacing: 0.01em;
     }
 
     .timeline-description {
-      margin: 0 0 0.75rem;
-      font-size: 0.875rem;
+      margin: 0 0 0.5rem;
+      font-size: 0.775rem;
       color: var(--ds-text-secondary);
       line-height: 1.6;
     }

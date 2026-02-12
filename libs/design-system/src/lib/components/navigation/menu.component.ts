@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Menu, MenuItem, MenuTrigger } from '@angular/aria/menu';
+import { DsIconComponent } from '../shared/ds-icon.component';
 
 export interface MenuAction {
   value: string;
@@ -20,7 +21,7 @@ export interface MenuAction {
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [CommonModule, Menu, MenuItem, MenuTrigger],
+  imports: [CommonModule, Menu, MenuItem, MenuTrigger, DsIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- Trigger button -->
@@ -67,7 +68,7 @@ export interface MenuAction {
           (click)="onItemClick(action)"
           class="menu-item"
         >
-          <span *ngIf="action.icon" class="menu-item-icon" aria-hidden="true">{{ action.icon }}</span>
+          <span *ngIf="action.icon" class="menu-item-icon" aria-hidden="true"><ds-icon [name]="action.icon" [size]="16"></ds-icon></span>
           <span class="menu-item-label">{{ action.label }}</span>
         </button>
       </ng-container>

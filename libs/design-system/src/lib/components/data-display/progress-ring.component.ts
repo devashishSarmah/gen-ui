@@ -1,10 +1,11 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DsIconComponent } from '../shared/ds-icon.component';
 
 @Component({
   selector: 'app-progress-ring',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DsIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="progress-ring" [style.width.px]="size" [style.height.px]="size">
@@ -44,7 +45,7 @@ import { CommonModule } from '@angular/common';
       </svg>
       
       <div class="progress-content">
-        <div class="progress-icon" *ngIf="icon">{{ icon }}</div>
+        <div class="progress-icon" *ngIf="icon"><ds-icon [name]="icon" [size]="20"></ds-icon></div>
         <div class="progress-value" *ngIf="showValue">{{ value }}%</div>
         <div class="progress-label" *ngIf="label">{{ label }}</div>
       </div>
@@ -78,12 +79,11 @@ import { CommonModule } from '@angular/common';
     }
 
     .progress-icon {
-      font-size: 2rem;
-      animation: float 3s ease-in-out infinite;
+      font-size: 1.25rem;
     }
 
     .progress-value {
-      font-size: 1.75rem;
+      font-size: 1.1rem;
       font-weight: 700;
       background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
       -webkit-background-clip: text;

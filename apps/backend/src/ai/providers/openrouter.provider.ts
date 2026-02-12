@@ -7,7 +7,7 @@ import {
   AIGenerationContext,
   UISchemaChunk,
 } from './ai-provider.interface';
-import { PromptLoader } from '../prompt-loader';
+import { ManifestLoaderService } from '../manifest-loader.service';
 
 @Injectable()
 export class OpenRouterProvider extends AIProvider {
@@ -23,7 +23,10 @@ export class OpenRouterProvider extends AIProvider {
   private client: OpenAI;
   private model: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private manifestLoader: ManifestLoaderService,
+  ) {
     super();
     const apiKey = this.configService.get('OPENROUTER_API_KEY');
     this.client = new OpenAI({
@@ -141,7 +144,7 @@ export class OpenRouterProvider extends AIProvider {
   }
 
   private buildSystemPrompt(): string {
-    return PromptLoader.getSystemPrompt();
+    return this.manifestLoader.getSystemPrompt();
   }
 
   private buildUserPrompt(context: AIGenerationContext): string {
@@ -156,6 +159,10 @@ export class OpenRouterProvider extends AIProvider {
         .map((source) => `- ${source.title ? source.title + ' ' : ''}(${source.url})`)
         .join('\n');
       prompt += `Web search summary:\n${context.searchResults.summary}\n\nSources:\n${sources}\n\n`;
+    }
+
+    if (context.uxPlan) {
+      prompt += `UX Design plan to follow:\n${context.uxPlan}\n\n`;
     }
 
     prompt += 'Generate a UI schema to fulfill this request.';

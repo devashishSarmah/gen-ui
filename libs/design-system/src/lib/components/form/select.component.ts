@@ -40,19 +40,19 @@ export interface SelectOption {
       .select-wrapper {
         display: flex;
         flex-direction: column;
-        gap: 0.625rem;
+        gap: 0.4rem;
       }
       .select-label {
         font-weight: 600;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         letter-spacing: 0.02em;
         color: var(--ds-text-secondary);
       }
       .select-field {
-        padding: 0.875rem 1.5rem;
+        padding: 0.55rem 1rem;
         border: 1px solid var(--ds-border);
         border-radius: var(--ds-radius-pill);
-        font-size: 0.95rem;
+        font-size: 0.85rem;
         color: var(--ds-text-primary);
         background: var(--ds-surface-glass);
         backdrop-filter: blur(20px) saturate(180%);

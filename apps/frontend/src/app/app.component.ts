@@ -291,6 +291,7 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
       -webkit-backdrop-filter: blur(40px) saturate(200%);
       border-top: 1px solid rgba(255, 255, 255, 0.06);
       padding: 0.6rem 1.25rem;
+      height: var(--app-footer-height, 48px);
     }
 
     .footer-inner {

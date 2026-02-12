@@ -43,8 +43,8 @@ export interface ChartDataPoint {
       }
 
       .chart-title {
-        margin: 0 0 1rem 0;
-        font-size: 1.125rem;
+        margin: 0 0 0.5rem 0;
+        font-size: 0.9rem;
         font-weight: 600;
         color: var(--ds-text-primary);
       }
@@ -56,7 +56,7 @@ export interface ChartDataPoint {
         background: var(--ds-surface-glass);
         border: 1px solid var(--ds-border);
         border-radius: var(--ds-radius-lg);
-        padding: 1.25rem;
+        padding: 0.75rem;
         box-shadow: var(--ds-shadow-soft);
       }
 

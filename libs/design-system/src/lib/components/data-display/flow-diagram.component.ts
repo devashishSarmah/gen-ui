@@ -1,5 +1,6 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DsIconComponent } from '../shared/ds-icon.component';
 
 export interface FlowNode {
   id: string;
@@ -18,7 +19,7 @@ export interface FlowConnection {
 @Component({
   selector: 'app-flow-diagram',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DsIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flow-diagram">
@@ -31,7 +32,7 @@ export interface FlowConnection {
             [class.process]="node.type === 'process' || !node.type"
             [class.decision]="node.type === 'decision'"
           >
-            <div class="node-icon" *ngIf="node.icon">{{ node.icon }}</div>
+            <div class="node-icon" *ngIf="node.icon"><ds-icon [name]="node.icon" [size]="18"></ds-icon></div>
             <div class="node-content">
               <div class="node-label">{{ node.label }}</div>
               <div class="node-description" *ngIf="node.description">{{ node.description }}</div>
@@ -52,7 +53,7 @@ export interface FlowConnection {
     .flow-diagram {
       width: 100%;
       overflow-x: auto;
-      padding: 2rem;
+      padding: 1rem;
     }
 
     .flow-container {
@@ -76,10 +77,10 @@ export interface FlowConnection {
       background: var(--ds-surface-glass);
       backdrop-filter: blur(32px) saturate(180%);
       border: 2px solid var(--ds-border);
-      padding: 1.5rem;
+      padding: 0.875rem;
       display: flex;
       align-items: center;
-      gap: 1.25rem;
+      gap: 0.75rem;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       box-shadow: var(--ds-shadow-medium);
@@ -127,15 +128,15 @@ export interface FlowConnection {
     }
 
     .node-icon {
-      width: 56px;
-      height: 56px;
+      width: 36px;
+      height: 36px;
       border-radius: var(--ds-radius-lg);
       background: linear-gradient(135deg, rgba(0, 255, 245, 0.2), rgba(91, 74, 255, 0.2));
       border: 1px solid var(--ds-border-glow);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2rem;
+      font-size: 1.25rem;
       flex-shrink: 0;
       box-shadow: 0 8px 24px rgba(0, 255, 245, 0.2);
       position: relative;
@@ -149,7 +150,7 @@ export interface FlowConnection {
     }
 
     .node-label {
-      font-size: 1.125rem;
+      font-size: 0.85rem;
       font-weight: 700;
       color: var(--ds-text-primary);
       margin-bottom: 0.375rem;
@@ -157,7 +158,7 @@ export interface FlowConnection {
     }
 
     .node-description {
-      font-size: 0.875rem;
+      font-size: 0.775rem;
       color: var(--ds-text-secondary);
       line-height: 1.5;
       opacity: 0.9;
@@ -168,19 +169,19 @@ export interface FlowConnection {
       flex-direction: column;
       align-items: center;
       position: relative;
-      margin: 1rem 0;
+      margin: 0.625rem 0;
     }
 
     .arrow-line {
       width: 3px;
-      height: 40px;
+      height: 24px;
       background: linear-gradient(180deg, var(--ds-accent-teal), var(--ds-accent-indigo));
       box-shadow: 0 0 12px rgba(0, 255, 245, 0.4);
       border-radius: 2px;
     }
 
     .arrow-head {
-      font-size: 1.5rem;
+      font-size: 1.125rem;
       color: var(--ds-accent-teal);
       text-shadow: 0 0 12px currentColor;
       margin-top: -8px;
