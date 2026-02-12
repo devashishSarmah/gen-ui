@@ -5,6 +5,7 @@ import { LocalAuthGuard } from './local-auth.guard';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { OAuthCallbackDto } from './dto/oauth-callback.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -19,6 +20,16 @@ export class AuthController {
   @Post('login')
   async login(@Request() req: ExpressRequest & { user: any }) {
     return this.authService.login(req.user);
+  }
+
+  @Post('github/callback')
+  async githubCallback(@Body() dto: OAuthCallbackDto) {
+    return this.authService.githubCallback(dto.code);
+  }
+
+  @Post('google/callback')
+  async googleCallback(@Body() dto: OAuthCallbackDto) {
+    return this.authService.googleCallback(dto.code);
   }
 
   @UseGuards(JwtAuthGuard)

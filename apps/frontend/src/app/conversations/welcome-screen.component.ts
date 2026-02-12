@@ -3,9 +3,21 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ConversationApiService } from '../core/services/conversation-api.service';
 import { ConversationStore } from '../core/stores/conversation.store';
+import {
+  LucideAngularModule,
+  ClipboardList,
+  BarChart3,
+  Compass,
+  FileText,
+  Zap,
+  RefreshCw,
+  Wand2,
+  Plus,
+  type LucideIconData,
+} from 'lucide-angular';
 
 export interface ExamplePrompt {
-  icon: string;
+  icon: LucideIconData;
   title: string;
   description: string;
   prompt: string;
@@ -14,7 +26,7 @@ export interface ExamplePrompt {
 @Component({
   selector: 'app-welcome-screen',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LucideAngularModule],
   template: `
     <div class="welcome-container">
       <div class="welcome-content">
@@ -27,14 +39,16 @@ export interface ExamplePrompt {
         </div>
 
         <div class="example-prompts">
-          <h2>Try asking me to...</h2>
+          <h2>Try asking me to…</h2>
           <div class="prompts-grid">
             <button
               *ngFor="let example of examplePrompts"
               class="prompt-card"
               (click)="selectPrompt(example)"
             >
-              <span class="prompt-icon">{{ example.icon }}</span>
+              <span class="prompt-icon">
+                <lucide-icon [img]="example.icon" [size]="18"></lucide-icon>
+              </span>
               <div class="prompt-text">
                 <strong>{{ example.title }}</strong>
                 <p>{{ example.description }}</p>
@@ -45,27 +59,34 @@ export interface ExamplePrompt {
 
         <div class="get-started">
           <button class="btn-primary" (click)="startNewConversation()">
+            <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
             Start a New Conversation
           </button>
         </div>
 
         <div class="features">
           <div class="feature">
-            <span class="feature-icon">⚡</span>
+            <span class="feature-icon">
+              <lucide-icon [img]="Zap" [size]="14"></lucide-icon>
+            </span>
             <div class="feature-text">
               <strong>Fast Generation</strong>
               <p>UI updates in under 300ms</p>
             </div>
           </div>
           <div class="feature">
-            <span class="feature-icon">🔄</span>
+            <span class="feature-icon">
+              <lucide-icon [img]="RefreshCw" [size]="14"></lucide-icon>
+            </span>
             <div class="feature-text">
               <strong>Real-time Streaming</strong>
               <p>Watch your UI build progressively</p>
             </div>
           </div>
           <div class="feature">
-            <span class="feature-icon">🧙</span>
+            <span class="feature-icon">
+              <lucide-icon [img]="Wand2" [size]="14"></lucide-icon>
+            </span>
             <div class="feature-text">
               <strong>Multi-step Wizards</strong>
               <p>Complex flows made simple</p>
@@ -150,8 +171,15 @@ export interface ExamplePrompt {
       }
 
       .prompt-icon {
-        font-size: 1.25rem;
         flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(0, 255, 245, 0.08);
+        color: var(--ds-accent-teal);
       }
 
       .prompt-text {
@@ -179,20 +207,23 @@ export interface ExamplePrompt {
       }
 
       .btn-primary {
-        padding: 0.65rem 1.5rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.55rem 1.25rem;
         background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
         color: #0a0b0f;
         border: none;
-        border-radius: var(--ds-radius-pill);
-        font-size: 0.95rem;
-        font-weight: 700;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 6px 20px rgba(0, 255, 245, 0.25);
+        transition: all 0.25s ease;
+        box-shadow: 0 4px 20px rgba(0, 255, 245, 0.2);
 
         &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 28px rgba(0, 255, 245, 0.35), 0 0 32px rgba(91, 74, 255, 0.2);
+          transform: translateY(-1px);
+          box-shadow: 0 8px 28px rgba(0, 255, 245, 0.3);
         }
       }
 
@@ -210,7 +241,10 @@ export interface ExamplePrompt {
       }
 
       .feature-icon {
-        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        color: var(--ds-accent-teal);
+        opacity: 0.7;
       }
 
       .feature-text {
@@ -237,27 +271,32 @@ export class WelcomeScreenComponent {
   private conversationApi = inject(ConversationApiService);
   private conversationStore = inject(ConversationStore);
 
+  readonly Plus = Plus;
+  readonly Zap = Zap;
+  readonly RefreshCw = RefreshCw;
+  readonly Wand2 = Wand2;
+
   examplePrompts: ExamplePrompt[] = [
     {
-      icon: '📋',
+      icon: ClipboardList,
       title: 'Create a Form',
       description: 'Build a contact form with validation',
       prompt: 'Create a contact form with name, email, and message fields with validation',
     },
     {
-      icon: '📊',
+      icon: BarChart3,
       title: 'Build a Dashboard',
       description: 'Generate charts and data tables',
       prompt: 'Create a sales dashboard with a bar chart and a data table showing monthly revenue',
     },
     {
-      icon: '🧭',
+      icon: Compass,
       title: 'Design a Wizard',
       description: 'Multi-step onboarding flow',
       prompt: 'Create a 3-step user onboarding wizard with personal info, preferences, and confirmation',
     },
     {
-      icon: '📝',
+      icon: FileText,
       title: 'Survey Builder',
       description: 'Interactive questionnaire',
       prompt: 'Build a customer satisfaction survey with multiple choice and rating questions',

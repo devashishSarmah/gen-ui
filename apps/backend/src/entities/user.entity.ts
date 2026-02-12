@@ -16,8 +16,25 @@ export class User {
   @Index()
   email!: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   passwordHash!: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  name?: string;
+
+  @Column({ type: 'varchar', length: 512, nullable: true })
+  avatarUrl?: string;
+
+  @Column({ type: 'varchar', length: 50, default: 'local' })
+  provider!: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
+  @Index()
+  githubId?: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
+  @Index()
+  googleId?: string;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt!: Date;

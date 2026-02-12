@@ -10,3 +10,11 @@ export { DS_COLORS, DS_SPACING, DS_RADII, DS_TYPOGRAPHY, DS_SHADOWS } from './li
 
 // ─── Design Token Types ──────────────────────────────────────────────────────
 export type { DesignTokens, ColorScale, SpacingScale } from './lib/tokens';
+
+// ─── Component Exports ──────────────────────────────────────────────────────
+export * from './lib/components';
+export * from './lib/component-library';
+export * from './lib/services/wizard-flow.service';
+
+// ─── Showcase / Documentation ────────────────────────────────────────────────
+export * from './lib/showcase';

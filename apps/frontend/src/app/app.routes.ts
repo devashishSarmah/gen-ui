@@ -25,6 +25,22 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    path: 'auth/github/callback',
+    loadComponent: () =>
+      import('./auth/oauth-callback.component').then(
+        (m) => m.OAuthCallbackComponent
+      ),
+    data: { provider: 'github' },
+  },
+  {
+    path: 'auth/google/callback',
+    loadComponent: () =>
+      import('./auth/oauth-callback.component').then(
+        (m) => m.OAuthCallbackComponent
+      ),
+    data: { provider: 'google' },
+  },
+  {
     path: 'conversations',
     canActivate: [authGuard],
     component: ConversationLayoutComponent,
@@ -51,6 +67,13 @@ export const appRoutes: Route[] = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./home/home.component').then((m) => m.HomeComponent),
+  },
+  {
+    path: 'showcase',
+    loadComponent: () =>
+      import('@gen-ui/design-system/showcase').then(
+        (m) => m.ShowcaseComponent
+      ),
   },
   {
     path: '**',

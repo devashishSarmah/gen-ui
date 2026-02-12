@@ -1,5 +1,5 @@
 import { Injectable, Type } from '@angular/core';
-import { COMPONENT_LIBRARY } from '../../shared/components/component-library';
+import { COMPONENT_LIBRARY } from '@gen-ui/design-system/component-library';
 
 export interface ComponentCapability {
   name: string;

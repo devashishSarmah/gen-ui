@@ -1,6 +1,6 @@
 import { Component, inject, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { WizardFlowService } from '../../../core/services/wizard-flow.service';
+import { WizardFlowService } from '../../services/wizard-flow.service';
 
 @Component({
   selector: 'app-wizard-navigation',

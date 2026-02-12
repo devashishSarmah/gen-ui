@@ -3,6 +3,9 @@
 export interface UserDto {
   id: string;
   email: string;
+  name?: string;
+  avatarUrl?: string;
+  provider?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -49,6 +52,22 @@ export interface AiProviderConfigDto {
   config: any;
   isActive: boolean;
   createdAt: Date;
+}
+
+export interface AnalyticsEventDto {
+  eventName: string;
+  category: 'auth' | 'conversation' | 'navigation' | 'engagement';
+  properties?: Record<string, any>;
+  sessionId?: string;
+  pageUrl?: string;
+}
+
+export interface AnalyticsStatsDto {
+  totalEvents: number;
+  uniqueUsers: number;
+  eventsByCategory: Record<string, number>;
+  eventsByName: { eventName: string; count: number }[];
+  dailyActivity: { date: string; count: number }[];
 }
 
 export interface RegisterDto {

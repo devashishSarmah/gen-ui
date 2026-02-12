@@ -6,18 +6,28 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ConversationStore, Conversation } from '../core/stores/conversation.store';
 import { ConversationApiService } from '../core/services/conversation-api.service';
-import { SkeletonLoaderComponent } from '../shared/components/skeleton-loader.component';
+import { SkeletonLoaderComponent } from '@gen-ui/design-system/skeleton-loader';
+import {
+  LucideAngularModule,
+  Search,
+  Plus,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  MessageSquare,
+} from 'lucide-angular';
 
 @Component({
   selector: 'app-conversation-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, SkeletonLoaderComponent],
+  imports: [CommonModule, FormsModule, RouterModule, SkeletonLoaderComponent, LucideAngularModule],
   template: `
     <div class="conversation-list-container">
       <div class="header">
         <h2>Conversations</h2>
         <button (click)="createNewConversation()" class="btn-new">
-          + New
+          <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+          New
         </button>
       </div>
 
@@ -29,7 +39,9 @@ import { SkeletonLoaderComponent } from '../shared/components/skeleton-loader.co
           placeholder="Search conversations..."
           class="search-input"
         />
-        <span class="search-icon">🔍</span>
+        <span class="search-icon">
+          <lucide-icon [img]="Search" [size]="13"></lucide-icon>
+        </span>
       </div>
 
       <div class="conversations">
@@ -55,11 +67,11 @@ import { SkeletonLoaderComponent } from '../shared/components/skeleton-loader.co
                   (click)="openMenu($event, conv)"
                   [attr.aria-label]="'Actions for ' + conv.title"
                 >
-                  ⋮
+                  <lucide-icon [img]="MoreVertical" [size]="14"></lucide-icon>
                 </button>
                 <div class="dropdown-menu" *ngIf="activeMenuId() === conv.id">
-                  <button (click)="startRename(conv)">Rename</button>
-                  <button (click)="confirmDelete(conv)" class="danger">Delete</button>
+                  <button (click)="startRename(conv)"><lucide-icon [img]="Pencil" [size]="13"></lucide-icon> Rename</button>
+                  <button (click)="confirmDelete(conv)" class="danger"><lucide-icon [img]="Trash2" [size]="13"></lucide-icon> Delete</button>
                 </div>
               </div>
             </div>
@@ -73,8 +85,10 @@ import { SkeletonLoaderComponent } from '../shared/components/skeleton-loader.co
 
           <ng-container *ngIf="conversationStore.conversations().length === 0 && !searchQuery">
             <div class="empty-state">
+              <lucide-icon [img]="MessageSquare" [size]="28" style="opacity:0.3;margin-bottom:0.5rem"></lucide-icon>
               <p>No conversations yet</p>
               <button (click)="createNewConversation()" class="btn-primary">
+                <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
                 Start a new conversation
               </button>
             </div>
@@ -155,6 +169,9 @@ import { SkeletonLoaderComponent } from '../shared/components/skeleton-loader.co
       }
 
       .btn-new {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
         padding: 0.4rem 0.85rem;
         background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
         color: #0a0b0f;
@@ -232,8 +249,10 @@ import { SkeletonLoaderComponent } from '../shared/components/skeleton-loader.co
         left: 1.4rem;
         top: 50%;
         transform: translateY(-50%);
-        font-size: 0.75rem;
-        opacity: 0.7;
+        display: flex;
+        align-items: center;
+        color: var(--ds-text-secondary);
+        opacity: 0.5;
       }
 
       .conversations {
@@ -343,7 +362,9 @@ import { SkeletonLoaderComponent } from '../shared/components/skeleton-loader.co
         animation: dropdownFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
         button {
-          display: block;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
           width: 100%;
           padding: 0.75rem 1rem;
           border: none;
@@ -574,6 +595,13 @@ import { SkeletonLoaderComponent } from '../shared/components/skeleton-loader.co
 export class ConversationListComponent implements OnInit, OnDestroy {
   conversationStore = inject(ConversationStore);
   private conversationApi = inject(ConversationApiService);
+
+  readonly Search = Search;
+  readonly Plus = Plus;
+  readonly MoreVertical = MoreVertical;
+  readonly Pencil = Pencil;
+  readonly Trash2 = Trash2;
+  readonly MessageSquare = MessageSquare;
   private router = inject(Router);
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();

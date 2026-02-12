@@ -11,6 +11,19 @@
     <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png" />
     <link rel="manifest" href="favicon/site.webmanifest" />
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      // Replace GA_MEASUREMENT_ID with your actual measurement ID or
+      // configure dynamically in environment.ts
+      if (window.location.hostname !== 'localhost') {
+        gtag('config', 'GA_MEASUREMENT_ID');
+      }
+    </script>
   </head>
   <body>
     <app-root></app-root>

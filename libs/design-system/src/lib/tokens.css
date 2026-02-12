@@ -2,6 +2,7 @@
   :root {
     --app-header-height: 60px;
 
+    /* ── Surfaces ── */
     --ds-bg: #0a0b0f;
     --ds-surface: #101219;
     --ds-surface-elevated: #151824;
@@ -13,29 +14,82 @@
     --ds-border-strong: rgba(255, 255, 255, 0.22);
     --ds-border-glow: rgba(8, 255, 243, 0.3);
 
+    /* ── Accents ── */
     --ds-accent-teal: #00fff5;
     --ds-accent-indigo: #5b4aff;
     --ds-accent-violet: #8c5dff;
     --ds-accent-lime: #c4ff9f;
     --ds-accent-pink: #ff4d9f;
+    --ds-error: #ff7485;
+    --ds-success: #2eff8b;
 
+    /* ── Glow ── */
     --ds-glow-teal: rgba(0, 255, 245, 0.4);
     --ds-glow-indigo: rgba(91, 74, 255, 0.4);
     --ds-glow-violet: rgba(140, 93, 255, 0.35);
 
+    /* ── Spacing scale ── */
+    --ds-space-0: 0;
+    --ds-space-1: 0.25rem;   /* 4px */
+    --ds-space-2: 0.4rem;    /* ~6px */
+    --ds-space-3: 0.55rem;   /* ~9px – compact input/button padding */
+    --ds-space-4: 0.75rem;   /* 12px */
+    --ds-space-5: 1rem;      /* 16px */
+    --ds-space-6: 1.25rem;   /* 20px */
+    --ds-space-7: 1.5rem;    /* 24px */
+    --ds-space-8: 2rem;      /* 32px */
+    --ds-space-9: 2.5rem;    /* 40px */
+    --ds-space-10: 3rem;     /* 48px */
+
+    /* ── Radius ── */
     --ds-radius-sm: 6px;
     --ds-radius-md: 10px;
     --ds-radius-lg: 14px;
     --ds-radius-xl: 18px;
+    --ds-radius-2xl: 20px;
     --ds-radius-pill: 999px;
 
+    /* ── Shadows ── */
     --ds-shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.4);
     --ds-shadow-medium: 0 12px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
     --ds-shadow-glow: 0 0 40px var(--ds-glow-teal), 0 0 60px var(--ds-glow-indigo);
     --ds-shadow-glow-sm: 0 0 20px var(--ds-glow-teal), 0 0 30px var(--ds-glow-indigo);
+    --ds-shadow-input: 0 2px 8px rgba(0, 0, 0, 0.15);
+    --ds-shadow-card: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
-    --ds-font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-    --ds-font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    /* ── Typography ── */
+    --ds-font-display: 'Geist', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --ds-font-body: 'Geist', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --ds-font-mono: 'Geist Mono', 'SF Mono', 'Fira Code', monospace;
+
+    --ds-text-xs: 0.7rem;
+    --ds-text-sm: 0.8rem;
+    --ds-text-base: 0.875rem;
+    --ds-text-lg: 1rem;
+    --ds-text-xl: 1.25rem;
+    --ds-text-2xl: 1.5rem;
+    --ds-text-3xl: 2rem;
+
+    /* ── Compact component sizes (matching auth pages) ── */
+    --ds-input-padding-y: var(--ds-space-3);           /* 0.55rem */
+    --ds-input-padding-x: var(--ds-space-5);           /* 1rem */
+    --ds-input-padding-left-icon: 2.5rem;
+    --ds-input-radius: 12px;
+    --ds-input-font-size: var(--ds-text-base);         /* 0.875rem */
+    --ds-input-bg: rgba(255, 255, 255, 0.04);
+    --ds-input-border: rgba(255, 255, 255, 0.08);
+    --ds-input-border-hover: rgba(255, 255, 255, 0.14);
+    --ds-input-border-focus: rgba(0, 255, 245, 0.35);
+    --ds-input-focus-ring: 0 0 0 3px rgba(0, 255, 245, 0.08), 0 4px 16px rgba(0, 0, 0, 0.2);
+
+    --ds-btn-padding-y: var(--ds-space-3);
+    --ds-btn-padding-x: var(--ds-space-5);
+    --ds-btn-radius: 12px;
+    --ds-btn-font-size: var(--ds-text-base);
+
+    --ds-card-padding: var(--ds-space-9) var(--ds-space-8);  /* 2.5rem 2rem */
+    --ds-card-radius: var(--ds-radius-2xl);                  /* 20px */
+    --ds-card-bg: rgba(12, 14, 18, 0.55);
   }
 
   body {

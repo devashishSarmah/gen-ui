@@ -9,12 +9,14 @@ import {
   AuthResponseDto,
   UserDto,
 } from '@gen-ui/shared';
+import { AnalyticsService } from '../core/services/analytics.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private http = inject(HttpClient);
+  private readonly analytics = inject(AnalyticsService);
   private readonly apiUrl = environment.apiUrl;
   
   // Signal-based state management (Angular 21)
@@ -42,11 +44,13 @@ export class AuthService {
         localStorage.setItem('access_token', response.access_token);
         this.isAuthenticatedSignal.set(true);
         this.loadProfile();
+        this.analytics.trackLogin('email');
       })
     );
   }
 
   logout(): void {
+    this.analytics.trackLogout();
     localStorage.removeItem('access_token');
     this.isAuthenticatedSignal.set(false);
     this.currentUser.set(null);

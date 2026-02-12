@@ -4,3 +4,4 @@ export { Message, MessageRole } from './message.entity';
 export { InteractionEvent } from './interaction-event.entity';
 export { StateSnapshot } from './state-snapshot.entity';
 export { AiProviderConfig } from './ai-provider-config.entity';
+export { AnalyticsEvent } from './analytics-event.entity';

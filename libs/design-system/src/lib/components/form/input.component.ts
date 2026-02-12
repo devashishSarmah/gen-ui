@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
         [id]="id"
         [type]="type"
         [(ngModel)]="value"
-        (change)="onChange()"
+        (ngModelChange)="onChange()"
         (blur)="onBlur()"
         [placeholder]="placeholder"
         [disabled]="disabled"
@@ -33,37 +33,37 @@ import { CommonModule } from '@angular/common';
       .input-wrapper {
         display: flex;
         flex-direction: column;
-        gap: 0.625rem;
+        gap: var(--ds-space-2, 0.4rem);
       }
       .input-label {
-        font-weight: 600;
-        font-size: 0.875rem;
-        letter-spacing: 0.02em;
+        font-weight: 500;
+        font-size: var(--ds-text-sm, 0.8rem);
+        letter-spacing: 0.01em;
         color: var(--ds-text-secondary);
       }
       .input-field {
-        padding: 0.875rem 1.5rem;
-        border: 1px solid var(--ds-border);
-        border-radius: var(--ds-radius-pill);
-        font-size: 0.95rem;
+        padding: var(--ds-input-padding-y, 0.55rem) var(--ds-input-padding-x, 1rem);
+        border: 1px solid var(--ds-input-border, rgba(255, 255, 255, 0.08));
+        border-radius: var(--ds-input-radius, 12px);
+        font-size: var(--ds-input-font-size, 0.875rem);
         color: var(--ds-text-primary);
-        background: var(--ds-surface-glass);
-        backdrop-filter: blur(20px) saturate(180%);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.06);
+        background: var(--ds-input-bg, rgba(255, 255, 255, 0.04));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        transition: all 0.25s ease;
+        box-shadow: var(--ds-shadow-input, 0 2px 8px rgba(0, 0, 0, 0.15));
       }
       .input-field::placeholder {
         color: var(--ds-text-secondary);
-        opacity: 0.6;
+        opacity: 0.5;
       }
       .input-field:hover:not(:disabled) {
-        border-color: var(--ds-border-strong);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        border-color: var(--ds-input-border-hover, rgba(255, 255, 255, 0.14));
       }
       .input-field:focus {
         outline: none;
-        border-color: var(--ds-border-glow);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(0, 255, 245, 0.2), 0 0 32px rgba(0, 255, 245, 0.15);
+        border-color: var(--ds-input-border-focus, rgba(0, 255, 245, 0.35));
+        box-shadow: var(--ds-input-focus-ring, 0 0 0 3px rgba(0, 255, 245, 0.08), 0 4px 16px rgba(0, 0, 0, 0.2));
       }
       .input-field:disabled {
         background-color: rgba(255, 255, 255, 0.03);
@@ -71,9 +71,10 @@ import { CommonModule } from '@angular/common';
         opacity: 0.6;
       }
       .input-error {
-        color: #ff7485;
-        font-size: 0.75rem;
+        color: var(--ds-error, #ff7485);
+        font-size: var(--ds-text-xs, 0.7rem);
         font-weight: 500;
+        margin-top: 0.15rem;
       }
     `,
   ],

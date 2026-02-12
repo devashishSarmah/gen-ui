@@ -10,6 +10,7 @@ import {
   InteractionEvent,
   StateSnapshot,
   AiProviderConfig,
+  AnalyticsEvent,
 } from '../entities';
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
@@ -20,6 +21,7 @@ import { AIModule } from '../ai/ai.module';
 import { GatewayModule } from '../gateway/gateway.module';
 import { AdminModule } from '../admin/admin.module';
 import { SchedulerModule } from '../scheduler/scheduler.module';
+import { AnalyticsModule } from '../analytics/analytics.module';
 import { CommonModule } from '../common/common.module';
 import { GlobalExceptionFilter } from '../common/filters/global-exception.filter';
 import { AppController } from './app.controller';
@@ -50,6 +52,7 @@ import { AppService } from './app.service';
             InteractionEvent,
             StateSnapshot,
             AiProviderConfig,
+            AnalyticsEvent,
           ],
           migrations: isProduction ? ['dist/apps/backend/migrations/*.js'] : [],
           migrationsRun: isProduction,
@@ -65,6 +68,7 @@ import { AppService } from './app.service';
       InteractionEvent,
       StateSnapshot,
       AiProviderConfig,
+      AnalyticsEvent,
     ]),
     BullModule.forRootAsync({
       imports: [ConfigModule],
@@ -87,6 +91,7 @@ import { AppService } from './app.service';
     GatewayModule,
     AdminModule,
     SchedulerModule,
+    AnalyticsModule,
     CommonModule,
   ],
   controllers: [AppController],

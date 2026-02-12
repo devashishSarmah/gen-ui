@@ -9,14 +9,21 @@ import { ConversationStore, Message } from '../core/stores/conversation.store';
 import { UIStateStore } from '../core/stores/ui.store';
 import { WebSocketService } from '../core/services/websocket.service';
 import { ConversationApiService } from '../core/services/conversation-api.service';
-import { SkeletonLoaderComponent } from '../shared/components/skeleton-loader.component';
+import { SkeletonLoaderComponent } from '@gen-ui/design-system/skeleton-loader';
 import { UiSchemaRendererComponent } from '../shared/components/ui-schema-renderer/ui-schema-renderer.component';
 import { DynamicUIService } from '../core/services/dynamic-ui.service';
+import {
+  LucideAngularModule,
+  Bot,
+  AlertCircle,
+  SendHorizontal,
+  Loader2,
+} from 'lucide-angular';
 
 @Component({
   selector: 'app-conversation-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, SkeletonLoaderComponent, UiSchemaRendererComponent],
+  imports: [CommonModule, FormsModule, SkeletonLoaderComponent, UiSchemaRendererComponent, LucideAngularModule],
   template: `
     <div class="conversation-container">
       <div class="messages-area">
@@ -72,7 +79,8 @@ import { DynamicUIService } from '../core/services/dynamic-ui.service';
             <div class="message assistant streaming">
               <div class="message-content">
                 <div class="streaming-header">
-                  🤖 Generating UI...
+                  <lucide-icon [img]="Bot" [size]="14"></lucide-icon>
+                  Generating UI…
                   <span class="progress">
                     {{ uiStateStore.completionPercentage() }}%
                   </span>
@@ -89,7 +97,8 @@ import { DynamicUIService } from '../core/services/dynamic-ui.service';
           <ng-container *ngIf="uiStateStore.error()">
             <div class="message error">
               <div class="message-content">
-                ❌ {{ uiStateStore.error() }}
+                <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
+                {{ uiStateStore.error() }}
               </div>
             </div>
           </ng-container>
@@ -130,7 +139,7 @@ import { DynamicUIService } from '../core/services/dynamic-ui.service';
             "
             class="send-btn"
           >
-            Send
+            <lucide-icon [img]="SendHorizontal" [size]="16"></lucide-icon>
           </button>
         </form>
       </div>
@@ -228,8 +237,8 @@ import { DynamicUIService } from '../core/services/dynamic-ui.service';
 
       .streaming-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        gap: 0.35rem;
         margin-bottom: 0.5rem;
         font-weight: 600;
         font-size: 0.8rem;
@@ -373,7 +382,10 @@ import { DynamicUIService } from '../core/services/dynamic-ui.service';
       }
 
       .send-btn {
-        padding: 0.6rem 1.25rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.6rem 1rem;
         background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
         color: #0a0b0f;
         border: none;
@@ -453,6 +465,12 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
   conversationStore = inject(ConversationStore);
   uiStateStore = inject(UIStateStore);
   webSocketService = inject(WebSocketService);
+
+  readonly Bot = Bot;
+  readonly AlertCircle = AlertCircle;
+  readonly SendHorizontal = SendHorizontal;
+  readonly Loader2 = Loader2;
+
   private conversationApi = inject(ConversationApiService);
   private dynamicUIService = inject(DynamicUIService);
   private route = inject(ActivatedRoute);
