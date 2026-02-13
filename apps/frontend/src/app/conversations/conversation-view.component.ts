@@ -21,6 +21,10 @@ import {
   Loader2,
   Sparkles,
   RefreshCw,
+  Braces,
+  Cpu,
+  Layers,
+  CheckCircle,
 } from 'lucide-angular';
 
 @Component({
@@ -102,19 +106,66 @@ import {
             <app-skeleton-loader type="paragraph"></app-skeleton-loader>
           </ng-container>
 
-          <!-- Streaming UI Schema Skeleton -->
+          <!-- Streaming UI Builder -->
           <ng-container *ngIf="uiStateStore.isStreaming()">
-            <div class="message assistant streaming">
+            <div class="message assistant streaming-card">
               <div class="message-content">
-                <div class="streaming-header">
-                  <lucide-icon [img]="Bot" [size]="14"></lucide-icon>
-                  Generating UI…
-                  <span class="progress">
-                    {{ uiStateStore.completionPercentage() }}%
-                  </span>
+                <!-- Header with animated icon -->
+                <div class="builder-header">
+                  <div class="builder-icon-wrap">
+                    <lucide-icon [img]="Sparkles" [size]="18"></lucide-icon>
+                  </div>
+                  <div class="builder-title">
+                    <span class="builder-label">Building your interface</span>
+                    <span class="builder-pct">{{ uiStateStore.completionPercentage() }}%</span>
+                  </div>
                 </div>
-                <app-skeleton-loader type="card"></app-skeleton-loader>
-                <app-skeleton-loader type="form"></app-skeleton-loader>
+
+                <!-- Progress bar -->
+                <div class="builder-progress-track">
+                  <div
+                    class="builder-progress-fill"
+                    [style.width.%]="uiStateStore.completionPercentage()"
+                  ></div>
+                </div>
+
+                <!-- Build steps -->
+                <div class="builder-steps">
+                  <div class="builder-step" [class.active]="uiStateStore.completionPercentage() >= 0" [class.done]="uiStateStore.completionPercentage() > 20">
+                    <span class="step-icon">
+                      <lucide-icon *ngIf="uiStateStore.completionPercentage() <= 20" [img]="Braces" [size]="13"></lucide-icon>
+                      <lucide-icon *ngIf="uiStateStore.completionPercentage() > 20" [img]="CheckCircle" [size]="13"></lucide-icon>
+                    </span>
+                    <span class="step-text">Parsing schema</span>
+                  </div>
+                  <div class="builder-step" [class.active]="uiStateStore.completionPercentage() > 20" [class.done]="uiStateStore.completionPercentage() > 55">
+                    <span class="step-icon">
+                      <lucide-icon *ngIf="uiStateStore.completionPercentage() <= 55" [img]="Cpu" [size]="13"></lucide-icon>
+                      <lucide-icon *ngIf="uiStateStore.completionPercentage() > 55" [img]="CheckCircle" [size]="13"></lucide-icon>
+                    </span>
+                    <span class="step-text">Generating components</span>
+                  </div>
+                  <div class="builder-step" [class.active]="uiStateStore.completionPercentage() > 55" [class.done]="uiStateStore.completionPercentage() > 85">
+                    <span class="step-icon">
+                      <lucide-icon *ngIf="uiStateStore.completionPercentage() <= 85" [img]="Layers" [size]="13"></lucide-icon>
+                      <lucide-icon *ngIf="uiStateStore.completionPercentage() > 85" [img]="CheckCircle" [size]="13"></lucide-icon>
+                    </span>
+                    <span class="step-text">Assembling layout</span>
+                  </div>
+                </div>
+
+                <!-- Wireframe preview skeleton -->
+                <div class="builder-wireframe">
+                  <div class="wire-bar"></div>
+                  <div class="wire-row">
+                    <div class="wire-block tall"></div>
+                    <div class="wire-col">
+                      <div class="wire-block"></div>
+                      <div class="wire-block"></div>
+                    </div>
+                  </div>
+                  <div class="wire-block wide"></div>
+                </div>
               </div>
             </div>
           </ng-container>
@@ -246,13 +297,28 @@ import {
           color: var(--ds-text-primary);
           max-width: 95%;
 
-          &.streaming {
+          &.streaming-card {
             background: var(--ds-surface-glass);
             backdrop-filter: blur(24px) saturate(180%);
             border: 1px solid var(--ds-border-glow);
             border-radius: var(--ds-radius-lg);
-            padding: 0.75rem;
-            animation: pulse 2s ease-in-out infinite;
+            padding: 1rem 1.15rem;
+            animation: none;
+            overflow: hidden;
+            position: relative;
+
+            &::before {
+              content: '';
+              position: absolute;
+              inset: 0;
+              background: linear-gradient(
+                135deg,
+                rgba(0, 255, 245, 0.04) 0%,
+                transparent 40%,
+                rgba(91, 74, 255, 0.04) 100%
+              );
+              pointer-events: none;
+            }
           }
         }
 
@@ -313,22 +379,195 @@ import {
         }
       }
 
-      .streaming-header {
+      /* ── Builder loader ── */
+      .builder-header {
         display: flex;
         align-items: center;
-        gap: 0.35rem;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-        font-size: 0.8rem;
-        color: var(--ds-accent-teal);
+        gap: 0.6rem;
+        margin-bottom: 0.75rem;
+      }
 
-        .progress {
-          font-size: 0.875rem;
-          padding: 0.25rem 0.625rem;
-          background: rgba(0, 255, 245, 0.15);
-          border-radius: var(--ds-radius-sm);
-          font-weight: 600;
-        }
+      .builder-icon-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(0, 255, 245, 0.15), rgba(91, 74, 255, 0.15));
+        color: var(--ds-accent-teal);
+        animation: icon-spin 3s linear infinite;
+      }
+
+      @keyframes icon-spin {
+        0%   { transform: rotate(0deg) scale(1); }
+        25%  { transform: rotate(5deg) scale(1.08); }
+        50%  { transform: rotate(0deg) scale(1); }
+        75%  { transform: rotate(-5deg) scale(1.08); }
+        100% { transform: rotate(0deg) scale(1); }
+      }
+
+      .builder-title {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .builder-label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--ds-text-primary);
+      }
+
+      .builder-pct {
+        font-size: 0.7rem;
+        color: var(--ds-accent-teal);
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Progress bar */
+      .builder-progress-track {
+        height: 3px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+        margin-bottom: 0.85rem;
+      }
+
+      .builder-progress-fill {
+        height: 100%;
+        border-radius: 3px;
+        background: linear-gradient(90deg, var(--ds-accent-teal), var(--ds-accent-indigo));
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+      }
+
+      .builder-progress-fill::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: -1px;
+        width: 12px;
+        height: 5px;
+        border-radius: 3px;
+        background: var(--ds-accent-teal);
+        box-shadow: 0 0 8px var(--ds-accent-teal), 0 0 16px var(--ds-accent-teal);
+      }
+
+      /* Build steps */
+      .builder-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        margin-bottom: 0.85rem;
+      }
+
+      .builder-step {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.72rem;
+        color: var(--ds-text-secondary);
+        opacity: 0.35;
+        transition: all 0.3s ease;
+      }
+
+      .builder-step.active {
+        opacity: 1;
+        color: var(--ds-text-primary);
+      }
+
+      .builder-step.done {
+        opacity: 0.7;
+      }
+
+      .builder-step .step-icon {
+        display: flex;
+        align-items: center;
+        color: var(--ds-text-secondary);
+        transition: color 0.3s ease;
+      }
+
+      .builder-step.active .step-icon {
+        color: var(--ds-accent-teal);
+        animation: step-pulse 1.2s ease-in-out infinite;
+      }
+
+      .builder-step.done .step-icon {
+        color: var(--ds-accent-teal);
+        animation: none;
+      }
+
+      @keyframes step-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+
+      /* Wireframe preview */
+      .builder-wireframe {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 0.65rem;
+        border-radius: var(--ds-radius-md);
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--ds-border);
+      }
+
+      .wire-bar {
+        height: 10px;
+        width: 40%;
+        border-radius: 4px;
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.04) 25%,
+          rgba(0, 255, 245, 0.08) 50%,
+          rgba(255, 255, 255, 0.04) 75%
+        );
+        background-size: 200% 100%;
+        animation: wire-shimmer 2s ease-in-out infinite;
+      }
+
+      .wire-row {
+        display: flex;
+        gap: 6px;
+      }
+
+      .wire-col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .wire-block {
+        flex: 1;
+        min-height: 28px;
+        border-radius: 6px;
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.03) 25%,
+          rgba(0, 255, 245, 0.06) 50%,
+          rgba(255, 255, 255, 0.03) 75%
+        );
+        background-size: 200% 100%;
+        animation: wire-shimmer 2s ease-in-out infinite;
+      }
+
+      .wire-block.tall {
+        flex: 0 0 60px;
+        width: 80px;
+        animation-delay: 0.3s;
+      }
+
+      .wire-block.wide {
+        height: 18px;
+        animation-delay: 0.6s;
+      }
+
+      @keyframes wire-shimmer {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
       }
 
       .ui-schema-container {
@@ -697,6 +936,10 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
   readonly Loader2 = Loader2;
   readonly Sparkles = Sparkles;
   readonly RefreshCw = RefreshCw;
+  readonly Braces = Braces;
+  readonly Cpu = Cpu;
+  readonly Layers = Layers;
+  readonly CheckCircle = CheckCircle;
 
   readonly starterPrompts: string[] = [
     'Create a compact dashboard with KPI cards and a trend chart',

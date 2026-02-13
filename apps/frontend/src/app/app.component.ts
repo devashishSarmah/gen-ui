@@ -587,6 +587,7 @@ export class AppComponent implements OnInit {
   logout(): void {
     this.auth.logout();
     this.dropdownOpen = false;
+    this.router.navigate(['/login']);
   }
 
   toggleTheme(): void {
