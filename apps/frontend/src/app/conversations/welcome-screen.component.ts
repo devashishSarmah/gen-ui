@@ -278,28 +278,35 @@ export class WelcomeScreenComponent {
 
   examplePrompts: ExamplePrompt[] = [
     {
-      icon: ClipboardList,
-      title: 'Create a Form',
-      description: 'Build a contact form with validation',
-      prompt: 'Create a contact form with name, email, and message fields with validation',
-    },
-    {
       icon: BarChart3,
-      title: 'Build a Dashboard',
-      description: 'Generate charts and data tables',
-      prompt: 'Create a sales dashboard with a bar chart and a data table showing monthly revenue',
+      title: 'Cricket World Cup History',
+      description: 'Track India year by year',
+      prompt:
+        "Visualize India's Cricket World Cup performances year by year with key players and turning points.",
     },
     {
       icon: Compass,
-      title: 'Design a Wizard',
-      description: 'Multi-step onboarding flow',
-      prompt: 'Create a 3-step user onboarding wizard with personal info, preferences, and confirmation',
+      title: 'Streaming vs Cinema',
+      description: 'Show platforms and impact',
+      prompt: 'Visualize the rise of streaming platforms and their impact on cinema.',
+    },
+    {
+      icon: ClipboardList,
+      title: 'AR Rahman vs Zimmer',
+      description: 'Compare style and influence',
+      prompt: 'Compare AR Rahman vs Hans Zimmer in composition style and global influence.',
     },
     {
       icon: FileText,
-      title: 'Survey Builder',
-      description: 'Interactive questionnaire',
-      prompt: 'Build a customer satisfaction survey with multiple choice and rating questions',
+      title: 'Internet Viral Moments',
+      description: 'Break down key milestones',
+      prompt: 'Break down the most viral moments in internet history.',
+    },
+    {
+      icon: BarChart3,
+      title: 'Multiverse Across Fandoms',
+      description: 'Marvel, DC, and anime',
+      prompt: 'Visualize the multiverse concept across Marvel, DC, and anime.',
     },
   ];
 
