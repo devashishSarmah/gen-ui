@@ -1,7 +1,8 @@
-import { AfterViewInit, Component, Input, OnChanges, SimpleChanges, ViewChild, ViewContainerRef, inject, ChangeDetectorRef } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, ViewContainerRef, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SchemaRendererService, UISchema } from '../../../core/services/schema-renderer.service';
 import { DynamicUIService } from '../../../core/services/dynamic-ui.service';
+import { InteractionService } from '../../../core/services/interaction.service';
 
 @Component({
   selector: 'app-ui-schema-renderer',
@@ -10,8 +11,10 @@ import { DynamicUIService } from '../../../core/services/dynamic-ui.service';
   standalone: true,
   imports: [CommonModule],
 })
-export class UiSchemaRendererComponent implements AfterViewInit, OnChanges {
+export class UiSchemaRendererComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() schema: UISchema | null = null;
+  @Input() conversationId = '';
+  @Input() messageId = '';
 
   @ViewChild('uiHost', { read: ViewContainerRef }) uiHost?: ViewContainerRef;
 
@@ -19,6 +22,7 @@ export class UiSchemaRendererComponent implements AfterViewInit, OnChanges {
 
   private schemaRenderer = inject(SchemaRendererService);
   private dynamicUIService = inject(DynamicUIService);
+  private interactionService = inject(InteractionService);
   private cdr = inject(ChangeDetectorRef);
 
   ngAfterViewInit(): void {
@@ -53,6 +57,11 @@ export class UiSchemaRendererComponent implements AfterViewInit, OnChanges {
       return;
     }
 
+    // Set interaction context so events know which conversation they belong to
+    if (this.conversationId) {
+      this.interactionService.setContext(this.conversationId, this.messageId);
+    }
+
     this.errorMessage = '';
     const normalizedSchema = this.dynamicUIService.normalizeExternalSchema(this.schema);
     const validation = this.schemaRenderer.validateSchema(normalizedSchema);
@@ -77,5 +86,9 @@ export class UiSchemaRendererComponent implements AfterViewInit, OnChanges {
         }
       }, 0);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.interactionService.clearContext();
   }
 }

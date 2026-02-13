@@ -37,6 +37,18 @@ import { CommonModule } from '@angular/common';
         backdrop-filter: blur(14px);
         box-shadow: var(--ds-shadow-soft);
       }
+
+      @media (max-width: 640px) {
+        .container {
+          padding: 0.5rem;
+          max-width: 100% !important;
+        }
+
+        .container-card {
+          margin: 0.5rem 0;
+          border-radius: var(--ds-radius-md);
+        }
+      }
     `,
   ],
 })

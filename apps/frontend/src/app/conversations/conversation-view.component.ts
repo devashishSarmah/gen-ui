@@ -12,12 +12,15 @@ import { ConversationApiService } from '../core/services/conversation-api.servic
 import { SkeletonLoaderComponent } from '@gen-ui/design-system/skeleton-loader';
 import { UiSchemaRendererComponent } from '../shared/components/ui-schema-renderer/ui-schema-renderer.component';
 import { DynamicUIService } from '../core/services/dynamic-ui.service';
+import { InteractionService } from '../core/services/interaction.service';
 import {
   LucideAngularModule,
   Bot,
   AlertCircle,
   SendHorizontal,
   Loader2,
+  Sparkles,
+  RefreshCw,
 } from 'lucide-angular';
 
 @Component({
@@ -49,7 +52,11 @@ import {
                         </div> -->
                         <div class="schema-rendered">
                           <!-- <strong>Rendered UI</strong> -->
-                          <app-ui-schema-renderer [schema]="message.uiSchema"></app-ui-schema-renderer>
+                          <app-ui-schema-renderer
+                            [schema]="message.uiSchema"
+                            [conversationId]="conversationId"
+                            [messageId]="message.id"
+                          ></app-ui-schema-renderer>
                         </div>
                       </div>
                     </div>
@@ -64,7 +71,28 @@ import {
 
             <ng-container *ngIf="conversationStore.messages().length === 0">
               <div class="empty-conversation">
-                <p>No messages yet. Send a message to get started!</p>
+                <div class="empty-panel">
+                  <div class="empty-badge">
+                    <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+                    Fresh canvas
+                  </div>
+                  <h3>Start building this interface</h3>
+                  <p>
+                    Describe the layout, components, and interactions you need.
+                    I will generate and stream the UI in real time.
+                  </p>
+                  <div class="starter-prompts">
+                    <button
+                      type="button"
+                      class="starter-btn"
+                      *ngFor="let prompt of starterPrompts"
+                      (click)="sendStarterPrompt(prompt)"
+                      [disabled]="uiStateStore.isStreaming() || !webSocketService.isConnected()"
+                    >
+                      {{ prompt }}
+                    </button>
+                  </div>
+                </div>
               </div>
             </ng-container>
           </ng-container>
@@ -96,9 +124,21 @@ import {
           <!-- Streaming Error -->
           <ng-container *ngIf="uiStateStore.error()">
             <div class="message error">
-              <div class="message-content">
-                <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
-                {{ uiStateStore.error() }}
+              <div class="message-content error-content">
+                <div class="error-line">
+                  <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
+                  {{ uiStateStore.error() }}
+                </div>
+                <button
+                  type="button"
+                  class="retry-btn"
+                  (click)="retryLastPrompt()"
+                  *ngIf="canRetryPrompt()"
+                  [disabled]="uiStateStore.isStreaming() || !webSocketService.isConnected()"
+                >
+                  <lucide-icon [img]="RefreshCw" [size]="13"></lucide-icon>
+                  Retry prompt
+                </button>
               </div>
             </div>
           </ng-container>
@@ -204,7 +244,7 @@ import {
           border-radius: 0;
           box-shadow: none;
           color: var(--ds-text-primary);
-          max-width: 85%;
+          max-width: 95%;
 
           &.streaming {
             background: var(--ds-surface-glass);
@@ -235,6 +275,44 @@ import {
         font-size: 0.875rem;
       }
 
+      .error-content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .error-line {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+      }
+
+      .retry-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.75rem;
+        border: 1px solid rgba(255, 116, 133, 0.35);
+        border-radius: var(--ds-radius-pill);
+        background: rgba(255, 255, 255, 0.06);
+        color: #ffd8de;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 116, 133, 0.55);
+        }
+
+        &:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+      }
+
       .streaming-header {
         display: flex;
         align-items: center;
@@ -254,11 +332,23 @@ import {
       }
 
       .ui-schema-container {
-        background: transparent;
-        border: none;
-        border-radius: 0;
+        background: var(--ds-surface-glass);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-lg);
         padding: 0;
-        backdrop-filter: none;
+        backdrop-filter: blur(16px) saturate(180%);
+        max-height: calc(100vh - var(--app-header-height, 60px) - var(--app-footer-height, 48px) - 180px);
+        max-height: calc(100dvh - var(--app-header-height, 60px) - var(--app-footer-height, 48px) - 180px);
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .schema-rendered {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 0.75rem;
       }
 
       .schema-preview {
@@ -299,9 +389,83 @@ import {
         align-items: center;
         justify-content: center;
         flex: 1;
-        color: var(--ds-text-secondary);
-        text-align: center;
-        font-size: 0.9rem;
+        padding: 1rem 0;
+      }
+
+      .empty-panel {
+        width: min(760px, 100%);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-xl);
+        background:
+          radial-gradient(circle at 12% 16%, rgba(0, 255, 245, 0.12), transparent 35%),
+          radial-gradient(circle at 92% 88%, rgba(91, 74, 255, 0.12), transparent 38%),
+          var(--ds-surface-glass);
+        backdrop-filter: blur(28px) saturate(180%);
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+
+        h3 {
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: var(--ds-text-primary);
+          letter-spacing: 0.01em;
+        }
+
+        p {
+          margin: 0;
+          color: var(--ds-text-secondary);
+          font-size: 0.88rem;
+          line-height: 1.55;
+          max-width: 64ch;
+        }
+      }
+
+      .empty-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        align-self: flex-start;
+        background: rgba(0, 255, 245, 0.14);
+        border: 1px solid rgba(0, 255, 245, 0.22);
+        color: var(--ds-accent-teal);
+        border-radius: var(--ds-radius-pill);
+        padding: 0.3rem 0.65rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+
+      .starter-prompts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.55rem;
+      }
+
+      .starter-btn {
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-md);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--ds-text-primary);
+        text-align: left;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.78rem;
+        line-height: 1.45;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover:not(:disabled) {
+          border-color: var(--ds-border-glow);
+          background: rgba(0, 255, 245, 0.08);
+          transform: translateY(-1px);
+        }
+
+        &:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
       }
 
       .input-area {
@@ -458,6 +622,67 @@ import {
           box-shadow: 0 0 16px currentColor, 0 0 24px currentColor;
         }
       }
+
+      /* ── Responsive ── */
+      @media (max-width: 1024px) {
+        .message {
+          max-width: 85%;
+
+          &.assistant {
+            max-width: 98%;
+          }
+        }
+      }
+
+      @media (max-width: 768px) {
+        .messages-area {
+          padding: 0.75rem;
+        }
+
+        .message {
+          max-width: 92%;
+
+          &.assistant {
+            max-width: 100%;
+          }
+
+          &.user {
+            max-width: 88%;
+          }
+        }
+
+        .ui-schema-container {
+          max-height: calc(100dvh - var(--app-header-height, 60px) - var(--app-footer-height, 48px) - 160px);
+        }
+
+        .input-area {
+          padding: 0.5rem 0.75rem;
+        }
+
+        .empty-panel {
+          padding: 1rem;
+        }
+
+        .starter-prompts {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .messages-area {
+          padding: 0.5rem;
+        }
+
+        .message.user {
+          padding: 0.5rem 0.7rem;
+          font-size: 0.8rem;
+        }
+
+        .connection-status {
+          font-size: 0.65rem;
+          padding: 0.3rem 0.5rem;
+        }
+      }
     `,
   ],
 })
@@ -470,15 +695,26 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
   readonly AlertCircle = AlertCircle;
   readonly SendHorizontal = SendHorizontal;
   readonly Loader2 = Loader2;
+  readonly Sparkles = Sparkles;
+  readonly RefreshCw = RefreshCw;
+
+  readonly starterPrompts: string[] = [
+    'Create a compact dashboard with KPI cards and a trend chart',
+    'Build a searchable customer table with filters and detail drawer',
+    'Design a 3-step onboarding flow with progress and validation hints',
+  ];
 
   private conversationApi = inject(ConversationApiService);
   private dynamicUIService = inject(DynamicUIService);
+  private interactionService = inject(InteractionService);
   private route = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
   private cdr = inject(ChangeDetectorRef);
 
   messageText = '';
-  private conversationId: string = '';
+  conversationId = '';
+  private lastSubmittedPrompt: string | null = null;
+  private lastFailedPrompt: string | null = null;
 
   trackByMessageId(index: number, message: Message): string {
     return message.id;
@@ -488,6 +724,7 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
     // Get conversation ID from route
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       this.conversationId = params['id'];
+      this.resetConversationViewState();
       this.loadConversation();
       this.setupWebSocket();
       
@@ -513,13 +750,21 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
           this.dynamicUIService.loadSchema(chunk.data);
           const normalizedSchema = this.dynamicUIService.getCurrentSchema() ?? chunk.data;
           this.uiStateStore.completeStreaming(normalizedSchema);
+          this.interactionService.completeInteraction();
+          this.lastSubmittedPrompt = null;
+          this.lastFailedPrompt = null;
           // Add a small delay to ensure the message is saved to the database
           setTimeout(() => {
             this.loadMessages(); // Reload messages to show assistant response
             this.cdr.detectChanges(); // Force change detection
           }, 300);
         } else if (chunk?.type === 'error') {
-          this.uiStateStore.setStreamingError(chunk.data?.error || chunk.data?.message || 'Unknown error');
+          this.uiStateStore.setStreamingError(
+            chunk.data?.error || chunk.data?.message || 'Unknown error'
+          );
+          this.interactionService.completeInteraction();
+          this.lastFailedPrompt = this.lastSubmittedPrompt;
+          this.lastSubmittedPrompt = null;
           this.cdr.detectChanges();
         }
       });
@@ -537,7 +782,8 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
       .getConversation(this.conversationId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (conversation) => {
+        next: () => {
+          this.conversationStore.setError(null);
           this.conversationStore.setCurrentConversation(this.conversationId);
           this.loadMessages();
         },
@@ -557,6 +803,7 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
         next: (messages) => {
           this.conversationStore.setMessages(messages);
           this.conversationStore.setIsLoadingMessages(false);
+          this.conversationStore.setError(null);
           const latestSchemaMessage = [...messages]
             .reverse()
             .find((message) => message.role === 'assistant' && message.uiSchema);
@@ -565,6 +812,9 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
             const normalizedSchema =
               this.dynamicUIService.getCurrentSchema() ?? latestSchemaMessage.uiSchema;
             this.uiStateStore.completeStreaming(normalizedSchema as any);
+          } else if (!this.uiStateStore.error()) {
+            this.dynamicUIService.clearSchema();
+            this.uiStateStore.clear();
           }
           this.scrollToBottom();
           this.cdr.detectChanges(); // Force change detection after messages load
@@ -615,6 +865,9 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
 
     const message = this.messageText.trim();
     this.messageText = '';
+    this.lastSubmittedPrompt = message;
+    this.lastFailedPrompt = null;
+    this.conversationStore.setError(null);
 
     // Add user message to store
     const userMessage: Message = {
@@ -635,9 +888,56 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Failed to send message:', error);
       this.uiStateStore.setStreamingError('Failed to send message');
+      this.lastFailedPrompt = message;
+      this.lastSubmittedPrompt = null;
     }
 
     this.scrollToBottom();
+  }
+
+  sendStarterPrompt(prompt: string): void {
+    this.messageText = prompt;
+    this.sendMessage();
+  }
+
+  canRetryPrompt(): boolean {
+    return (
+      !!this.lastFailedPrompt &&
+      !this.uiStateStore.isStreaming() &&
+      this.webSocketService.isConnected()
+    );
+  }
+
+  retryLastPrompt(): void {
+    if (!this.lastFailedPrompt || !this.webSocketService.isConnected()) {
+      return;
+    }
+
+    const promptToRetry = this.lastFailedPrompt;
+    this.lastSubmittedPrompt = promptToRetry;
+    this.conversationStore.setError(null);
+    this.uiStateStore.startStreaming();
+
+    try {
+      this.webSocketService.sendPrompt(this.conversationId, promptToRetry);
+    } catch (error) {
+      console.error('Failed to retry prompt:', error);
+      this.uiStateStore.setStreamingError('Failed to retry prompt');
+      this.lastFailedPrompt = promptToRetry;
+      this.lastSubmittedPrompt = null;
+    }
+
+    this.scrollToBottom();
+  }
+
+  private resetConversationViewState(): void {
+    this.messageText = '';
+    this.lastSubmittedPrompt = null;
+    this.lastFailedPrompt = null;
+    this.conversationStore.setError(null);
+    this.conversationStore.setMessages([]);
+    this.uiStateStore.clear();
+    this.dynamicUIService.clearSchema();
   }
 
   private scrollToBottom(): void {

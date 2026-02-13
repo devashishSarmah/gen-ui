@@ -290,7 +290,9 @@ export function manifestToSystemPrompt(manifest: ComponentManifest): string {
   lines.push('```');
   lines.push('');
   lines.push('Use mode "replace" for new UIs, "patch" for updates.');
-  lines.push('Patch ops: { "op": "add"|"update"|"remove"|"replace", "path": "component.id", "value": {...} }');
+  lines.push(
+    'Patch ops must follow JSON Patch style: { "op": "add"|"remove"|"replace"|"copy"|"move", "path": "/children/0/props/value", "value": {...}, "from": "/children/1" }',
+  );
   lines.push('');
 
   // Density rules

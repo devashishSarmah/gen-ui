@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AccordionGroup,
@@ -35,6 +35,7 @@ export interface AccordionItem {
             [panelId]="item.id"
             [disabled]="item.disabled ?? false"
             [expanded]="item.expanded ?? false"
+            (expandedChange)="onPanelToggle(item, $event)"
             class="accordion-trigger"
           >
             <span class="accordion-trigger-text">{{ item.title }}</span>
@@ -161,4 +162,11 @@ export class AccordionComponent {
   @Input() items: AccordionItem[] = [];
   @Input() multiExpandable = true;
   @Input() wrap = false;
+
+  @Output() panelToggle = new EventEmitter<{ id: string; title: string; expanded: boolean }>();
+
+  onPanelToggle(item: AccordionItem, expanded: boolean) {
+    item.expanded = expanded;
+    this.panelToggle.emit({ id: item.id, title: item.title, expanded });
+  }
 }

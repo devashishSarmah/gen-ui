@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, NgZone, signal } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
@@ -28,7 +28,7 @@ export class WebSocketService {
   private uiStreamSubject = new BehaviorSubject<UIStreamChunk | null>(null);
   public uiStream$ = this.uiStreamSubject.asObservable();
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private ngZone: NgZone) {}
 
   /**
    * Connect to WebSocket server with JWT authentication
@@ -59,21 +59,24 @@ export class WebSocketService {
       reconnectionAttempts: this.maxReconnectAttempts,
     });
 
-    // Connection event handlers
-    this.socket.on('connect', () => this.onConnect());
-    this.socket.on('disconnect', (reason) => this.onDisconnect(reason));
-    this.socket.on('reconnect_attempt', () => this.onReconnectAttempt());
-    this.socket.on('error', (error) => this.onError(error));
-    this.socket.on('connect_error', (error) => this.onError(error));
+    // Connection event handlers — run inside Angular zone so
+    // signals and change detection fire correctly.
+    this.socket.on('connect', () => this.ngZone.run(() => this.onConnect()));
+    this.socket.on('disconnect', (reason) => this.ngZone.run(() => this.onDisconnect(reason)));
+    this.socket.on('reconnect_attempt', () => this.ngZone.run(() => this.onReconnectAttempt()));
+    this.socket.on('error', (error) => this.ngZone.run(() => this.onError(error)));
+    this.socket.on('connect_error', (error) => this.ngZone.run(() => this.onError(error)));
 
     // WebSocket stream events
     this.socket.on('ui-stream', (chunk: UIStreamChunk) => {
-      this.uiStreamSubject.next(chunk);
+      this.ngZone.run(() => this.uiStreamSubject.next(chunk));
     });
 
     this.socket.on('connected', (data) => {
-      console.log('✅ Connected to gateway:', data);
-      this.lastError.set(null);
+      this.ngZone.run(() => {
+        console.log('✅ Connected to gateway:', data);
+        this.lastError.set(null);
+      });
     });
 
     await new Promise<void>((resolve, reject) => {

@@ -1,6 +1,12 @@
 .ui-schema-renderer {
   display: block;
   width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ui-schema-renderer > * {
+  min-width: 0;
 }
 
 .render-error {

@@ -36,6 +36,7 @@ export class ConversationStore {
   setCurrentConversation(conversationId: string): void {
     this.currentConversationId.set(conversationId);
     this.messages.set([]);
+    this.error.set(null);
   }
 
   /**
@@ -67,6 +68,7 @@ export class ConversationStore {
   clearCurrentConversation(): void {
     this.currentConversationId.set(null);
     this.messages.set([]);
+    this.error.set(null);
   }
 
   /**

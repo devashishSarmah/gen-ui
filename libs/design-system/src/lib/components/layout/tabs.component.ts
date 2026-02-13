@@ -1,6 +1,8 @@
 import {
   Component,
   Input,
+  Output,
+  EventEmitter,
   OnChanges,
   SimpleChanges,
   signal,
@@ -27,6 +29,7 @@ export interface TabItem {
         ngTabList
         [selectionMode]="selectionMode"
         [selectedTab]="activeTab()"
+        (selectedTabChange)="onTabChange($event)"
         [orientation]="orientation"
         [wrap]="wrap"
         class="tabs-header"
@@ -161,12 +164,20 @@ export class TabsComponent implements OnChanges {
   @Input() orientation: 'horizontal' | 'vertical' = 'horizontal';
   @Input() wrap = true;
 
+  @Output() tabChange = new EventEmitter<string>();
+
   activeTab = signal('');
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['tabs'] || changes['defaultTab']) {
       this.updateActiveTab();
     }
+  }
+
+  onTabChange(value: string | undefined) {
+    const tab = value ?? '';
+    this.activeTab.set(tab);
+    this.tabChange.emit(tab);
   }
 
   private updateActiveTab() {

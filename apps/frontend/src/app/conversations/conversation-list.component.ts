@@ -6,6 +6,8 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ConversationStore, Conversation } from '../core/stores/conversation.store';
 import { ConversationApiService } from '../core/services/conversation-api.service';
+import { UIStateStore } from '../core/stores/ui.store';
+import { DynamicUIService } from '../core/services/dynamic-ui.service';
 import { SkeletonLoaderComponent } from '@gen-ui/design-system/skeleton-loader';
 import {
   LucideAngularModule,
@@ -50,10 +52,11 @@ import {
             <div
               *ngFor="let conv of filteredConversations()"
               class="conversation-item"
+              [class.menu-open]="activeMenuId() === conv.id"
               [class.active]="
                 conversationStore.currentConversationId() === conv.id
               "
-              (click)="selectConversation(conv.id)"
+              (click)="onConversationItemClick($event, conv.id)"
             >
               <div class="conversation-info">
                 <h3 [innerHTML]="highlightMatch(conv.title)"></h3>
@@ -63,15 +66,17 @@ import {
               </div>
               <div class="conversation-actions">
                 <button
+                  type="button"
                   class="action-btn"
+                  (mousedown)="preventConversationSelection($event)"
                   (click)="openMenu($event, conv)"
                   [attr.aria-label]="'Actions for ' + conv.title"
                 >
                   <lucide-icon [img]="MoreVertical" [size]="14"></lucide-icon>
                 </button>
-                <div class="dropdown-menu" *ngIf="activeMenuId() === conv.id">
-                  <button (click)="startRename(conv)"><lucide-icon [img]="Pencil" [size]="13"></lucide-icon> Rename</button>
-                  <button (click)="confirmDelete(conv)" class="danger"><lucide-icon [img]="Trash2" [size]="13"></lucide-icon> Delete</button>
+                <div class="dropdown-menu" *ngIf="activeMenuId() === conv.id" (click)="preventConversationSelection($event)">
+                  <button type="button" (mousedown)="preventConversationSelection($event)" (click)="startRename(conv)"><lucide-icon [img]="Pencil" [size]="13"></lucide-icon> Rename</button>
+                  <button type="button" (mousedown)="preventConversationSelection($event)" (click)="confirmDelete(conv)" class="danger"><lucide-icon [img]="Trash2" [size]="13"></lucide-icon> Delete</button>
                 </div>
               </div>
             </div>
@@ -85,11 +90,14 @@ import {
 
           <ng-container *ngIf="conversationStore.conversations().length === 0 && !searchQuery">
             <div class="empty-state">
-              <lucide-icon [img]="MessageSquare" [size]="28" style="opacity:0.3;margin-bottom:0.5rem"></lucide-icon>
-              <p>No conversations yet</p>
+              <div class="empty-icon-ring">
+                <lucide-icon [img]="MessageSquare" [size]="24"></lucide-icon>
+              </div>
+              <p class="empty-title">No conversations yet</p>
+              <p class="empty-hint">Start chatting to generate your first UI</p>
               <button (click)="createNewConversation()" class="btn-primary">
                 <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-                Start a new conversation
+                New Conversation
               </button>
             </div>
           </ng-container>
@@ -144,7 +152,6 @@ import {
         flex-direction: column;
         height: 100%;
         background: var(--ds-surface-glass);
-        backdrop-filter: blur(24px) saturate(180%);
         border-right: 1px solid var(--ds-border);
       }
 
@@ -271,6 +278,7 @@ import {
         cursor: pointer;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
+        z-index: 0;
 
         &::before {
           content: '';
@@ -288,6 +296,7 @@ import {
           background: rgba(255, 255, 255, 0.06);
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
           transform: translateX(4px);
+          z-index: 1;
         }
 
         &.active {
@@ -299,6 +308,11 @@ import {
             background: linear-gradient(180deg, var(--ds-accent-teal), var(--ds-accent-indigo));
             box-shadow: 0 0 12px currentColor;
           }
+        }
+
+        &.menu-open {
+          z-index: 40;
+          transform: none;
         }
       }
 
@@ -328,6 +342,7 @@ import {
 
       .conversation-actions {
         position: relative;
+        z-index: 5;
       }
 
       .action-btn {
@@ -356,7 +371,7 @@ import {
         border: 1px solid var(--ds-border);
         border-radius: var(--ds-radius-lg);
         box-shadow: var(--ds-shadow-medium), 0 0 32px rgba(0, 0, 0, 0.3);
-        z-index: 100;
+        z-index: 120;
         min-width: 140px;
         overflow: hidden;
         animation: dropdownFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -409,7 +424,7 @@ import {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 1.5rem;
+        padding: 2.5rem 1.5rem;
         text-align: center;
         color: var(--ds-text-secondary);
 
@@ -417,6 +432,33 @@ import {
           margin-bottom: 0.75rem;
           font-size: 0.85rem;
         }
+      }
+
+      .empty-icon-ring {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(0, 255, 245, 0.08), rgba(91, 74, 255, 0.08));
+        border: 1px solid var(--ds-border);
+        color: var(--ds-accent-teal);
+        margin-bottom: 0.75rem;
+        opacity: 0.8;
+      }
+
+      .empty-title {
+        font-size: 0.9rem !important;
+        font-weight: 600;
+        color: var(--ds-text-primary);
+        margin-bottom: 0.15rem !important;
+      }
+
+      .empty-hint {
+        font-size: 0.75rem !important;
+        opacity: 0.6;
+        margin-bottom: 1rem !important;
       }
 
       .btn-primary {
@@ -486,14 +528,15 @@ import {
         position: fixed;
         top: 0;
         left: 0;
-        right: 0;
-        bottom: 0;
+        width: 100dvw;
+        height: 100dvh;
         background: rgba(0, 0, 0, 0.75);
         backdrop-filter: blur(8px);
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 1000;
+        padding: 1rem;
+        z-index: 4000;
         animation: overlayFadeIn 0.3s ease;
       }
 
@@ -504,8 +547,7 @@ import {
         border-radius: var(--ds-radius-xl);
         border: 1px solid var(--ds-border);
         box-shadow: var(--ds-shadow-medium), 0 0 64px rgba(0, 0, 0, 0.5);
-        min-width: 300px;
-        max-width: 400px;
+        width: min(400px, calc(100dvw - 2rem));
         animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
         h3 {
@@ -594,7 +636,9 @@ import {
 })
 export class ConversationListComponent implements OnInit, OnDestroy {
   conversationStore = inject(ConversationStore);
+  uiStateStore = inject(UIStateStore);
   private conversationApi = inject(ConversationApiService);
+  private dynamicUIService = inject(DynamicUIService);
 
   readonly Search = Search;
   readonly Plus = Plus;
@@ -653,6 +697,11 @@ export class ConversationListComponent implements OnInit, OnDestroy {
     }
   }
 
+  preventConversationSelection(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
   onSearchChange(query: string): void {
     this.searchSubject.next(query);
   }
@@ -670,8 +719,22 @@ export class ConversationListComponent implements OnInit, OnDestroy {
   }
 
   openMenu(event: Event, conv: Conversation): void {
-    event.stopPropagation();
+    this.preventConversationSelection(event);
     this.activeMenuId.set(this.activeMenuId() === conv.id ? null : conv.id);
+  }
+
+  onConversationItemClick(event: Event, conversationId: string): void {
+    const target = event.target as HTMLElement;
+    if (target.closest('.conversation-actions') || target.closest('.dropdown-menu')) {
+      return;
+    }
+
+    if (this.activeMenuId()) {
+      this.activeMenuId.set(null);
+      return;
+    }
+
+    this.selectConversation(conversationId);
   }
 
   startRename(conv: Conversation): void {
@@ -755,6 +818,7 @@ export class ConversationListComponent implements OnInit, OnDestroy {
         next: (conversations) => {
           this.conversationStore.setConversations(conversations);
           this.conversationStore.setIsLoadingConversations(false);
+          this.conversationStore.setError(null);
         },
         error: (error) => {
           console.error('Failed to load conversations:', error);
@@ -765,17 +829,26 @@ export class ConversationListComponent implements OnInit, OnDestroy {
   }
 
   selectConversation(conversationId: string): void {
+    this.conversationStore.setError(null);
+    this.uiStateStore.clear();
+    this.dynamicUIService.clearSchema();
     this.conversationStore.setCurrentConversation(conversationId);
     this.router.navigate(['/conversations', conversationId]);
   }
 
   createNewConversation(): void {
+    this.conversationStore.setError(null);
+    this.uiStateStore.clear();
+    this.dynamicUIService.clearSchema();
+    sessionStorage.removeItem('pendingPrompt');
+
     this.conversationApi
       .createConversation()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (conversation) => {
           this.conversationStore.conversations.update((convs) => [conversation, ...convs]);
+          this.conversationStore.setError(null);
           this.selectConversation(conversation.id);
         },
         error: (error) => {
