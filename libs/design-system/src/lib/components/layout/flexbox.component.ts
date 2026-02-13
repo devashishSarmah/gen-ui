@@ -29,6 +29,18 @@ import { CommonModule } from '@angular/common';
         display: flex;
         width: 100%;
         box-sizing: border-box;
+        min-width: 0;
+      }
+
+      .flexbox > * {
+        min-width: 0;
+      }
+
+      @media (max-width: 640px) {
+        .flexbox[style*="flex-direction: row"],
+        .flexbox[style*="flex-direction:row"] {
+          flex-wrap: wrap !important;
+        }
       }
     `,
   ],

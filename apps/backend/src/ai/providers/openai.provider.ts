@@ -1,16 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 import {
   AIProvider,
   AIProviderCapabilities,
   AIGenerationContext,
+  ModelTier,
   UISchemaChunk,
 } from './ai-provider.interface';
 import { ManifestLoaderService } from '../manifest-loader.service';
+import { buildUsageMetrics } from '../usage/usage-utils';
+import { ModelResolverService } from '../model-resolver.service';
 
 @Injectable()
 export class OpenAIProvider extends AIProvider {
+  private readonly logger = new Logger(OpenAIProvider.name);
   readonly name = 'openai';
   readonly capabilities: AIProviderCapabilities = {
     streaming: true,
@@ -21,16 +25,22 @@ export class OpenAIProvider extends AIProvider {
   };
 
   private client: OpenAI;
-  private model: string;
+  private modelDefault: string;
+  private modelFast: string;
+  private modelQuality: string;
 
   constructor(
     private configService: ConfigService,
     private manifestLoader: ManifestLoaderService,
+    private modelResolver: ModelResolverService,
   ) {
     super();
     const apiKey = this.configService.get('OPENAI_API_KEY');
     this.client = new OpenAI({ apiKey });
-    this.model = this.configService.get('OPENAI_MODEL') || 'gpt-4-turbo-preview';
+    this.modelDefault = this.configService.get('OPENAI_MODEL') || 'gpt-4-turbo-preview';
+    this.modelFast = this.configService.get('OPENAI_MODEL_FAST') || this.modelDefault;
+    this.modelQuality =
+      this.configService.get('OPENAI_MODEL_QUALITY') || this.modelDefault;
   }
 
   async isAvailable(): Promise<boolean> {
@@ -43,24 +53,38 @@ export class OpenAIProvider extends AIProvider {
   }
 
   async *generateUI(context: AIGenerationContext): AsyncIterableIterator<UISchemaChunk> {
+    const trace = context.traceId || 'no-trace';
     const systemPrompt = this.buildSystemPrompt();
     const userPrompt = this.buildUserPrompt(context);
+    const model = this.resolveModel(context);
+    this.logger.log(
+      `[${trace}] openai_generate_start model=${model} promptLen=${userPrompt.length} webSearch=${this.useWebSearch(context)}`,
+    );
 
-    if (this.useWebSearch()) {
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...this.formatConversationHistory(context.conversationHistory),
+      { role: 'user', content: userPrompt },
+    ] as any[];
+
+    const promptText = messages.map((m) => String(m.content || '')).join('\n\n');
+
+    if (this.useWebSearch(context)) {
       try {
-        const uiSchema = await this.generateWithWebSearch([
-          { role: 'system', content: systemPrompt },
-          ...this.formatConversationHistory(context.conversationHistory),
-          { role: 'user', content: userPrompt },
-        ]);
+        const result = await this.generateWithWebSearch(messages, context);
+        this.logger.log(
+          `[${trace}] openai_generate_websearch_complete totalTokens=${result.usage?.totalTokens || 0}`,
+        );
 
         yield {
           type: 'complete',
-          data: uiSchema,
+          data: result.schema,
           done: true,
+          meta: { usage: result.usage },
         };
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        this.logger.error(`[${trace}] openai_generate_websearch_error error=${message}`);
         yield {
           type: 'error',
           data: { error: message },
@@ -72,22 +96,32 @@ export class OpenAIProvider extends AIProvider {
 
     try {
       const stream = await this.client.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...this.formatConversationHistory(context.conversationHistory),
-          { role: 'user', content: userPrompt },
-        ],
+        model,
+        messages,
         response_format: { type: 'json_object' },
         stream: true,
+        stream_options: { include_usage: true } as any,
         temperature: 1,
-      });
+      } as any);
 
       let accumulatedContent = '';
+      let rawUsage: any = null;
+      let partialChunks = 0;
 
-      for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content || '';
+      for await (const chunk of stream as any) {
+        const content = chunk?.choices?.[0]?.delta?.content || '';
         accumulatedContent += content;
+        partialChunks += 1;
+
+        if (chunk?.usage) {
+          rawUsage = chunk.usage;
+        }
+
+        if (partialChunks === 1 || partialChunks % 25 === 0) {
+          this.logger.log(
+            `[${trace}] openai_generate_partial count=${partialChunks} contentLen=${content.length}`,
+          );
+        }
 
         yield {
           type: 'partial',
@@ -96,16 +130,30 @@ export class OpenAIProvider extends AIProvider {
         };
       }
 
-      // Parse final JSON
       const uiSchema = JSON.parse(accumulatedContent);
+      const usage = buildUsageMetrics({
+        layer: 'schema_generation',
+        provider: 'openai',
+        model,
+        promptText,
+        completionText: accumulatedContent,
+        rawUsage,
+        configService: this.configService,
+      });
+
+      this.logger.log(
+        `[${trace}] openai_generate_complete partialChunks=${partialChunks} totalTokens=${usage.totalTokens}`,
+      );
 
       yield {
         type: 'complete',
         data: uiSchema,
         done: true,
+        meta: { usage },
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`[${trace}] openai_generate_error error=${message}`);
       yield {
         type: 'error',
         data: { error: message },
@@ -117,25 +165,39 @@ export class OpenAIProvider extends AIProvider {
   async *updateUI(
     currentSchema: any,
     interaction: any,
-    context: AIGenerationContext
+    context: AIGenerationContext,
   ): AsyncIterableIterator<UISchemaChunk> {
+    const trace = context.traceId || 'no-trace';
     const systemPrompt = this.buildSystemPrompt();
     const updatePrompt = this.buildUpdatePrompt(currentSchema, interaction, context);
+    const model = this.resolveModel(context);
+    this.logger.log(
+      `[${trace}] openai_update_start model=${model} promptLen=${updatePrompt.length} webSearch=${this.useWebSearch(context)}`,
+    );
 
-    if (this.useWebSearch()) {
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: updatePrompt },
+    ] as any[];
+
+    const promptText = messages.map((m) => String(m.content || '')).join('\n\n');
+
+    if (this.useWebSearch(context)) {
       try {
-        const updatedSchema = await this.generateWithWebSearch([
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: updatePrompt },
-        ]);
+        const result = await this.generateWithWebSearch(messages, context);
+        this.logger.log(
+          `[${trace}] openai_update_websearch_complete totalTokens=${result.usage?.totalTokens || 0}`,
+        );
 
         yield {
           type: 'complete',
-          data: updatedSchema,
+          data: result.schema,
           done: true,
+          meta: { usage: result.usage },
         };
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        this.logger.error(`[${trace}] openai_update_websearch_error error=${message}`);
         yield {
           type: 'error',
           data: { error: message },
@@ -147,21 +209,32 @@ export class OpenAIProvider extends AIProvider {
 
     try {
       const stream = await this.client.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: updatePrompt },
-        ],
+        model,
+        messages,
         response_format: { type: 'json_object' },
         stream: true,
+        stream_options: { include_usage: true } as any,
         temperature: 0.7,
-      });
+      } as any);
 
       let accumulatedContent = '';
+      let rawUsage: any = null;
+      let partialChunks = 0;
 
-      for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content || '';
+      for await (const chunk of stream as any) {
+        const content = chunk?.choices?.[0]?.delta?.content || '';
         accumulatedContent += content;
+        partialChunks += 1;
+
+        if (chunk?.usage) {
+          rawUsage = chunk.usage;
+        }
+
+        if (partialChunks === 1 || partialChunks % 25 === 0) {
+          this.logger.log(
+            `[${trace}] openai_update_partial count=${partialChunks} contentLen=${content.length}`,
+          );
+        }
 
         yield {
           type: 'partial',
@@ -171,14 +244,29 @@ export class OpenAIProvider extends AIProvider {
       }
 
       const updatedSchema = JSON.parse(accumulatedContent);
+      const usage = buildUsageMetrics({
+        layer: 'schema_update',
+        provider: 'openai',
+        model,
+        promptText,
+        completionText: accumulatedContent,
+        rawUsage,
+        configService: this.configService,
+      });
+
+      this.logger.log(
+        `[${trace}] openai_update_complete partialChunks=${partialChunks} totalTokens=${usage.totalTokens}`,
+      );
 
       yield {
         type: 'complete',
         data: updatedSchema,
         done: true,
+        meta: { usage },
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`[${trace}] openai_update_error error=${message}`);
       yield {
         type: 'error',
         data: { error: message },
@@ -191,7 +279,10 @@ export class OpenAIProvider extends AIProvider {
     return this.manifestLoader.getSystemPrompt();
   }
 
-  private useWebSearch(): boolean {
+  private useWebSearch(context?: AIGenerationContext): boolean {
+    if (context?.routingDecision?.runWebSearch === false) {
+      return false;
+    }
     return this.configService.get('OPENAI_WEB_SEARCH') === 'true';
   }
 
@@ -215,16 +306,32 @@ export class OpenAIProvider extends AIProvider {
     return tool;
   }
 
-  private async generateWithWebSearch(messages: any[]): Promise<any> {
+  private async generateWithWebSearch(
+    messages: any[],
+    context: AIGenerationContext,
+  ): Promise<{ schema: any; usage: any }> {
     const response = await this.client.responses.create({
-      model: this.model,
+      model: this.resolveModel(context),
       tools: [this.buildWebSearchTool()],
       tool_choice: 'auto',
       input: messages,
     });
 
     const text = this.extractResponseText(response);
-    return JSON.parse(text);
+    const schema = JSON.parse(text);
+
+    const promptText = messages.map((m) => String(m.content || '')).join('\n\n');
+    const usage = buildUsageMetrics({
+      layer: 'schema_generation',
+      provider: 'openai',
+      model: this.resolveModel(context),
+      promptText,
+      completionText: text,
+      rawUsage: (response as any).usage,
+      configService: this.configService,
+    });
+
+    return { schema, usage };
   }
 
   private extractResponseText(response: any): string {
@@ -253,11 +360,24 @@ export class OpenAIProvider extends AIProvider {
       prompt += `Current UI state: ${JSON.stringify(context.currentUiState)}\n\n`;
     }
 
+    if (context.uiStateDigest) {
+      prompt += `UI state digest:\n${context.uiStateDigest}\n\n`;
+    }
+
+    if (context.contextSummary) {
+      prompt += `${context.contextSummary}\n\n`;
+    }
+
     if (context.searchResults?.summary) {
       const sources = (context.searchResults.sources || [])
         .map((source) => `- ${source.title ? source.title + ' ' : ''}(${source.url})`)
         .join('\n');
       prompt += `Web search summary:\n${context.searchResults.summary}\n\nSources:\n${sources}\n\n`;
+    }
+
+    const routingHints = this.buildRoutingHints(context);
+    if (routingHints) {
+      prompt += `Routing hints:\n${routingHints}\n\n`;
     }
 
     if (context.uxPlan) {
@@ -276,19 +396,76 @@ export class OpenAIProvider extends AIProvider {
           .join('\n')}`
       : '';
 
+    const summaryContext = context.contextSummary
+      ? `\n\nConversation summary:\n${context.contextSummary}`
+      : '';
+
+    const uiStateDigest = context.uiStateDigest
+      ? `\n\nUI state digest:\n${context.uiStateDigest}`
+      : '';
+
+    const uxPlan = context.uxPlan
+      ? `\n\nUX Design plan to follow:\n${context.uxPlan}`
+      : '';
+
+    const routingHints = this.buildRoutingHints(context);
+    const routingContext = routingHints ? `\n\nRouting hints:\n${routingHints}` : '';
+
+    const patchInstruction =
+      context.routingDecision?.mode === 'patch'
+        ? '\n\nPrefer mode="patch" with minimal JSON Patch operations. Keep unchanged structure untouched.'
+        : '';
+
     return `Current UI schema: ${JSON.stringify(currentSchema)}
 
 User interaction: ${JSON.stringify(interaction)}
 
-User request: ${context.userPrompt}${searchContext}
+User request: ${context.userPrompt}${searchContext}${summaryContext}${uiStateDigest}${uxPlan}${routingContext}${patchInstruction}
 
 Update the UI schema based on the interaction and request.`;
   }
 
+  private buildRoutingHints(context: AIGenerationContext): string | null {
+    const decision = context.routingDecision;
+    if (!decision) return null;
+
+    const patchHints = (decision.patchHints || []).map((hint) => `- ${hint}`).join('\n');
+
+    return [
+      `- mode: ${decision.mode}`,
+      `- model tier: ${decision.modelTier}`,
+      `- run UX plan: ${decision.runUxPlan ? 'yes' : 'no'}`,
+      `- run web search: ${decision.runWebSearch ? 'yes' : 'no'}`,
+      ...(patchHints ? [patchHints] : []),
+    ].join('\n');
+  }
+
+  private resolveModel(context: AIGenerationContext): string {
+    const tier: ModelTier = context.routingDecision?.modelTier || 'balanced';
+    try {
+      return this.modelResolver.resolveModel({
+        layer: 'schema',
+        provider: 'openai',
+        modelTier: tier,
+      });
+    } catch {
+      if (tier === 'fast') return this.modelFast;
+      if (tier === 'quality') return this.modelQuality;
+      return this.modelDefault;
+    }
+  }
+
   private formatConversationHistory(history: any[]): any[] {
-    return history.map((msg) => ({
-      role: msg.role,
-      content: msg.content || JSON.stringify(msg.uiSchema),
-    }));
+    const MAX_CONTENT_CHARS = 500;
+    return history.map((msg) => {
+      let content = msg.content || '';
+      if (!content && msg.uiSchema) {
+        content = '[UI schema response]';
+      }
+      if (content.length > MAX_CONTENT_CHARS) {
+        content = content.slice(0, MAX_CONTENT_CHARS) + '…[truncated]';
+      }
+      return { role: msg.role, content };
+    });
   }
 }

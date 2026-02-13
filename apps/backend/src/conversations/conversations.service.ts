@@ -48,13 +48,15 @@ export class ConversationsService {
     conversationId: string,
     role: MessageRole,
     content?: string | null,
-    uiSchema?: any
+    uiSchema?: any,
+    aiMetrics?: any,
   ): Promise<Message> {
     const message = this.messageRepository.create({
       conversationId,
       role,
       content,
       uiSchema,
+      aiMetrics,
     }) as Message;
 
     const savedMessage = await this.messageRepository.save(message);
@@ -67,10 +69,11 @@ export class ConversationsService {
     return savedMessage;
   }
 
-  async getConversationMessages(conversationId: string): Promise<Message[]> {
+  async getConversationMessages(conversationId: string, limit = 50): Promise<Message[]> {
     return await this.messageRepository.find({
       where: { conversationId },
       order: { createdAt: 'ASC' },
+      take: limit,
     });
   }
 

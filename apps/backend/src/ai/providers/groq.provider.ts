@@ -13,18 +13,18 @@ import { buildUsageMetrics } from '../usage/usage-utils';
 import { ModelResolverService } from '../model-resolver.service';
 
 @Injectable()
-export class OpenRouterProvider extends AIProvider {
-  private readonly logger = new Logger(OpenRouterProvider.name);
-  readonly name = 'openrouter';
+export class GroqProvider extends AIProvider {
+  private readonly logger = new Logger(GroqProvider.name);
+  readonly name = 'groq';
   readonly capabilities: AIProviderCapabilities = {
     streaming: true,
     functionCalling: true,
     jsonMode: true,
     maxTokens: 4096,
-    supportsVision: true,
+    supportsVision: false,
   };
 
-  private client: OpenAI;
+  private client: OpenAI | null = null;
   private modelDefault: string;
   private modelFast: string;
   private modelQuality: string;
@@ -35,37 +35,47 @@ export class OpenRouterProvider extends AIProvider {
     private modelResolver: ModelResolverService,
   ) {
     super();
-    const apiKey = this.configService.get('OPENROUTER_API_KEY');
-    this.client = new OpenAI({
-      apiKey,
-      baseURL:
-        this.configService.get<string>('OPENROUTER_BASE_URL') ||
-        'https://openrouter.ai/api/v1',
-    });
+    const apiKey = this.configService.get<string>('GROQ_API_KEY');
+    if (apiKey) {
+      this.client = new OpenAI({
+        apiKey,
+        baseURL:
+          this.configService.get<string>('GROQ_BASE_URL') ||
+          'https://api.groq.com/openai/v1',
+      });
+    }
+
     this.modelDefault =
-      this.configService.get('OPENROUTER_MODEL') || 'arcee-ai/trinity-large-preview:free';
+      this.configService.get<string>('GROQ_MODEL') || 'llama-3.3-70b-versatile';
     this.modelFast =
-      this.configService.get('OPENROUTER_MODEL_FAST') || this.modelDefault;
+      this.configService.get<string>('GROQ_MODEL_FAST') ||
+      this.configService.get<string>('GROQ_MODEL_ROUTER_FAST') ||
+      'llama-3.1-8b-instant';
     this.modelQuality =
-      this.configService.get('OPENROUTER_MODEL_QUALITY') || this.modelDefault;
+      this.configService.get<string>('GROQ_MODEL_QUALITY') || this.modelDefault;
   }
 
   async isAvailable(): Promise<boolean> {
-    try {
-      const apiKey = this.configService.get('OPENROUTER_API_KEY');
-      return !!apiKey;
-    } catch {
-      return false;
-    }
+    return !!this.configService.get('GROQ_API_KEY');
   }
 
   async *generateUI(context: AIGenerationContext): AsyncIterableIterator<UISchemaChunk> {
     const trace = context.traceId || 'no-trace';
+    if (!this.client) {
+      this.logger.error(`[${trace}] groq_generate_error provider_not_configured`);
+      yield {
+        type: 'error',
+        data: { error: 'Groq provider is not configured' },
+        done: true,
+      };
+      return;
+    }
+
     const systemPrompt = this.buildSystemPrompt();
     const userPrompt = this.buildUserPrompt(context);
     const model = this.resolveModel(context);
     this.logger.log(
-      `[${trace}] openrouter_generate_start model=${model} promptLen=${userPrompt.length}`,
+      `[${trace}] groq_generate_start model=${model} promptLen=${userPrompt.length}`,
     );
 
     const messages = [
@@ -83,7 +93,7 @@ export class OpenRouterProvider extends AIProvider {
         response_format: { type: 'json_object' },
         stream: true,
         stream_options: { include_usage: true } as any,
-        temperature: 0.7,
+        temperature: 0.5,
       } as any);
 
       let accumulatedContent = '';
@@ -101,7 +111,7 @@ export class OpenRouterProvider extends AIProvider {
 
         if (partialChunks === 1 || partialChunks % 25 === 0) {
           this.logger.log(
-            `[${trace}] openrouter_generate_partial count=${partialChunks} contentLen=${content.length}`,
+            `[${trace}] groq_generate_partial count=${partialChunks} contentLen=${content.length}`,
           );
         }
 
@@ -115,7 +125,7 @@ export class OpenRouterProvider extends AIProvider {
       const uiSchema = JSON.parse(accumulatedContent);
       const usage = buildUsageMetrics({
         layer: 'schema_generation',
-        provider: 'openrouter',
+        provider: 'groq',
         model,
         promptText,
         completionText: accumulatedContent,
@@ -124,7 +134,7 @@ export class OpenRouterProvider extends AIProvider {
       });
 
       this.logger.log(
-        `[${trace}] openrouter_generate_complete partialChunks=${partialChunks} totalTokens=${usage.totalTokens}`,
+        `[${trace}] groq_generate_complete partialChunks=${partialChunks} totalTokens=${usage.totalTokens}`,
       );
 
       yield {
@@ -135,7 +145,7 @@ export class OpenRouterProvider extends AIProvider {
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`[${trace}] openrouter_generate_error error=${message}`);
+      this.logger.error(`[${trace}] groq_generate_error error=${message}`);
       yield {
         type: 'error',
         data: { error: message },
@@ -150,11 +160,21 @@ export class OpenRouterProvider extends AIProvider {
     context: AIGenerationContext,
   ): AsyncIterableIterator<UISchemaChunk> {
     const trace = context.traceId || 'no-trace';
+    if (!this.client) {
+      this.logger.error(`[${trace}] groq_update_error provider_not_configured`);
+      yield {
+        type: 'error',
+        data: { error: 'Groq provider is not configured' },
+        done: true,
+      };
+      return;
+    }
+
     const systemPrompt = this.buildSystemPrompt();
     const updatePrompt = this.buildUpdatePrompt(currentSchema, interaction, context);
     const model = this.resolveModel(context);
     this.logger.log(
-      `[${trace}] openrouter_update_start model=${model} promptLen=${updatePrompt.length}`,
+      `[${trace}] groq_update_start model=${model} promptLen=${updatePrompt.length}`,
     );
 
     const messages = [
@@ -171,7 +191,7 @@ export class OpenRouterProvider extends AIProvider {
         response_format: { type: 'json_object' },
         stream: true,
         stream_options: { include_usage: true } as any,
-        temperature: 0.7,
+        temperature: 0.5,
       } as any);
 
       let accumulatedContent = '';
@@ -189,7 +209,7 @@ export class OpenRouterProvider extends AIProvider {
 
         if (partialChunks === 1 || partialChunks % 25 === 0) {
           this.logger.log(
-            `[${trace}] openrouter_update_partial count=${partialChunks} contentLen=${content.length}`,
+            `[${trace}] groq_update_partial count=${partialChunks} contentLen=${content.length}`,
           );
         }
 
@@ -203,7 +223,7 @@ export class OpenRouterProvider extends AIProvider {
       const updatedSchema = JSON.parse(accumulatedContent);
       const usage = buildUsageMetrics({
         layer: 'schema_update',
-        provider: 'openrouter',
+        provider: 'groq',
         model,
         promptText,
         completionText: accumulatedContent,
@@ -212,7 +232,7 @@ export class OpenRouterProvider extends AIProvider {
       });
 
       this.logger.log(
-        `[${trace}] openrouter_update_complete partialChunks=${partialChunks} totalTokens=${usage.totalTokens}`,
+        `[${trace}] groq_update_complete partialChunks=${partialChunks} totalTokens=${usage.totalTokens}`,
       );
 
       yield {
@@ -223,7 +243,7 @@ export class OpenRouterProvider extends AIProvider {
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`[${trace}] openrouter_update_error error=${message}`);
+      this.logger.error(`[${trace}] groq_update_error error=${message}`);
       yield {
         type: 'error',
         data: { error: message },
@@ -325,10 +345,11 @@ Update the UI schema based on the interaction and request.`;
 
   private resolveModel(context: AIGenerationContext): string {
     const tier: ModelTier = context.routingDecision?.modelTier || 'balanced';
+
     try {
       return this.modelResolver.resolveModel({
         layer: 'schema',
-        provider: 'openrouter',
+        provider: 'groq',
         modelTier: tier,
       });
     } catch {

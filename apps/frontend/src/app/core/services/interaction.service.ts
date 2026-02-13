@@ -1,0 +1,304 @@
+import { Injectable, inject, ComponentRef, signal } from '@angular/core';
+import { ClientDataEngine } from './client-data-engine.service';
+
+/**
+ * Client-side interaction service.
+ *
+ * Listens to @Output events from dynamically rendered components and routes
+ * them entirely client-side:
+ *
+ *  - Form "state" events (input/select/checkbox changes) → update form state
+ *    store AND push filter updates to ClientDataEngine
+ *  - "action" events (button clicks, tab switches, etc.) → handled locally
+ *    (no backend roundtrip)
+ *
+ * The AI is ONLY called when the user types a new chat message.
+ */
+
+export type EventKind = 'action' | 'state';
+
+interface EventMapping {
+  kind: EventKind;
+  describe: (componentId: string | undefined, componentType: string, value: any) => string;
+}
+
+/** Registry of known @Output names → how to handle them */
+const EVENT_REGISTRY: Record<string, EventMapping> = {
+  // Form state events — update local store + data engine filters
+  valueChange: {
+    kind: 'state',
+    describe: (id, type, val) => `${type}${id ? ` "${id}"` : ''} value changed to "${val}"`,
+  },
+  change: {
+    kind: 'state',
+    describe: (id, type, val) => `${type}${id ? ` "${id}"` : ''} changed to "${val}"`,
+  },
+  checkedChange: {
+    kind: 'state',
+    describe: (id, _type, val) => `checkbox${id ? ` "${id}"` : ''} ${val ? 'checked' : 'unchecked'}`,
+  },
+
+  // Action events — handled locally (no backend dispatch)
+  btnClick: {
+    kind: 'action',
+    describe: (id, _type, _val) => `Button${id ? ` "${id}"` : ''} clicked`,
+  },
+  actionSelected: {
+    kind: 'action',
+    describe: (id, _type, val) =>
+      `Menu action "${val?.label || val?.id || val}" selected${id ? ` from "${id}"` : ''}`,
+  },
+  stepChange: {
+    kind: 'action',
+    describe: (id, _type, val) => `Wizard step changed to ${val}${id ? ` in "${id}"` : ''}`,
+  },
+  tabChange: {
+    kind: 'action',
+    describe: (id, _type, val) => `Tab "${val}" selected${id ? ` in "${id}"` : ''}`,
+  },
+  panelToggle: {
+    kind: 'action',
+    describe: (id, _type, val) =>
+      `Accordion panel "${val?.title || val}" toggled${id ? ` in "${id}"` : ''}`,
+  },
+  pageChange: {
+    kind: 'action',
+    describe: (id, _type, val) => `Page changed to ${val}${id ? ` in "${id}"` : ''}`,
+  },
+
+  // Blur — ignored
+  blur: {
+    kind: 'state',
+    describe: () => '',
+  },
+};
+
+/**
+ * Filter binding metadata attached to a form component via schema props.
+ * Example schema: { type: "input", props: { id: "search", filterTarget: "jobTable", filterField: "title" } }
+ */
+interface FilterBinding {
+  /** Data source id to filter (e.g. "jobTable") */
+  target: string;
+  /** Data field to filter on (e.g. "title", "location") */
+  field: string;
+  /** Filter operator (default: "contains") */
+  operator: 'contains' | 'equals' | 'gt' | 'lt' | 'gte' | 'lte' | 'in';
+}
+
+@Injectable({ providedIn: 'root' })
+export class InteractionService {
+  private dataEngine = inject(ClientDataEngine);
+
+  /** Live form-field values keyed by component id. */
+  private formState = new Map<string, any>();
+
+  /**
+   * Filter bindings: componentId → FilterBinding.
+   * Populated when a form component has `filterTarget` + `filterField` props.
+   */
+  private filterBindings = new Map<string, FilterBinding>();
+
+  /**
+   * Data component refs: sourceId → ComponentRef.
+   * Lets us push filtered data back to the component.
+   */
+  private dataComponentRefs = new Map<string, ComponentRef<any>>();
+
+  /** Signal: true when an interaction is in progress (kept for API compat). */
+  readonly interacting = signal(false);
+
+  // ── Context (kept for renderer compat, no-op for backend) ──────────
+
+  setContext(_conversationId: string, _messageId: string): void {
+    // No-op — we don't dispatch to backend anymore
+  }
+
+  clearContext(): void {
+    this.formState.clear();
+    this.filterBindings.clear();
+    this.dataComponentRefs.clear();
+    this.dataEngine.clearAll();
+  }
+
+  // ── Event wiring ───────────────────────────────────────────────────
+
+  /**
+   * Called by SchemaRendererService after creating a component.
+   * Subscribes to known @Outputs and routes them client-side.
+   */
+  wireComponentEvents(
+    componentRef: ComponentRef<any>,
+    componentType: string,
+    componentId?: string,
+    schemaProps?: Record<string, any>,
+  ): void {
+    // Seed initial form state
+    this.seedInitialState(componentRef, componentType, componentId);
+
+    // Register filter binding if the component has filterTarget
+    if (componentId && schemaProps?.['filterTarget'] && schemaProps?.['filterField']) {
+      this.filterBindings.set(componentId, {
+        target: schemaProps['filterTarget'],
+        field: schemaProps['filterField'],
+        operator: schemaProps['filterOperator'] || 'contains',
+      });
+    }
+
+    // Register data source if it's a data component with an id
+    if (componentId && this.isDataComponent(componentType)) {
+      const instance = componentRef.instance;
+      const data = instance.data ?? instance.items ?? instance.options ?? [];
+      const pageSize = schemaProps?.['pageSize'] ?? 0;
+      this.dataEngine.registerSource(componentId, data, pageSize);
+      this.dataComponentRefs.set(componentId, componentRef);
+    }
+
+    // Subscribe to all known @Outputs
+    for (const [eventName, mapping] of Object.entries(EVENT_REGISTRY)) {
+      const output = (componentRef.instance as any)[eventName];
+      if (!output || typeof output.subscribe !== 'function') continue;
+
+      output.subscribe((eventValue: any) => {
+        this.handleEvent(mapping, eventName, eventValue, componentType, componentId);
+      });
+    }
+  }
+
+  /**
+   * Seed form state with initial values.
+   */
+  private seedInitialState(
+    componentRef: ComponentRef<any>,
+    componentType: string,
+    componentId?: string,
+  ): void {
+    if (!componentId) return;
+
+    const instance = componentRef.instance;
+    const formTypes = ['input', 'select', 'textarea', 'checkbox'];
+    if (!formTypes.includes(componentType)) return;
+
+    if (componentType === 'checkbox') {
+      this.formState.set(componentId, instance.checked ?? false);
+    } else {
+      this.formState.set(componentId, instance.value ?? '');
+    }
+  }
+
+  private isDataComponent(type: string): boolean {
+    return ['table', 'list', 'listbox'].includes(type);
+  }
+
+  // ── Event handling (client-side only) ──────────────────────────────
+
+  private handleEvent(
+    mapping: EventMapping,
+    eventName: string,
+    eventValue: any,
+    componentType: string,
+    componentId?: string,
+  ): void {
+    if (eventName === 'blur') return;
+
+    if (mapping.kind === 'state') {
+      // Update local form state
+      if (componentId) {
+        this.formState.set(componentId, eventValue);
+      }
+
+      // Push to data engine if there's a filter binding
+      if (componentId) {
+        const binding = this.filterBindings.get(componentId);
+        if (binding) {
+          this.dataEngine.applyFilter(
+            binding.target,
+            componentId,
+            eventValue === '' || eventValue == null
+              ? null
+              : { field: binding.field, operator: binding.operator, value: eventValue },
+          );
+          // Push filtered data back to the data component
+          this.refreshDataComponent(binding.target);
+        }
+      }
+      return;
+    }
+
+    // Action events — handle locally
+    if (eventName === 'btnClick' && componentId) {
+      this.handleButtonAction(componentId);
+    }
+  }
+
+  /**
+   * Handle button clicks client-side.
+   * For buttons with special roles like "clearFilters", "nextPage", etc.
+   */
+  private handleButtonAction(componentId: string): void {
+    // Convention: button ids like "clearFilters_<sourceId>" clear all filters
+    if (componentId.startsWith('clearFilters_')) {
+      const sourceId = componentId.replace('clearFilters_', '');
+      for (const [filterId, binding] of this.filterBindings.entries()) {
+        if (binding.target === sourceId) {
+          this.dataEngine.applyFilter(sourceId, filterId, null);
+        }
+      }
+      this.refreshDataComponent(sourceId);
+    }
+
+    // Convention: "nextPage_<sourceId>" / "prevPage_<sourceId>"
+    if (componentId.startsWith('nextPage_')) {
+      const sourceId = componentId.replace('nextPage_', '');
+      const current = this.dataEngine.getCurrentPage(sourceId);
+      this.dataEngine.setPage(sourceId, current + 1);
+      this.refreshDataComponent(sourceId);
+    }
+    if (componentId.startsWith('prevPage_')) {
+      const sourceId = componentId.replace('prevPage_', '');
+      const current = this.dataEngine.getCurrentPage(sourceId);
+      this.dataEngine.setPage(sourceId, current - 1);
+      this.refreshDataComponent(sourceId);
+    }
+  }
+
+  /**
+   * Push the current filtered/sorted/paginated data from the engine
+   * back to the data component for re-render.
+   */
+  private refreshDataComponent(sourceId: string): void {
+    const ref = this.dataComponentRefs.get(sourceId);
+    if (!ref) return;
+
+    const filteredData = this.dataEngine.getData(sourceId);
+    const instance = ref.instance;
+
+    // Call updateData() if the component supports it (table, list)
+    if (typeof instance.updateData === 'function') {
+      instance.updateData(filteredData);
+    } else {
+      // Fallback: set data/items directly
+      if ('data' in instance) {
+        instance.data = filteredData;
+      } else if ('items' in instance) {
+        instance.items = filteredData;
+      }
+    }
+
+    ref.changeDetectorRef.markForCheck();
+  }
+
+  // ── Public accessors ───────────────────────────────────────────────
+
+  /** Get current form state snapshot. */
+  getFormSnapshot(): Record<string, any> {
+    const snapshot: Record<string, any> = {};
+    this.formState.forEach((val, key) => (snapshot[key] = val));
+    return snapshot;
+  }
+
+  /** Reset the interacting flag (kept for API compat). */
+  completeInteraction(): void {
+    this.interacting.set(false);
+  }
+}

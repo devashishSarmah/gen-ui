@@ -30,7 +30,8 @@
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "backend:build"
+        "buildTarget": "backend:build",
+        "runtimeArgs": ["--max-old-space-size=4096"]
       },
       "configurations": {
         "development": {

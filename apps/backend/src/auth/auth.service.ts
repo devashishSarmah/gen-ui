@@ -125,6 +125,10 @@ export class AuthService {
    * Exchange Google OAuth code for JWT token
    */
   async googleCallback(code: string): Promise<AuthResponseDto> {
+    // Use the frontend callback URL to match what was sent to Google initially
+    const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:4200';
+    const redirectUri = `${frontendUrl}/auth/google/callback`;
+
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -133,7 +137,7 @@ export class AuthService {
         client_secret: this.configService.get('GOOGLE_CLIENT_SECRET'),
         code,
         grant_type: 'authorization_code',
-        redirect_uri: this.configService.get('GOOGLE_CALLBACK_URL'),
+        redirect_uri: redirectUri,
       }),
     });
 

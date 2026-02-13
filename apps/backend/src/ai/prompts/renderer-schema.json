@@ -164,6 +164,19 @@
             "error": {
               "type": "string",
               "description": "Error message"
+            },
+            "filterTarget": {
+              "type": "string",
+              "description": "ID of the data component to filter"
+            },
+            "filterField": {
+              "type": "string",
+              "description": "Data field to filter on"
+            },
+            "filterOperator": {
+              "type": "string",
+              "enum": ["contains", "equals", "gt", "lt", "gte", "lte", "in"],
+              "description": "Filter comparison operator"
             }
           },
           "additionalProperties": false
@@ -223,6 +236,19 @@
             "error": {
               "type": "string",
               "description": "Error message"
+            },
+            "filterTarget": {
+              "type": "string",
+              "description": "ID of the data component to filter"
+            },
+            "filterField": {
+              "type": "string",
+              "description": "Data field to filter on"
+            },
+            "filterOperator": {
+              "type": "string",
+              "enum": ["contains", "equals", "gt", "lt", "gte", "lte", "in"],
+              "description": "Filter comparison operator"
             }
           },
           "additionalProperties": false
@@ -262,6 +288,19 @@
             "error": {
               "type": "string",
               "description": "Error message"
+            },
+            "filterTarget": {
+              "type": "string",
+              "description": "ID of the data component to filter"
+            },
+            "filterField": {
+              "type": "string",
+              "description": "Data field to filter on"
+            },
+            "filterOperator": {
+              "type": "string",
+              "enum": ["contains", "equals", "gt", "lt", "gte", "lte", "in"],
+              "description": "Filter comparison operator"
             }
           },
           "additionalProperties": false
@@ -314,6 +353,19 @@
             "error": {
               "type": "string",
               "description": "Error message"
+            },
+            "filterTarget": {
+              "type": "string",
+              "description": "ID of the data component to filter"
+            },
+            "filterField": {
+              "type": "string",
+              "description": "Data field to filter on"
+            },
+            "filterOperator": {
+              "type": "string",
+              "enum": ["contains", "equals", "gt", "lt", "gte", "lte", "in"],
+              "description": "Filter comparison operator"
             }
           },
           "additionalProperties": false
@@ -371,6 +423,19 @@
             "error": {
               "type": "string",
               "description": "Error message"
+            },
+            "filterTarget": {
+              "type": "string",
+              "description": "ID of the data component to filter"
+            },
+            "filterField": {
+              "type": "string",
+              "description": "Data field to filter on"
+            },
+            "filterOperator": {
+              "type": "string",
+              "enum": ["contains", "equals", "gt", "lt", "gte", "lte", "in"],
+              "description": "Filter comparison operator"
             }
           },
           "additionalProperties": false
@@ -830,6 +895,10 @@
         "props": {
           "type": "object",
           "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique identifier (required for client-side filtering)"
+            },
             "columns": {
               "type": "array",
               "items": {
@@ -863,6 +932,18 @@
             },
             "hoverable": {
               "type": "boolean"
+            },
+            "pageSize": {
+              "type": "number",
+              "description": "Rows per page (0 = no pagination)"
+            },
+            "rowHeight": {
+              "type": "number",
+              "description": "Row height in px for virtual scroll"
+            },
+            "maxVisibleRows": {
+              "type": "number",
+              "description": "Max visible rows in virtual scroll viewport"
             }
           },
           "additionalProperties": false
@@ -885,6 +966,10 @@
         "props": {
           "type": "object",
           "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique identifier (required for client-side filtering)"
+            },
             "items": {
               "type": "array",
               "items": {
@@ -908,6 +993,14 @@
             },
             "styled": {
               "type": "boolean"
+            },
+            "itemHeight": {
+              "type": "number",
+              "description": "Item height in px for virtual scroll"
+            },
+            "maxVisibleItems": {
+              "type": "number",
+              "description": "Max visible items in virtual scroll viewport"
             }
           },
           "additionalProperties": false

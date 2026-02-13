@@ -1,10 +1,25 @@
-import { Component, inject, OnInit, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, OnInit, HostListener, signal } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { RouterModule, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService } from './auth/auth.service';
 import { AnalyticsService } from './core/services/analytics.service';
-import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, User, LogOut, ChevronDown, LogIn } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  Github,
+  Heart,
+  ExternalLink,
+  Sparkles,
+  BookOpen,
+  User,
+  LogOut,
+  ChevronDown,
+  LogIn,
+  Sun,
+  Moon,
+  Menu,
+  X,
+} from 'lucide-angular';
 
 @Component({
   standalone: true,
@@ -13,11 +28,21 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
   template: `
     <div class="app-container">
       <header class="app-header">
-        <a routerLink="/" class="header-brand">
-          <img class="logo" [src]="'https://res.cloudinary.com/dmm7pipxt/image/upload/v1770762472/Gen%20UI/Layer/logo_w1jdum.png'" alt="Gen UI" />
-        </a>
-        <nav class="header-nav">
-          <a routerLink="/showcase" class="nav-link">
+        <div class="header-left">
+          <button
+            type="button"
+            class="mobile-nav-toggle"
+            (click)="mobileNavOpen.set(!mobileNavOpen())"
+            aria-label="Toggle navigation"
+          >
+            <lucide-icon [img]="mobileNavOpen() ? XIcon : MenuIcon" [size]="18"></lucide-icon>
+          </button>
+          <a routerLink="/" class="header-brand">
+            <img class="logo" [src]="'https://res.cloudinary.com/dmm7pipxt/image/upload/v1770762472/Gen%20UI/Layer/logo_w1jdum.png'" alt="Gen UI" />
+          </a>
+        </div>
+        <nav class="header-nav" [class.mobile-open]="mobileNavOpen()">
+          <a routerLink="/showcase" class="nav-link" (click)="mobileNavOpen.set(false)">
             <lucide-icon [img]="BookOpen" [size]="15"></lucide-icon>
             Docs
           </a>
@@ -25,6 +50,17 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
             <lucide-icon [img]="Github" [size]="15"></lucide-icon>
             GitHub
           </a>
+
+          <button
+            type="button"
+            class="theme-toggle"
+            (click)="toggleTheme()"
+            [attr.aria-label]="isDarkTheme ? 'Switch to light mode' : 'Switch to dark mode'"
+            [attr.title]="isDarkTheme ? 'Light mode' : 'Dark mode'"
+          >
+            <lucide-icon [img]="isDarkTheme ? SunIcon : MoonIcon" [size]="15"></lucide-icon>
+            <span class="hide-mobile">{{ isDarkTheme ? 'Light' : 'Dark' }}</span>
+          </button>
 
           @if (auth.isAuthenticatedSignal()) {
             <div class="profile-wrapper">
@@ -54,7 +90,7 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
               }
             </div>
           } @else {
-            <a routerLink="/login" class="nav-link sign-in-link">
+            <a routerLink="/login" class="nav-link sign-in-link" (click)="mobileNavOpen.set(false)">
               <lucide-icon [img]="LogInIcon" [size]="15"></lucide-icon>
               Sign in
             </a>
@@ -106,11 +142,35 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
       align-items: center;
       justify-content: space-between;
       padding: 0 1.25rem;
-      background: rgba(10, 11, 15, 0.55);
+      background: var(--app-chrome-bg, rgba(10, 11, 15, 0.55));
       backdrop-filter: blur(40px) saturate(200%);
       -webkit-backdrop-filter: blur(40px) saturate(200%);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 8px 32px rgba(0, 0, 0, 0.3);
+      border-bottom: 1px solid var(--app-chrome-border, rgba(255, 255, 255, 0.06));
+      box-shadow: var(--app-chrome-shadow, 0 1px 0 rgba(255, 255, 255, 0.03), 0 8px 32px rgba(0, 0, 0, 0.3));
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .mobile-nav-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0.35rem;
+      border: 1px solid var(--app-control-border, rgba(255, 255, 255, 0.08));
+      border-radius: var(--ds-radius-md);
+      background: var(--app-control-bg, rgba(255, 255, 255, 0.06));
+      color: var(--ds-text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .mobile-nav-toggle:hover {
+      color: var(--ds-text-primary);
+      background: var(--app-control-bg-hover, rgba(255, 255, 255, 0.1));
     }
 
     .header-brand {
@@ -122,6 +182,11 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
     .logo {
       height: 16px;
       width: auto;
+      transition: filter 0.3s ease;
+    }
+
+    :host-context([data-theme='light']) .logo {
+      filter: brightness(0);
     }
 
     .header-nav {
@@ -145,7 +210,7 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
 
     .nav-link:hover {
       color: var(--ds-text-primary);
-      background: rgba(255, 255, 255, 0.06);
+      background: var(--app-hover-bg, rgba(255, 255, 255, 0.06));
     }
 
     .sign-in-link {
@@ -157,7 +222,28 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
 
     .sign-in-link:hover {
       border-color: var(--ds-border-strong);
-      background: rgba(255, 255, 255, 0.08);
+      background: var(--app-control-bg-hover, rgba(255, 255, 255, 0.1));
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--ds-radius-pill);
+      border: 1px solid var(--app-control-border, rgba(255, 255, 255, 0.08));
+      background: var(--app-control-bg, rgba(255, 255, 255, 0.06));
+      color: var(--ds-text-secondary);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .theme-toggle:hover {
+      color: var(--ds-text-primary);
+      background: var(--app-control-bg-hover, rgba(255, 255, 255, 0.1));
+      border-color: var(--app-control-border-hover, rgba(255, 255, 255, 0.14));
     }
 
     /* ── Profile Dropdown ── */
@@ -171,8 +257,8 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
       align-items: center;
       gap: 0.4rem;
       padding: 0.3rem 0.6rem 0.3rem 0.3rem;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--app-control-bg, rgba(255, 255, 255, 0.06));
+      border: 1px solid var(--app-control-border, rgba(255, 255, 255, 0.08));
       border-radius: var(--ds-radius-pill);
       color: var(--ds-text-primary);
       font-size: 0.8rem;
@@ -182,8 +268,8 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
     }
 
     .profile-trigger:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.14);
+      background: var(--app-control-bg-hover, rgba(255, 255, 255, 0.1));
+      border-color: var(--app-control-border-hover, rgba(255, 255, 255, 0.14));
     }
 
     .avatar {
@@ -221,12 +307,12 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
       top: calc(100% + 6px);
       right: 0;
       min-width: 220px;
-      background: rgba(16, 18, 25, 0.95);
+      background: var(--app-menu-bg, rgba(16, 18, 25, 0.95));
       backdrop-filter: blur(48px) saturate(200%);
       -webkit-backdrop-filter: blur(48px) saturate(200%);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--app-menu-border, rgba(255, 255, 255, 0.1));
       border-radius: 12px;
-      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+      box-shadow: var(--app-menu-shadow, 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04));
       padding: 0.35rem;
       animation: dropdown-in 0.15s ease-out;
     }
@@ -248,7 +334,7 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
 
     .dropdown-divider {
       height: 1px;
-      background: rgba(255, 255, 255, 0.08);
+      background: var(--app-menu-divider, rgba(255, 255, 255, 0.08));
       margin: 0.25rem 0;
     }
 
@@ -269,7 +355,7 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
     }
 
     .dropdown-item:hover {
-      background: rgba(255, 255, 255, 0.06);
+      background: var(--app-hover-bg, rgba(255, 255, 255, 0.06));
       color: var(--ds-text-primary);
     }
 
@@ -284,13 +370,14 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
       overflow: hidden;
     }
 
-    /* ── Footer ── */
+    /* ── Footer ── full-width like header */
     .app-footer {
-      background: rgba(10, 11, 15, 0.6);
+      background: var(--app-chrome-bg, rgba(10, 11, 15, 0.55));
       backdrop-filter: blur(40px) saturate(200%);
       -webkit-backdrop-filter: blur(40px) saturate(200%);
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-      padding: 0.6rem 1.25rem;
+      border-top: 1px solid var(--app-chrome-border, rgba(255, 255, 255, 0.06));
+      box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.03), 0 -8px 32px rgba(0, 0, 0, 0.15);
+      padding: 0 1.25rem;
       height: var(--app-footer-height, 48px);
     }
 
@@ -298,8 +385,7 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
       display: flex;
       align-items: center;
       justify-content: space-between;
-      max-width: 1400px;
-      margin: 0 auto;
+      height: 100%;
     }
 
     .footer-left {
@@ -317,6 +403,11 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
     .footer-logo {
       height: 14px;
       width: auto;
+      transition: filter 0.3s ease;
+    }
+
+    :host-context([data-theme='light']) .footer-logo {
+      filter: brightness(0);
     }
 
     .footer-sep {
@@ -370,13 +461,77 @@ import { LucideAngularModule, Github, Heart, ExternalLink, Sparkles, BookOpen, U
     .footer-link:hover {
       color: var(--ds-text-primary);
       border-color: var(--ds-border-strong);
-      background: rgba(255, 255, 255, 0.04);
+      background: var(--app-footer-link-bg-hover, rgba(255, 255, 255, 0.04));
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .mobile-nav-toggle {
+        display: inline-flex;
+      }
+
+      .header-nav {
+        display: none;
+        position: absolute;
+        top: var(--app-header-height, 60px);
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0.5rem;
+        gap: 0.25rem;
+        background: var(--app-chrome-bg, rgba(10, 11, 15, 0.95));
+        backdrop-filter: blur(40px) saturate(200%);
+        -webkit-backdrop-filter: blur(40px) saturate(200%);
+        border-bottom: 1px solid var(--app-chrome-border, rgba(255, 255, 255, 0.06));
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        z-index: 99;
+      }
+
+      .header-nav.mobile-open {
+        display: flex;
+      }
+
+      .header-nav .nav-link,
+      .header-nav .theme-toggle {
+        justify-content: flex-start;
+        width: 100%;
+        padding: 0.55rem 0.75rem;
+        border-radius: var(--ds-radius-md);
+      }
+
+      .profile-wrapper {
+        margin-left: 0;
+      }
+
+      .profile-trigger {
+        width: 100%;
+        justify-content: flex-start;
+        padding: 0.45rem 0.65rem;
+      }
+
+      .dropdown-menu {
+        position: static;
+        width: 100%;
+        margin-top: 0.25rem;
+        border-radius: var(--ds-radius-md);
+      }
     }
 
     @media (max-width: 640px) {
+      .app-header {
+        padding: 0 0.75rem;
+      }
+
       .footer-center { display: none; }
       .footer-tagline { display: none; }
       .profile-name { display: none; }
+      .hide-mobile { display: none; }
+      .theme-toggle { padding: 0.35rem 0.5rem; }
+
+      .app-footer {
+        padding: 0 0.75rem;
+      }
     }
   `],
 })
@@ -385,6 +540,7 @@ export class AppComponent implements OnInit {
   auth = inject(AuthService);
   private readonly analytics = inject(AnalyticsService);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
 
   readonly Github = Github;
   readonly Heart = Heart;
@@ -395,11 +551,22 @@ export class AppComponent implements OnInit {
   readonly LogOutIcon = LogOut;
   readonly ChevronDown = ChevronDown;
   readonly LogInIcon = LogIn;
+  readonly SunIcon = Sun;
+  readonly MoonIcon = Moon;
+  readonly MenuIcon = Menu;
+  readonly XIcon = X;
 
   dropdownOpen = false;
+  mobileNavOpen = signal(false);
+  theme: 'dark' | 'light' = 'dark';
+
+  get isDarkTheme(): boolean {
+    return this.theme === 'dark';
+  }
 
   ngOnInit(): void {
     this.auth.initAuth();
+    this.initTheme();
 
     // Track page views on route changes
     this.router.events
@@ -420,5 +587,38 @@ export class AppComponent implements OnInit {
   logout(): void {
     this.auth.logout();
     this.dropdownOpen = false;
+    this.router.navigate(['/login']);
+  }
+
+  toggleTheme(): void {
+    this.setTheme(this.theme === 'dark' ? 'light' : 'dark', true);
+  }
+
+  private initTheme(): void {
+    const storedTheme =
+      typeof window !== 'undefined' ? localStorage.getItem('gen-ui-theme') : null;
+
+    if (storedTheme === 'light' || storedTheme === 'dark') {
+      this.setTheme(storedTheme, false);
+      return;
+    }
+
+    const prefersDark =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    this.setTheme(prefersDark ? 'dark' : 'light', false);
+  }
+
+  private setTheme(theme: 'dark' | 'light', persist: boolean): void {
+    this.theme = theme;
+    const root = this.document.documentElement;
+    root.setAttribute('data-theme', theme);
+    root.style.colorScheme = theme;
+
+    if (persist && typeof window !== 'undefined') {
+      localStorage.setItem('gen-ui-theme', theme);
+    }
   }
 }
