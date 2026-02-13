@@ -7,6 +7,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY nx.json ./
 COPY tsconfig.base.json ./
+COPY .postcssrc.json ./
+COPY postcss.config.js ./
 
 # Install dependencies
 RUN npm ci --legacy-peer-deps
@@ -14,6 +16,7 @@ RUN npm ci --legacy-peer-deps
 # Copy source code
 COPY apps/frontend ./apps/frontend
 COPY libs/shared ./libs/shared
+COPY libs/design-system ./libs/design-system
 
 # Build frontend
 RUN npx nx build frontend --configuration=production

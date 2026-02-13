@@ -14,6 +14,10 @@ RUN npm ci --legacy-peer-deps
 # Copy source code
 COPY apps/backend ./apps/backend
 COPY libs/shared ./libs/shared
+COPY libs/design-system ./libs/design-system
+
+# Regenerate manifest-derived backend prompts from design-system metadata
+RUN npm run generate:schema
 
 # Build backend
 RUN npx nx build backend --configuration=production
