@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DsIconComponent } from '../shared/ds-icon.component';
 
 export interface ListItem {
@@ -13,31 +14,52 @@ export interface ListItem {
 @Component({
   selector: 'app-list',
   standalone: true,
-  imports: [CommonModule, DsIconComponent],
+  imports: [CommonModule, ScrollingModule, DsIconComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ul class="list" [class.list-styled]="styled">
-      <li *ngFor="let item of items" class="list-item" [class.list-item-clickable]="item.action">
-        <div class="list-item-content">
-          <span *ngIf="item.icon" class="list-item-icon"><ds-icon [name]="item.icon" [size]="16"></ds-icon></span>
-          <div class="list-item-text">
-            <div class="list-item-label">{{ item.label }}</div>
-            <div *ngIf="item.description" class="list-item-description">
-              {{ item.description }}
-            </div>
+      <!-- Virtual scroll for large lists (>100 items) -->
+      <ng-container *ngIf="useVirtualScroll(); else normalList">
+        <cdk-virtual-scroll-viewport
+          [itemSize]="itemHeight"
+          [style.height.px]="viewportHeight"
+          class="virtual-viewport"
+        >
+          <li *cdkVirtualFor="let item of displayItems()" class="list-item" [class.list-item-clickable]="item.action">
+            <ng-container *ngTemplateOutlet="itemTpl; context: { $implicit: item }"></ng-container>
+          </li>
+        </cdk-virtual-scroll-viewport>
+      </ng-container>
+      <ng-template #normalList>
+        <li *ngFor="let item of displayItems()" class="list-item" [class.list-item-clickable]="item.action">
+          <ng-container *ngTemplateOutlet="itemTpl; context: { $implicit: item }"></ng-container>
+        </li>
+      </ng-template>
+      <li *ngIf="displayItems().length === 0" class="list-empty">
+        {{ items.length > 0 ? 'No matching results' : 'No items' }}
+      </li>
+    </ul>
+
+    <ng-template #itemTpl let-item>
+      <div class="list-item-content">
+        <span *ngIf="item.icon" class="list-item-icon"><ds-icon [name]="item.icon" [size]="16"></ds-icon></span>
+        <div class="list-item-text">
+          <div class="list-item-label">{{ item.label }}</div>
+          <div *ngIf="item.description" class="list-item-description">
+            {{ item.description }}
           </div>
         </div>
-        <button
-          *ngIf="item.action"
-          (click)="item.action()"
-          class="list-item-action"
-          type="button"
-          [attr.aria-label]="'Open ' + item.label"
-        >
-          →
-        </button>
-      </li>
-      <li *ngIf="!items || items.length === 0" class="list-empty">No items</li>
-    </ul>
+      </div>
+      <button
+        *ngIf="item.action"
+        (click)="item.action()"
+        class="list-item-action"
+        type="button"
+        [attr.aria-label]="'Open ' + item.label"
+      >
+        →
+      </button>
+    </ng-template>
   `,
   styles: [
     `
@@ -197,7 +219,32 @@ export interface ListItem {
     `,
   ],
 })
-export class ListComponent {
+export class ListComponent implements OnInit, OnChanges {
   @Input() items: ListItem[] = [];
   @Input() styled = true;
+  @Input() itemHeight = 48;
+  @Input() maxVisibleItems = 15;
+
+  private readonly dataSignal = signal<ListItem[]>([]);
+  readonly displayItems = computed(() => this.dataSignal());
+  readonly useVirtualScroll = computed(() => this.dataSignal().length > 100);
+
+  get viewportHeight(): number {
+    return this.itemHeight * Math.min(this.maxVisibleItems, this.dataSignal().length);
+  }
+
+  ngOnInit(): void {
+    this.dataSignal.set(this.items);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['items']) {
+      this.dataSignal.set(this.items);
+    }
+  }
+
+  /** Called by InteractionService / ClientDataEngine to update displayed data. */
+  updateData(filteredItems: ListItem[]): void {
+    this.dataSignal.set(filteredItems);
+  }
 }

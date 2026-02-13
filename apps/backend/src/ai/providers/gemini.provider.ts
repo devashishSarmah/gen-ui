@@ -13,9 +13,9 @@ import { buildUsageMetrics } from '../usage/usage-utils';
 import { ModelResolverService } from '../model-resolver.service';
 
 @Injectable()
-export class OpenRouterProvider extends AIProvider {
-  private readonly logger = new Logger(OpenRouterProvider.name);
-  readonly name = 'openrouter';
+export class GeminiProvider extends AIProvider {
+  private readonly logger = new Logger(GeminiProvider.name);
+  readonly name = 'gemini';
   readonly capabilities: AIProviderCapabilities = {
     streaming: true,
     functionCalling: true,
@@ -24,7 +24,7 @@ export class OpenRouterProvider extends AIProvider {
     supportsVision: true,
   };
 
-  private client: OpenAI;
+  private client: OpenAI | null = null;
   private modelDefault: string;
   private modelFast: string;
   private modelQuality: string;
@@ -35,37 +35,57 @@ export class OpenRouterProvider extends AIProvider {
     private modelResolver: ModelResolverService,
   ) {
     super();
-    const apiKey = this.configService.get('OPENROUTER_API_KEY');
-    this.client = new OpenAI({
-      apiKey,
-      baseURL:
-        this.configService.get<string>('OPENROUTER_BASE_URL') ||
-        'https://openrouter.ai/api/v1',
-    });
+
+    const apiKey =
+      this.configService.get<string>('GEMINI_API_KEY') ||
+      this.configService.get<string>('GOOGLE_API_KEY');
+
+    if (apiKey) {
+      this.client = new OpenAI({
+        apiKey,
+        baseURL:
+          this.configService.get<string>('GEMINI_BASE_URL') ||
+          'https://generativelanguage.googleapis.com/v1beta/openai/',
+      });
+    }
+
     this.modelDefault =
-      this.configService.get('OPENROUTER_MODEL') || 'arcee-ai/trinity-large-preview:free';
+      this.configService.get<string>('GEMINI_MODEL') ||
+      this.configService.get<string>('GEMINI_MODEL_PRO') ||
+      'gemini-2.5-pro';
+
     this.modelFast =
-      this.configService.get('OPENROUTER_MODEL_FAST') || this.modelDefault;
+      this.configService.get<string>('GEMINI_MODEL_FAST') ||
+      this.configService.get<string>('GEMINI_MODEL') ||
+      'gemini-2.0-flash';
+
     this.modelQuality =
-      this.configService.get('OPENROUTER_MODEL_QUALITY') || this.modelDefault;
+      this.configService.get<string>('GEMINI_MODEL_QUALITY') ||
+      this.configService.get<string>('GEMINI_MODEL_PRO') ||
+      this.modelDefault;
   }
 
   async isAvailable(): Promise<boolean> {
-    try {
-      const apiKey = this.configService.get('OPENROUTER_API_KEY');
-      return !!apiKey;
-    } catch {
-      return false;
-    }
+    return !!this.client;
   }
 
   async *generateUI(context: AIGenerationContext): AsyncIterableIterator<UISchemaChunk> {
     const trace = context.traceId || 'no-trace';
+    if (!this.client) {
+      this.logger.error(`[${trace}] gemini_generate_error provider_not_configured`);
+      yield {
+        type: 'error',
+        data: { error: 'Gemini provider is not configured' },
+        done: true,
+      };
+      return;
+    }
+
     const systemPrompt = this.buildSystemPrompt();
     const userPrompt = this.buildUserPrompt(context);
     const model = this.resolveModel(context);
     this.logger.log(
-      `[${trace}] openrouter_generate_start model=${model} promptLen=${userPrompt.length}`,
+      `[${trace}] gemini_generate_start model=${model} promptLen=${userPrompt.length}`,
     );
 
     const messages = [
@@ -83,7 +103,7 @@ export class OpenRouterProvider extends AIProvider {
         response_format: { type: 'json_object' },
         stream: true,
         stream_options: { include_usage: true } as any,
-        temperature: 0.7,
+        temperature: 0.2,
       } as any);
 
       let accumulatedContent = '';
@@ -101,7 +121,7 @@ export class OpenRouterProvider extends AIProvider {
 
         if (partialChunks === 1 || partialChunks % 25 === 0) {
           this.logger.log(
-            `[${trace}] openrouter_generate_partial count=${partialChunks} contentLen=${content.length}`,
+            `[${trace}] gemini_generate_partial count=${partialChunks} contentLen=${content.length}`,
           );
         }
 
@@ -112,10 +132,14 @@ export class OpenRouterProvider extends AIProvider {
         };
       }
 
-      const uiSchema = JSON.parse(accumulatedContent);
+      const uiSchema = this.parseSchemaFromModelOutput(
+        accumulatedContent,
+        trace,
+        'generate',
+      );
       const usage = buildUsageMetrics({
         layer: 'schema_generation',
-        provider: 'openrouter',
+        provider: 'gemini',
         model,
         promptText,
         completionText: accumulatedContent,
@@ -124,7 +148,7 @@ export class OpenRouterProvider extends AIProvider {
       });
 
       this.logger.log(
-        `[${trace}] openrouter_generate_complete partialChunks=${partialChunks} totalTokens=${usage.totalTokens}`,
+        `[${trace}] gemini_generate_complete partialChunks=${partialChunks} totalTokens=${usage.totalTokens}`,
       );
 
       yield {
@@ -135,7 +159,7 @@ export class OpenRouterProvider extends AIProvider {
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`[${trace}] openrouter_generate_error error=${message}`);
+      this.logger.error(`[${trace}] gemini_generate_error error=${message}`);
       yield {
         type: 'error',
         data: { error: message },
@@ -150,11 +174,21 @@ export class OpenRouterProvider extends AIProvider {
     context: AIGenerationContext,
   ): AsyncIterableIterator<UISchemaChunk> {
     const trace = context.traceId || 'no-trace';
+    if (!this.client) {
+      this.logger.error(`[${trace}] gemini_update_error provider_not_configured`);
+      yield {
+        type: 'error',
+        data: { error: 'Gemini provider is not configured' },
+        done: true,
+      };
+      return;
+    }
+
     const systemPrompt = this.buildSystemPrompt();
     const updatePrompt = this.buildUpdatePrompt(currentSchema, interaction, context);
     const model = this.resolveModel(context);
     this.logger.log(
-      `[${trace}] openrouter_update_start model=${model} promptLen=${updatePrompt.length}`,
+      `[${trace}] gemini_update_start model=${model} promptLen=${updatePrompt.length}`,
     );
 
     const messages = [
@@ -171,7 +205,7 @@ export class OpenRouterProvider extends AIProvider {
         response_format: { type: 'json_object' },
         stream: true,
         stream_options: { include_usage: true } as any,
-        temperature: 0.7,
+        temperature: 0.2,
       } as any);
 
       let accumulatedContent = '';
@@ -189,7 +223,7 @@ export class OpenRouterProvider extends AIProvider {
 
         if (partialChunks === 1 || partialChunks % 25 === 0) {
           this.logger.log(
-            `[${trace}] openrouter_update_partial count=${partialChunks} contentLen=${content.length}`,
+            `[${trace}] gemini_update_partial count=${partialChunks} contentLen=${content.length}`,
           );
         }
 
@@ -200,10 +234,14 @@ export class OpenRouterProvider extends AIProvider {
         };
       }
 
-      const updatedSchema = JSON.parse(accumulatedContent);
+      const updatedSchema = this.parseSchemaFromModelOutput(
+        accumulatedContent,
+        trace,
+        'update',
+      );
       const usage = buildUsageMetrics({
         layer: 'schema_update',
-        provider: 'openrouter',
+        provider: 'gemini',
         model,
         promptText,
         completionText: accumulatedContent,
@@ -212,7 +250,7 @@ export class OpenRouterProvider extends AIProvider {
       });
 
       this.logger.log(
-        `[${trace}] openrouter_update_complete partialChunks=${partialChunks} totalTokens=${usage.totalTokens}`,
+        `[${trace}] gemini_update_complete partialChunks=${partialChunks} totalTokens=${usage.totalTokens}`,
       );
 
       yield {
@@ -223,7 +261,7 @@ export class OpenRouterProvider extends AIProvider {
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`[${trace}] openrouter_update_error error=${message}`);
+      this.logger.error(`[${trace}] gemini_update_error error=${message}`);
       yield {
         type: 'error',
         data: { error: message },
@@ -328,7 +366,7 @@ Update the UI schema based on the interaction and request.`;
     try {
       return this.modelResolver.resolveModel({
         layer: 'schema',
-        provider: 'openrouter',
+        provider: 'gemini',
         modelTier: tier,
       });
     } catch {
@@ -350,5 +388,121 @@ Update the UI schema based on the interaction and request.`;
       }
       return { role: msg.role, content };
     });
+  }
+
+  private parseSchemaFromModelOutput(
+    rawContent: string,
+    trace: string,
+    phase: 'generate' | 'update',
+  ): any {
+    const normalized = String(rawContent || '').trim();
+    const candidates = this.buildJsonCandidates(normalized);
+    let lastError: unknown = null;
+
+    for (const candidate of candidates) {
+      try {
+        return JSON.parse(candidate);
+      } catch (error) {
+        lastError = error;
+      }
+
+      try {
+        return JSON.parse(this.repairJsonString(candidate));
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    const detail =
+      lastError instanceof Error ? lastError.message : String(lastError || 'Unknown parse error');
+    const preview = this.safePreview(normalized);
+
+    this.logger.warn(
+      `[${trace}] gemini_${phase}_json_parse_failed detail=${detail} preview=${preview}`,
+    );
+
+    throw new Error(`Gemini returned invalid JSON (${phase})`);
+  }
+
+  private buildJsonCandidates(content: string): string[] {
+    const candidates: string[] = [];
+    const trimmed = String(content || '').trim();
+    if (trimmed) {
+      candidates.push(trimmed);
+    }
+
+    const extracted = this.extractJsonString(trimmed);
+    if (extracted && extracted !== trimmed) {
+      candidates.push(extracted);
+    }
+
+    return [...new Set(candidates)];
+  }
+
+  private extractJsonString(value: string): string {
+    const text = (value || '').trim();
+
+    const fenced =
+      text.match(/```json\s*([\s\S]*?)\s*```/i) ||
+      text.match(/```\s*([\s\S]*?)\s*```/);
+    if (fenced?.[1]) {
+      return fenced[1].trim();
+    }
+
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+      return text.slice(firstBrace, lastBrace + 1).trim();
+    }
+
+    const firstBracket = text.indexOf('[');
+    const lastBracket = text.lastIndexOf(']');
+    if (firstBracket >= 0 && lastBracket > firstBracket) {
+      return text.slice(firstBracket, lastBracket + 1).trim();
+    }
+
+    return text;
+  }
+
+  private repairJsonString(value: string): string {
+    let repaired = String(value || '').trim();
+
+    // Normalize special quote characters and remove invisible leading marks.
+    repaired = repaired
+      .replace(/^\uFEFF/, '')
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"');
+
+    // Remove trailing commas before object/array closes.
+    repaired = repaired.replace(/,\s*([}\]])/g, '$1');
+
+    // Quote unquoted object keys: { key: ... } -> { "key": ... }
+    repaired = repaired.replace(
+      /([{,]\s*)([A-Za-z_$][A-Za-z0-9_$-]*)(\s*:)/g,
+      '$1"$2"$3',
+    );
+
+    // Quote bareword string values: "type": paragraph -> "type": "paragraph"
+    repaired = repaired.replace(
+      /(:\s*)([A-Za-z_][A-Za-z0-9_-]*)(\s*[,}\]])/g,
+      (_match, prefix: string, token: string, suffix: string) => {
+        if (/^(true|false|null)$/i.test(token)) {
+          return `${prefix}${token.toLowerCase()}${suffix}`;
+        }
+        if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(token)) {
+          return `${prefix}${token}${suffix}`;
+        }
+        return `${prefix}"${token}"${suffix}`;
+      },
+    );
+
+    return repaired;
+  }
+
+  private safePreview(value: string): string {
+    return value
+      .replace(/\s+/g, ' ')
+      .slice(0, 220)
+      .replace(/"/g, "'");
   }
 }

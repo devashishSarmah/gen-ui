@@ -1,13 +1,17 @@
+import { runtimeEnv } from './runtime-env';
+
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:3000', // Update with production API URL
+  apiUrl: runtimeEnv.API_URL || 'http://localhost:3000',
+  frontendUrl: runtimeEnv.FRONTEND_URL || 'http://localhost:4200',
+  gaMeasurementId: runtimeEnv.GA_MEASUREMENT_ID || '',
   oauth: {
     github: {
-      clientId: process.env['GITHUB_CLIENT_ID'] || 'YOUR_GITHUB_CLIENT_ID',
+      clientId: runtimeEnv.GITHUB_CLIENT_ID || '',
       scope: 'user:email',
     },
     google: {
-      clientId: process.env['GOOGLE_CLIENT_ID'] || 'YOUR_GOOGLE_CLIENT_ID',
+      clientId: runtimeEnv.GOOGLE_CLIENT_ID || '',
       scope: 'email profile',
     },
   },

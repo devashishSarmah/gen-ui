@@ -1,8 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import OpenAI from 'openai';
 import { ManifestLoaderService } from '../manifest-loader.service';
-import { AIGenerationContext } from '../providers/ai-provider.interface';
+import {
+  AIGenerationContext,
+  AIUsageMetrics,
+  ModelTier,
+} from '../providers/ai-provider.interface';
+import { LayerLLMService } from '../layer-llm.service';
 
 /**
  * UX Designer Agent
@@ -14,30 +17,19 @@ import { AIGenerationContext } from '../providers/ai-provider.interface';
 @Injectable()
 export class UXDesignerAgentService {
   private readonly logger = new Logger(UXDesignerAgentService.name);
-  private client: OpenAI | null = null;
-  private model: string;
 
   constructor(
-    private configService: ConfigService,
     private manifestLoader: ManifestLoaderService,
-  ) {
-    const apiKey = this.configService.get('OPENROUTER_API_KEY');
-    if (apiKey) {
-      this.client = new OpenAI({
-        apiKey,
-        baseURL: 'https://openrouter.ai/api/v1',
-      });
-    }
-    this.model =
-      this.configService.get('OPENROUTER_MODEL') ||
-      'arcee-ai/trinity-large-preview:free';
-  }
+    private layerLLMService: LayerLLMService,
+  ) {}
 
-  async planUX(context: AIGenerationContext): Promise<UXPlan | null> {
-    if (!this.client) return null;
-
+  async planUX(context: AIGenerationContext): Promise<UXPlanResult> {
+    const trace = context.traceId || 'no-trace';
     const manifest = this.manifestLoader.getManifest();
-    if (!manifest) return null;
+    if (!manifest) {
+      this.logger.warn(`[${trace}] ux_plan_skipped reason=no_manifest`);
+      return { plan: null };
+    }
 
     const availableLayouts = manifest.components
       .filter((c) => c.childrenRules.isContainer)
@@ -59,7 +51,7 @@ Your constraints:
 
 You MUST output ONLY valid JSON in this shape:
 {
-  "layout": "grid|flexbox|tabs|accordion|card",
+  "layout": "grid|flexbox|tabs|accordion|card|split-layout",
   "sections": [
     {
       "purpose": "string describing what this section does",
@@ -70,36 +62,65 @@ You MUST output ONLY valid JSON in this shape:
   ],
   "interactionModel": "filter-locally|details-on-demand|paginate|tabbed-navigation|wizard-flow",
   "densityNotes": "specific density choices for this layout",
-  "iconSuggestions": { "sectionName": "lucide-icon-name" }
+  "iconSuggestions": { "sectionName": "lucide-icon-name" },
+  "patchStrategy": {
+    "preferPatch": true,
+    "targetAreas": ["section-or-component-id"],
+    "operations": ["add|replace|remove|update"]
+  }
 }
 
 Do NOT produce the final UI schema. Only recommend structure.`;
 
+    const tier: ModelTier = context.routingDecision?.modelTier === 'quality' ? 'quality' : 'balanced';
+    this.logger.log(
+      `[${trace}] ux_plan_start tier=${tier} hasCurrentUiState=${!!context.currentUiState}`,
+    );
+
     try {
-      const response = await this.client.chat.completions.create({
-        model: this.model,
+      const response = await this.layerLLMService.complete({
+        layer: 'ux',
+        traceId: context.traceId,
+        modelTier: tier,
+        responseType: 'json',
+        temperature: 0.4,
         messages: [
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
             content: `User request: "${context.userPrompt}"\n\nCurrent UI state: ${
-              context.currentUiState ? JSON.stringify(context.currentUiState).slice(0, 2000) : 'none'
+              context.currentUiState
+                ? JSON.stringify(context.currentUiState).slice(0, 3000)
+                : 'none'
             }`,
           },
         ],
-        response_format: { type: 'json_object' },
-        temperature: 0.5,
       });
 
-      const content = response.choices[0]?.message?.content || '';
-      const plan = JSON.parse(content) as UXPlan;
-      this.logger.debug(`UX plan: ${plan.layout} with ${plan.sections?.length || 0} sections`);
-      return plan;
+      if (!response?.json) {
+        this.logger.warn(`[${trace}] ux_plan_empty_response`);
+        return { plan: null };
+      }
+
+      const plan = response.json as UXPlan;
+      this.logger.log(
+        `[${trace}] ux_plan_success layout=${plan.layout} sections=${plan.sections?.length || 0}`,
+      );
+
+      return {
+        plan,
+        usage: response.usage,
+      };
     } catch (error) {
-      this.logger.warn('UX Designer Agent failed, skipping plan', error);
-      return null;
+      this.logger.warn(`[${trace}] ux_plan_failed`, error as any);
+      return { plan: null };
     }
   }
+}
+
+export interface UXPlanResult {
+  plan: UXPlan | null;
+  usage?: AIUsageMetrics;
 }
 
 export interface UXPlan {
@@ -113,4 +134,9 @@ export interface UXPlan {
   interactionModel: string;
   densityNotes: string;
   iconSuggestions: Record<string, string>;
+  patchStrategy?: {
+    preferPatch: boolean;
+    targetAreas: string[];
+    operations: string[];
+  };
 }

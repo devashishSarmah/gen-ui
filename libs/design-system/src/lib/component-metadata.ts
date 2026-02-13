@@ -44,6 +44,9 @@ export const COMPONENT_METADATA: ComponentMetadata[] = [
       required: { type: 'boolean', default: false },
       pattern: { type: 'string', description: 'Regex pattern for validation' },
       error: { type: 'string', description: 'Error message' },
+      filterTarget: { type: 'string', description: 'ID of the data component to filter' },
+      filterField: { type: 'string', description: 'Data field to filter on' },
+      filterOperator: { type: 'string', enum: ['contains', 'equals', 'gt', 'lt', 'gte', 'lte', 'in'], default: 'contains', description: 'Filter comparison operator' },
     },
   },
   {
@@ -69,6 +72,9 @@ export const COMPONENT_METADATA: ComponentMetadata[] = [
       disabled: { type: 'boolean', default: false },
       required: { type: 'boolean', default: false },
       error: { type: 'string', description: 'Error message' },
+      filterTarget: { type: 'string', description: 'ID of the data component to filter' },
+      filterField: { type: 'string', description: 'Data field to filter on' },
+      filterOperator: { type: 'string', enum: ['contains', 'equals', 'gt', 'lt', 'gte', 'lte', 'in'], default: 'equals', description: 'Filter comparison operator' },
     },
   },
   {
@@ -81,6 +87,9 @@ export const COMPONENT_METADATA: ComponentMetadata[] = [
       checked: { type: 'boolean', default: false },
       disabled: { type: 'boolean', default: false },
       error: { type: 'string', description: 'Error message' },
+      filterTarget: { type: 'string', description: 'ID of the data component to filter' },
+      filterField: { type: 'string', description: 'Data field to filter on' },
+      filterOperator: { type: 'string', enum: ['contains', 'equals', 'gt', 'lt', 'gte', 'lte', 'in'], default: 'equals', description: 'Filter comparison operator' },
     },
   },
   {
@@ -104,6 +113,9 @@ export const COMPONENT_METADATA: ComponentMetadata[] = [
       },
       disabled: { type: 'boolean', default: false },
       error: { type: 'string', description: 'Error message' },
+      filterTarget: { type: 'string', description: 'ID of the data component to filter' },
+      filterField: { type: 'string', description: 'Data field to filter on' },
+      filterOperator: { type: 'string', enum: ['contains', 'equals', 'gt', 'lt', 'gte', 'lte', 'in'], default: 'equals', description: 'Filter comparison operator' },
     },
   },
   {
@@ -121,6 +133,9 @@ export const COMPONENT_METADATA: ComponentMetadata[] = [
       disabled: { type: 'boolean', default: false },
       required: { type: 'boolean', default: false },
       error: { type: 'string', description: 'Error message' },
+      filterTarget: { type: 'string', description: 'ID of the data component to filter' },
+      filterField: { type: 'string', description: 'Data field to filter on' },
+      filterOperator: { type: 'string', enum: ['contains', 'equals', 'gt', 'lt', 'gte', 'lte', 'in'], default: 'contains', description: 'Filter comparison operator' },
     },
   },
   {
@@ -286,8 +301,9 @@ export const COMPONENT_METADATA: ComponentMetadata[] = [
   {
     name: 'table',
     category: 'data-display',
-    description: 'Data table with striping and borders',
+    description: 'Data table with striping, borders, sorting, and pagination. Virtual scroll auto-enabled >100 rows.',
     propsSchema: {
+      id: { type: 'string', description: 'Unique identifier (required for client-side filtering)' },
       columns: {
         type: 'array',
         items: {
@@ -308,13 +324,17 @@ export const COMPONENT_METADATA: ComponentMetadata[] = [
       striped: { type: 'boolean', default: true },
       bordered: { type: 'boolean', default: true },
       hoverable: { type: 'boolean', default: true },
+      pageSize: { type: 'number', default: 0, description: 'Rows per page (0 = no pagination)' },
+      rowHeight: { type: 'number', default: 36, description: 'Row height in px for virtual scroll' },
+      maxVisibleRows: { type: 'number', default: 15, description: 'Max visible rows in virtual scroll viewport' },
     },
   },
   {
     name: 'list',
     category: 'data-display',
-    description: 'List component with items and descriptions',
+    description: 'List component with items and descriptions. Virtual scroll auto-enabled >100 items.',
     propsSchema: {
+      id: { type: 'string', description: 'Unique identifier (required for client-side filtering)' },
       items: {
         type: 'array',
         items: {
@@ -329,6 +349,8 @@ export const COMPONENT_METADATA: ComponentMetadata[] = [
         description: 'Array of list items',
       },
       styled: { type: 'boolean', default: true },
+      itemHeight: { type: 'number', default: 48, description: 'Item height in px for virtual scroll' },
+      maxVisibleItems: { type: 'number', default: 15, description: 'Max visible items in virtual scroll viewport' },
     },
   },
   {

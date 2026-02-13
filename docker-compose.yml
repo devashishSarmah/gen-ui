@@ -52,6 +52,12 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
       FRONTEND_URL: ${FRONTEND_URL}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      GITHUB_CALLBACK_URL: ${GITHUB_CALLBACK_URL}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
       NODE_ENV: ${NODE_ENV}
     ports:
       - "${BACKEND_PORT}:3000"
@@ -69,6 +75,12 @@ services:
       context: .
       dockerfile: apps/frontend/Dockerfile
     container_name: genui-frontend
+    environment:
+      API_URL: http://localhost:${BACKEND_PORT}
+      FRONTEND_URL: ${FRONTEND_URL}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GA_MEASUREMENT_ID: ${GA_MEASUREMENT_ID}
     ports:
       - "${FRONTEND_PORT}:80"
     depends_on:

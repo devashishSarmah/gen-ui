@@ -90,7 +90,7 @@ import {
             Component showcase
           </a>
           <span class="dot"></span>
-          <a href="https://github.com/anthropics/gen-ui" target="_blank" rel="noopener" class="link-item">
+          <a href="https://github.com/devashishSarmah/gen-ui" target="_blank" rel="noopener" class="link-item">
             <lucide-icon [img]="Github" [size]="14"></lucide-icon>
             Star on GitHub
           </a>

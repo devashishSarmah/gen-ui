@@ -20,10 +20,19 @@ export class OAuthService {
   private authService = inject(AuthService);
   private analytics = inject(AnalyticsService);
 
+  private getFrontendOrigin(): string {
+    const configured = environment.frontendUrl?.trim();
+    if (configured) {
+      return configured.replace(/\/$/, '');
+    }
+
+    return window.location.origin;
+  }
+
   getGithubAuthUrl(): string {
     const clientId = environment.oauth.github.clientId;
     const scope = environment.oauth.github.scope;
-    const redirectUri = `${window.location.origin}/auth/github/callback`;
+    const redirectUri = `${this.getFrontendOrigin()}/auth/github/callback`;
     
     return `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
   }
@@ -31,7 +40,7 @@ export class OAuthService {
   getGoogleAuthUrl(): string {
     const clientId = environment.oauth.google.clientId;
     const scope = environment.oauth.google.scope;
-    const redirectUri = `${window.location.origin}/auth/google/callback`;
+    const redirectUri = `${this.getFrontendOrigin()}/auth/google/callback`;
     
     return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}`;
   }

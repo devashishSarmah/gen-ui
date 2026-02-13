@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Gen UI - Conversational AI</title>
+    <title>Layer - UI Based Conversational AI</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     
@@ -12,16 +12,23 @@
     <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png" />
     <link rel="manifest" href="favicon/site.webmanifest" />
 
+    <script src="/env.js"></script>
+
     <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
     <script>
+      const gaMeasurementId = window.__ENV?.GA_MEASUREMENT_ID || '';
+      if (gaMeasurementId && window.location.hostname !== 'localhost') {
+        const gaScript = document.createElement('script');
+        gaScript.async = true;
+        gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaMeasurementId)}`;
+        document.head.appendChild(gaScript);
+      }
+
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      // Replace GA_MEASUREMENT_ID with your actual measurement ID or
-      // configure dynamically in environment.ts
-      if (window.location.hostname !== 'localhost') {
-        gtag('config', 'GA_MEASUREMENT_ID');
+      if (gaMeasurementId && window.location.hostname !== 'localhost') {
+        gtag('config', gaMeasurementId);
       }
     </script>
   </head>

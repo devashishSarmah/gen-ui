@@ -242,13 +242,81 @@ export class ManifestLoaderService implements OnModuleInit {
       errors.push(`${path}: Button type="submit" is forbidden. Use type="button" with explicit actions.`);
     }
 
+    // Explicitly block navigation/submission style props
+    if (node.props && typeof node.props === 'object') {
+      const forbiddenProps = ['actionUrl', 'href', 'formAction', 'target'];
+      for (const key of forbiddenProps) {
+        if (node.props[key] !== undefined) {
+          errors.push(`${path}.props.${key}: Forbidden interaction/navigation prop.`);
+        }
+      }
+
+      for (const [key, value] of Object.entries(node.props)) {
+        const lowerKey = key.toLowerCase();
+        const looksLikeUrlKey =
+          lowerKey.includes('url') ||
+          lowerKey.includes('href') ||
+          lowerKey.includes('link') ||
+          lowerKey.includes('endpoint') ||
+          lowerKey === 'action';
+
+        if (
+          looksLikeUrlKey &&
+          typeof value === 'string' &&
+          this.isNavigationOrExternalUrl(value)
+        ) {
+          errors.push(`${path}.props.${key}: External/navigation URLs are forbidden.`);
+        }
+
+        if (
+          lowerKey === 'method' &&
+          typeof value === 'string' &&
+          /^(post|get|put|delete|patch)$/i.test(value.trim())
+        ) {
+          errors.push(`${path}.props.${key}: HTTP submission semantics are forbidden.`);
+        }
+      }
+    }
+
     // Check events for dangerous patterns
     if (node.events) {
       for (const [eventName, handler] of Object.entries(node.events)) {
         if (typeof handler === 'string') {
           const lower = handler.toLowerCase();
-          if (lower.includes('submit') || lower.includes('post ') || lower.includes('window.location')) {
+          if (
+            lower.includes('submit') ||
+            lower.includes('post ') ||
+            lower.includes('window.location') ||
+            lower.includes('http://') ||
+            lower.includes('https://') ||
+            lower.includes('fetch(') ||
+            lower.includes('axios.')
+          ) {
             errors.push(`${path}.events.${eventName}: Forbidden interaction pattern detected.`);
+          }
+          continue;
+        }
+
+        if (handler && typeof handler === 'object') {
+          const actionType =
+            (handler as any).type || (handler as any).action || (handler as any).kind;
+          const allowed = ['ui.patch', 'tool.call', 'state.update', 'copyToClipboard'];
+
+          if (!actionType || typeof actionType !== 'string' || !allowed.includes(actionType)) {
+            errors.push(
+              `${path}.events.${eventName}: Unknown or forbidden action type; use ui.patch|tool.call|state.update|copyToClipboard.`,
+            );
+          }
+
+          for (const [k, v] of Object.entries(handler as any)) {
+            const lowerKey = k.toLowerCase();
+            if (
+              (lowerKey.includes('url') || lowerKey === 'href' || lowerKey === 'formaction') &&
+              typeof v === 'string' &&
+              this.isNavigationOrExternalUrl(v)
+            ) {
+              errors.push(`${path}.events.${eventName}.${k}: Forbidden URL/navigation payload.`);
+            }
           }
         }
       }
@@ -257,6 +325,12 @@ export class ManifestLoaderService implements OnModuleInit {
     if (Array.isArray(node.children)) {
       node.children.forEach((child: any, i: number) => {
         errors.push(...this.validateInteractionSafety(child, `${path}.children[${i}]`));
+      });
+    }
+
+    if (Array.isArray(node.components)) {
+      node.components.forEach((child: any, i: number) => {
+        errors.push(...this.validateInteractionSafety(child, `${path}.components[${i}]`));
       });
     }
 
@@ -322,6 +396,92 @@ export class ManifestLoaderService implements OnModuleInit {
       node.props.type = 'button';
     }
 
+    // Remove dangerous interaction/navigation props
+    if (node.props && typeof node.props === 'object') {
+      for (const forbidden of ['actionUrl', 'href', 'formAction', 'target']) {
+        if (node.props[forbidden] !== undefined) {
+          delete node.props[forbidden];
+        }
+      }
+
+      for (const [key, value] of Object.entries(node.props)) {
+        const lower = key.toLowerCase();
+        const looksLikeUrlKey =
+          lower.includes('url') ||
+          lower.includes('href') ||
+          lower.includes('link') ||
+          lower.includes('endpoint') ||
+          lower === 'action';
+
+        if (
+          looksLikeUrlKey &&
+          typeof value === 'string' &&
+          this.isNavigationOrExternalUrl(value)
+        ) {
+          delete node.props[key];
+        }
+
+        if (
+          lower === 'method' &&
+          typeof value === 'string' &&
+          /^(post|get|put|delete|patch)$/i.test(value.trim())
+        ) {
+          delete node.props[key];
+        }
+      }
+    }
+
+    // Drop dangerous event handlers
+    if (node.events && typeof node.events === 'object') {
+      const cleanedEvents: Record<string, any> = {};
+      for (const [eventName, handler] of Object.entries(node.events)) {
+        if (typeof handler === 'string') {
+          const lower = handler.toLowerCase();
+          if (
+            lower.includes('submit') ||
+            lower.includes('post ') ||
+            lower.includes('window.location') ||
+            lower.includes('http://') ||
+            lower.includes('https://') ||
+            lower.includes('fetch(') ||
+            lower.includes('axios.')
+          ) {
+            continue;
+          }
+          cleanedEvents[eventName] = handler;
+          continue;
+        }
+
+        if (handler && typeof handler === 'object') {
+          const raw = handler as Record<string, any>;
+          const actionType = raw.type || raw.action || raw.kind;
+          const allowed = new Set(['ui.patch', 'tool.call', 'state.update', 'copyToClipboard']);
+          if (!actionType || typeof actionType !== 'string' || !allowed.has(actionType)) {
+            continue;
+          }
+
+          let hasDangerousUrl = false;
+          for (const [k, v] of Object.entries(raw)) {
+            const lowerKey = k.toLowerCase();
+            if (
+              (lowerKey.includes('url') || lowerKey === 'href' || lowerKey === 'formaction') &&
+              typeof v === 'string' &&
+              this.isNavigationOrExternalUrl(v)
+            ) {
+              hasDangerousUrl = true;
+              break;
+            }
+          }
+
+          if (!hasDangerousUrl) {
+            cleanedEvents[eventName] = handler;
+          }
+        }
+      }
+
+      node.events = cleanedEvents;
+    }
+
     // Replace emojis in string props with safe Lucide icon names
     if (node.props) {
       for (const [key, value] of Object.entries(node.props)) {
@@ -336,7 +496,24 @@ export class ManifestLoaderService implements OnModuleInit {
       node.children = node.children.map((child: any) => this.sanitizeNode(child));
     }
 
+    if (Array.isArray(node.components)) {
+      node.components = node.components.map((child: any) => this.sanitizeNode(child));
+    }
+
     return node;
+  }
+
+  private isNavigationOrExternalUrl(value: string): boolean {
+    const lower = value.trim().toLowerCase();
+    return (
+      lower.startsWith('http://') ||
+      lower.startsWith('https://') ||
+      lower.startsWith('//') ||
+      lower.startsWith('mailto:') ||
+      lower.startsWith('tel:') ||
+      lower.startsWith('/') ||
+      lower.includes('window.location')
+    );
   }
 
   private emojiToLucide(value: string): string {

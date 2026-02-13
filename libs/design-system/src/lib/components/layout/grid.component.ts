@@ -27,6 +27,12 @@ import { CommonModule } from '@angular/common';
         width: 100%;
         box-sizing: border-box;
       }
+
+      @media (max-width: 640px) {
+        .grid-layout {
+          grid-template-columns: 1fr !important;
+        }
+      }
     `,
   ],
 })

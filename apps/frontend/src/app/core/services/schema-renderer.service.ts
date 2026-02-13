@@ -5,8 +5,10 @@ import {
   ComponentRef,
   ViewContainerRef,
   createComponent,
+  inject,
 } from '@angular/core';
 import { ComponentRegistryService } from './component-registry.service';
+import { InteractionService } from './interaction.service';
 
 export interface UISchema {
   id?: string;
@@ -34,6 +36,8 @@ export interface RenderResult {
   providedIn: 'root',
 })
 export class SchemaRendererService {
+  private interactionService = inject(InteractionService);
+
   constructor(
     private injector: EnvironmentInjector,
     private componentRegistry: ComponentRegistryService
@@ -81,6 +85,14 @@ export class SchemaRendererService {
 
     this.applySchemaProps(componentRef, schema);
     this.wireSchemaEvents(componentRef, schema);
+
+    // Wire interaction bridge — auto-subscribes to all known @Outputs
+    this.interactionService.wireComponentEvents(
+      componentRef,
+      schema.type,
+      schema.props?.['id'],
+      schema.props,
+    );
 
     return componentRef;
   }

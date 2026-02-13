@@ -12,12 +12,19 @@ import { ConversationApiService } from '../core/services/conversation-api.servic
 import { SkeletonLoaderComponent } from '@gen-ui/design-system/skeleton-loader';
 import { UiSchemaRendererComponent } from '../shared/components/ui-schema-renderer/ui-schema-renderer.component';
 import { DynamicUIService } from '../core/services/dynamic-ui.service';
+import { InteractionService } from '../core/services/interaction.service';
 import {
   LucideAngularModule,
   Bot,
   AlertCircle,
   SendHorizontal,
   Loader2,
+  Sparkles,
+  RefreshCw,
+  Braces,
+  Cpu,
+  Layers,
+  CheckCircle,
 } from 'lucide-angular';
 
 @Component({
@@ -49,7 +56,11 @@ import {
                         </div> -->
                         <div class="schema-rendered">
                           <!-- <strong>Rendered UI</strong> -->
-                          <app-ui-schema-renderer [schema]="message.uiSchema"></app-ui-schema-renderer>
+                          <app-ui-schema-renderer
+                            [schema]="message.uiSchema"
+                            [conversationId]="conversationId"
+                            [messageId]="message.id"
+                          ></app-ui-schema-renderer>
                         </div>
                       </div>
                     </div>
@@ -64,7 +75,28 @@ import {
 
             <ng-container *ngIf="conversationStore.messages().length === 0">
               <div class="empty-conversation">
-                <p>No messages yet. Send a message to get started!</p>
+                <div class="empty-panel">
+                  <div class="empty-badge">
+                    <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+                    Fresh canvas
+                  </div>
+                  <h3>Start building this interface</h3>
+                  <p>
+                    Describe the layout, components, and interactions you need.
+                    I will generate and stream the UI in real time.
+                  </p>
+                  <div class="starter-prompts">
+                    <button
+                      type="button"
+                      class="starter-btn"
+                      *ngFor="let prompt of starterPrompts"
+                      (click)="sendStarterPrompt(prompt)"
+                      [disabled]="uiStateStore.isStreaming() || !webSocketService.isConnected()"
+                    >
+                      {{ prompt }}
+                    </button>
+                  </div>
+                </div>
               </div>
             </ng-container>
           </ng-container>
@@ -74,19 +106,66 @@ import {
             <app-skeleton-loader type="paragraph"></app-skeleton-loader>
           </ng-container>
 
-          <!-- Streaming UI Schema Skeleton -->
+          <!-- Streaming UI Builder -->
           <ng-container *ngIf="uiStateStore.isStreaming()">
-            <div class="message assistant streaming">
+            <div class="message assistant streaming-card">
               <div class="message-content">
-                <div class="streaming-header">
-                  <lucide-icon [img]="Bot" [size]="14"></lucide-icon>
-                  Generating UI…
-                  <span class="progress">
-                    {{ uiStateStore.completionPercentage() }}%
-                  </span>
+                <!-- Header with animated icon -->
+                <div class="builder-header">
+                  <div class="builder-icon-wrap">
+                    <lucide-icon [img]="Sparkles" [size]="18"></lucide-icon>
+                  </div>
+                  <div class="builder-title">
+                    <span class="builder-label">Building your interface</span>
+                    <span class="builder-pct">{{ uiStateStore.completionPercentage() }}%</span>
+                  </div>
                 </div>
-                <app-skeleton-loader type="card"></app-skeleton-loader>
-                <app-skeleton-loader type="form"></app-skeleton-loader>
+
+                <!-- Progress bar -->
+                <div class="builder-progress-track">
+                  <div
+                    class="builder-progress-fill"
+                    [style.width.%]="uiStateStore.completionPercentage()"
+                  ></div>
+                </div>
+
+                <!-- Build steps -->
+                <div class="builder-steps">
+                  <div class="builder-step" [class.active]="uiStateStore.completionPercentage() >= 0" [class.done]="uiStateStore.completionPercentage() > 20">
+                    <span class="step-icon">
+                      <lucide-icon *ngIf="uiStateStore.completionPercentage() <= 20" [img]="Braces" [size]="13"></lucide-icon>
+                      <lucide-icon *ngIf="uiStateStore.completionPercentage() > 20" [img]="CheckCircle" [size]="13"></lucide-icon>
+                    </span>
+                    <span class="step-text">Parsing schema</span>
+                  </div>
+                  <div class="builder-step" [class.active]="uiStateStore.completionPercentage() > 20" [class.done]="uiStateStore.completionPercentage() > 55">
+                    <span class="step-icon">
+                      <lucide-icon *ngIf="uiStateStore.completionPercentage() <= 55" [img]="Cpu" [size]="13"></lucide-icon>
+                      <lucide-icon *ngIf="uiStateStore.completionPercentage() > 55" [img]="CheckCircle" [size]="13"></lucide-icon>
+                    </span>
+                    <span class="step-text">Generating components</span>
+                  </div>
+                  <div class="builder-step" [class.active]="uiStateStore.completionPercentage() > 55" [class.done]="uiStateStore.completionPercentage() > 85">
+                    <span class="step-icon">
+                      <lucide-icon *ngIf="uiStateStore.completionPercentage() <= 85" [img]="Layers" [size]="13"></lucide-icon>
+                      <lucide-icon *ngIf="uiStateStore.completionPercentage() > 85" [img]="CheckCircle" [size]="13"></lucide-icon>
+                    </span>
+                    <span class="step-text">Assembling layout</span>
+                  </div>
+                </div>
+
+                <!-- Wireframe preview skeleton -->
+                <div class="builder-wireframe">
+                  <div class="wire-bar"></div>
+                  <div class="wire-row">
+                    <div class="wire-block tall"></div>
+                    <div class="wire-col">
+                      <div class="wire-block"></div>
+                      <div class="wire-block"></div>
+                    </div>
+                  </div>
+                  <div class="wire-block wide"></div>
+                </div>
               </div>
             </div>
           </ng-container>
@@ -96,9 +175,21 @@ import {
           <!-- Streaming Error -->
           <ng-container *ngIf="uiStateStore.error()">
             <div class="message error">
-              <div class="message-content">
-                <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
-                {{ uiStateStore.error() }}
+              <div class="message-content error-content">
+                <div class="error-line">
+                  <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
+                  {{ uiStateStore.error() }}
+                </div>
+                <button
+                  type="button"
+                  class="retry-btn"
+                  (click)="retryLastPrompt()"
+                  *ngIf="canRetryPrompt()"
+                  [disabled]="uiStateStore.isStreaming() || !webSocketService.isConnected()"
+                >
+                  <lucide-icon [img]="RefreshCw" [size]="13"></lucide-icon>
+                  Retry prompt
+                </button>
               </div>
             </div>
           </ng-container>
@@ -204,15 +295,30 @@ import {
           border-radius: 0;
           box-shadow: none;
           color: var(--ds-text-primary);
-          max-width: 85%;
+          max-width: 95%;
 
-          &.streaming {
+          &.streaming-card {
             background: var(--ds-surface-glass);
             backdrop-filter: blur(24px) saturate(180%);
             border: 1px solid var(--ds-border-glow);
             border-radius: var(--ds-radius-lg);
-            padding: 0.75rem;
-            animation: pulse 2s ease-in-out infinite;
+            padding: 1rem 1.15rem;
+            animation: none;
+            overflow: hidden;
+            position: relative;
+
+            &::before {
+              content: '';
+              position: absolute;
+              inset: 0;
+              background: linear-gradient(
+                135deg,
+                rgba(0, 255, 245, 0.04) 0%,
+                transparent 40%,
+                rgba(91, 74, 255, 0.04) 100%
+              );
+              pointer-events: none;
+            }
           }
         }
 
@@ -235,30 +341,253 @@ import {
         font-size: 0.875rem;
       }
 
-      .streaming-header {
+      .error-content {
         display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .error-line {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+      }
+
+      .retry-btn {
+        display: inline-flex;
         align-items: center;
         gap: 0.35rem;
-        margin-bottom: 0.5rem;
+        padding: 0.35rem 0.75rem;
+        border: 1px solid rgba(255, 116, 133, 0.35);
+        border-radius: var(--ds-radius-pill);
+        background: rgba(255, 255, 255, 0.06);
+        color: #ffd8de;
+        font-size: 0.75rem;
         font-weight: 600;
-        font-size: 0.8rem;
-        color: var(--ds-accent-teal);
+        cursor: pointer;
+        transition: all 0.2s ease;
 
-        .progress {
-          font-size: 0.875rem;
-          padding: 0.25rem 0.625rem;
-          background: rgba(0, 255, 245, 0.15);
-          border-radius: var(--ds-radius-sm);
-          font-weight: 600;
+        &:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 116, 133, 0.55);
+        }
+
+        &:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
         }
       }
 
+      /* ── Builder loader ── */
+      .builder-header {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .builder-icon-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(0, 255, 245, 0.15), rgba(91, 74, 255, 0.15));
+        color: var(--ds-accent-teal);
+        animation: icon-spin 3s linear infinite;
+      }
+
+      @keyframes icon-spin {
+        0%   { transform: rotate(0deg) scale(1); }
+        25%  { transform: rotate(5deg) scale(1.08); }
+        50%  { transform: rotate(0deg) scale(1); }
+        75%  { transform: rotate(-5deg) scale(1.08); }
+        100% { transform: rotate(0deg) scale(1); }
+      }
+
+      .builder-title {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .builder-label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--ds-text-primary);
+      }
+
+      .builder-pct {
+        font-size: 0.7rem;
+        color: var(--ds-accent-teal);
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Progress bar */
+      .builder-progress-track {
+        height: 3px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+        margin-bottom: 0.85rem;
+      }
+
+      .builder-progress-fill {
+        height: 100%;
+        border-radius: 3px;
+        background: linear-gradient(90deg, var(--ds-accent-teal), var(--ds-accent-indigo));
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+      }
+
+      .builder-progress-fill::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: -1px;
+        width: 12px;
+        height: 5px;
+        border-radius: 3px;
+        background: var(--ds-accent-teal);
+        box-shadow: 0 0 8px var(--ds-accent-teal), 0 0 16px var(--ds-accent-teal);
+      }
+
+      /* Build steps */
+      .builder-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        margin-bottom: 0.85rem;
+      }
+
+      .builder-step {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.72rem;
+        color: var(--ds-text-secondary);
+        opacity: 0.35;
+        transition: all 0.3s ease;
+      }
+
+      .builder-step.active {
+        opacity: 1;
+        color: var(--ds-text-primary);
+      }
+
+      .builder-step.done {
+        opacity: 0.7;
+      }
+
+      .builder-step .step-icon {
+        display: flex;
+        align-items: center;
+        color: var(--ds-text-secondary);
+        transition: color 0.3s ease;
+      }
+
+      .builder-step.active .step-icon {
+        color: var(--ds-accent-teal);
+        animation: step-pulse 1.2s ease-in-out infinite;
+      }
+
+      .builder-step.done .step-icon {
+        color: var(--ds-accent-teal);
+        animation: none;
+      }
+
+      @keyframes step-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+
+      /* Wireframe preview */
+      .builder-wireframe {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 0.65rem;
+        border-radius: var(--ds-radius-md);
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--ds-border);
+      }
+
+      .wire-bar {
+        height: 10px;
+        width: 40%;
+        border-radius: 4px;
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.04) 25%,
+          rgba(0, 255, 245, 0.08) 50%,
+          rgba(255, 255, 255, 0.04) 75%
+        );
+        background-size: 200% 100%;
+        animation: wire-shimmer 2s ease-in-out infinite;
+      }
+
+      .wire-row {
+        display: flex;
+        gap: 6px;
+      }
+
+      .wire-col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .wire-block {
+        flex: 1;
+        min-height: 28px;
+        border-radius: 6px;
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.03) 25%,
+          rgba(0, 255, 245, 0.06) 50%,
+          rgba(255, 255, 255, 0.03) 75%
+        );
+        background-size: 200% 100%;
+        animation: wire-shimmer 2s ease-in-out infinite;
+      }
+
+      .wire-block.tall {
+        flex: 0 0 60px;
+        width: 80px;
+        animation-delay: 0.3s;
+      }
+
+      .wire-block.wide {
+        height: 18px;
+        animation-delay: 0.6s;
+      }
+
+      @keyframes wire-shimmer {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+
       .ui-schema-container {
-        background: transparent;
-        border: none;
-        border-radius: 0;
+        background: var(--ds-surface-glass);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-lg);
         padding: 0;
-        backdrop-filter: none;
+        backdrop-filter: blur(16px) saturate(180%);
+        max-height: calc(100vh - var(--app-header-height, 60px) - var(--app-footer-height, 48px) - 180px);
+        max-height: calc(100dvh - var(--app-header-height, 60px) - var(--app-footer-height, 48px) - 180px);
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .schema-rendered {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 0.75rem;
       }
 
       .schema-preview {
@@ -299,9 +628,83 @@ import {
         align-items: center;
         justify-content: center;
         flex: 1;
-        color: var(--ds-text-secondary);
-        text-align: center;
-        font-size: 0.9rem;
+        padding: 1rem 0;
+      }
+
+      .empty-panel {
+        width: min(760px, 100%);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-xl);
+        background:
+          radial-gradient(circle at 12% 16%, rgba(0, 255, 245, 0.12), transparent 35%),
+          radial-gradient(circle at 92% 88%, rgba(91, 74, 255, 0.12), transparent 38%),
+          var(--ds-surface-glass);
+        backdrop-filter: blur(28px) saturate(180%);
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+
+        h3 {
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: var(--ds-text-primary);
+          letter-spacing: 0.01em;
+        }
+
+        p {
+          margin: 0;
+          color: var(--ds-text-secondary);
+          font-size: 0.88rem;
+          line-height: 1.55;
+          max-width: 64ch;
+        }
+      }
+
+      .empty-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        align-self: flex-start;
+        background: rgba(0, 255, 245, 0.14);
+        border: 1px solid rgba(0, 255, 245, 0.22);
+        color: var(--ds-accent-teal);
+        border-radius: var(--ds-radius-pill);
+        padding: 0.3rem 0.65rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+
+      .starter-prompts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.55rem;
+      }
+
+      .starter-btn {
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-md);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--ds-text-primary);
+        text-align: left;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.78rem;
+        line-height: 1.45;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover:not(:disabled) {
+          border-color: var(--ds-border-glow);
+          background: rgba(0, 255, 245, 0.08);
+          transform: translateY(-1px);
+        }
+
+        &:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
       }
 
       .input-area {
@@ -458,6 +861,67 @@ import {
           box-shadow: 0 0 16px currentColor, 0 0 24px currentColor;
         }
       }
+
+      /* ── Responsive ── */
+      @media (max-width: 1024px) {
+        .message {
+          max-width: 85%;
+
+          &.assistant {
+            max-width: 98%;
+          }
+        }
+      }
+
+      @media (max-width: 768px) {
+        .messages-area {
+          padding: 0.75rem;
+        }
+
+        .message {
+          max-width: 92%;
+
+          &.assistant {
+            max-width: 100%;
+          }
+
+          &.user {
+            max-width: 88%;
+          }
+        }
+
+        .ui-schema-container {
+          max-height: calc(100dvh - var(--app-header-height, 60px) - var(--app-footer-height, 48px) - 160px);
+        }
+
+        .input-area {
+          padding: 0.5rem 0.75rem;
+        }
+
+        .empty-panel {
+          padding: 1rem;
+        }
+
+        .starter-prompts {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .messages-area {
+          padding: 0.5rem;
+        }
+
+        .message.user {
+          padding: 0.5rem 0.7rem;
+          font-size: 0.8rem;
+        }
+
+        .connection-status {
+          font-size: 0.65rem;
+          padding: 0.3rem 0.5rem;
+        }
+      }
     `,
   ],
 })
@@ -470,15 +934,30 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
   readonly AlertCircle = AlertCircle;
   readonly SendHorizontal = SendHorizontal;
   readonly Loader2 = Loader2;
+  readonly Sparkles = Sparkles;
+  readonly RefreshCw = RefreshCw;
+  readonly Braces = Braces;
+  readonly Cpu = Cpu;
+  readonly Layers = Layers;
+  readonly CheckCircle = CheckCircle;
+
+  readonly starterPrompts: string[] = [
+    'Create a compact dashboard with KPI cards and a trend chart',
+    'Build a searchable customer table with filters and detail drawer',
+    'Design a 3-step onboarding flow with progress and validation hints',
+  ];
 
   private conversationApi = inject(ConversationApiService);
   private dynamicUIService = inject(DynamicUIService);
+  private interactionService = inject(InteractionService);
   private route = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
   private cdr = inject(ChangeDetectorRef);
 
   messageText = '';
-  private conversationId: string = '';
+  conversationId = '';
+  private lastSubmittedPrompt: string | null = null;
+  private lastFailedPrompt: string | null = null;
 
   trackByMessageId(index: number, message: Message): string {
     return message.id;
@@ -488,6 +967,7 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
     // Get conversation ID from route
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       this.conversationId = params['id'];
+      this.resetConversationViewState();
       this.loadConversation();
       this.setupWebSocket();
       
@@ -513,13 +993,21 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
           this.dynamicUIService.loadSchema(chunk.data);
           const normalizedSchema = this.dynamicUIService.getCurrentSchema() ?? chunk.data;
           this.uiStateStore.completeStreaming(normalizedSchema);
+          this.interactionService.completeInteraction();
+          this.lastSubmittedPrompt = null;
+          this.lastFailedPrompt = null;
           // Add a small delay to ensure the message is saved to the database
           setTimeout(() => {
             this.loadMessages(); // Reload messages to show assistant response
             this.cdr.detectChanges(); // Force change detection
           }, 300);
         } else if (chunk?.type === 'error') {
-          this.uiStateStore.setStreamingError(chunk.data?.error || chunk.data?.message || 'Unknown error');
+          this.uiStateStore.setStreamingError(
+            chunk.data?.error || chunk.data?.message || 'Unknown error'
+          );
+          this.interactionService.completeInteraction();
+          this.lastFailedPrompt = this.lastSubmittedPrompt;
+          this.lastSubmittedPrompt = null;
           this.cdr.detectChanges();
         }
       });
@@ -537,7 +1025,8 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
       .getConversation(this.conversationId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (conversation) => {
+        next: () => {
+          this.conversationStore.setError(null);
           this.conversationStore.setCurrentConversation(this.conversationId);
           this.loadMessages();
         },
@@ -557,6 +1046,7 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
         next: (messages) => {
           this.conversationStore.setMessages(messages);
           this.conversationStore.setIsLoadingMessages(false);
+          this.conversationStore.setError(null);
           const latestSchemaMessage = [...messages]
             .reverse()
             .find((message) => message.role === 'assistant' && message.uiSchema);
@@ -565,6 +1055,9 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
             const normalizedSchema =
               this.dynamicUIService.getCurrentSchema() ?? latestSchemaMessage.uiSchema;
             this.uiStateStore.completeStreaming(normalizedSchema as any);
+          } else if (!this.uiStateStore.error()) {
+            this.dynamicUIService.clearSchema();
+            this.uiStateStore.clear();
           }
           this.scrollToBottom();
           this.cdr.detectChanges(); // Force change detection after messages load
@@ -615,6 +1108,9 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
 
     const message = this.messageText.trim();
     this.messageText = '';
+    this.lastSubmittedPrompt = message;
+    this.lastFailedPrompt = null;
+    this.conversationStore.setError(null);
 
     // Add user message to store
     const userMessage: Message = {
@@ -635,9 +1131,56 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Failed to send message:', error);
       this.uiStateStore.setStreamingError('Failed to send message');
+      this.lastFailedPrompt = message;
+      this.lastSubmittedPrompt = null;
     }
 
     this.scrollToBottom();
+  }
+
+  sendStarterPrompt(prompt: string): void {
+    this.messageText = prompt;
+    this.sendMessage();
+  }
+
+  canRetryPrompt(): boolean {
+    return (
+      !!this.lastFailedPrompt &&
+      !this.uiStateStore.isStreaming() &&
+      this.webSocketService.isConnected()
+    );
+  }
+
+  retryLastPrompt(): void {
+    if (!this.lastFailedPrompt || !this.webSocketService.isConnected()) {
+      return;
+    }
+
+    const promptToRetry = this.lastFailedPrompt;
+    this.lastSubmittedPrompt = promptToRetry;
+    this.conversationStore.setError(null);
+    this.uiStateStore.startStreaming();
+
+    try {
+      this.webSocketService.sendPrompt(this.conversationId, promptToRetry);
+    } catch (error) {
+      console.error('Failed to retry prompt:', error);
+      this.uiStateStore.setStreamingError('Failed to retry prompt');
+      this.lastFailedPrompt = promptToRetry;
+      this.lastSubmittedPrompt = null;
+    }
+
+    this.scrollToBottom();
+  }
+
+  private resetConversationViewState(): void {
+    this.messageText = '';
+    this.lastSubmittedPrompt = null;
+    this.lastFailedPrompt = null;
+    this.conversationStore.setError(null);
+    this.conversationStore.setMessages([]);
+    this.uiStateStore.clear();
+    this.dynamicUIService.clearSchema();
   }
 
   private scrollToBottom(): void {

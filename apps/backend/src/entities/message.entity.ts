@@ -41,6 +41,9 @@ export class Message {
   @Column({ type: 'jsonb', nullable: true })
   uiSchema?: any | null;
 
+  @Column({ type: 'jsonb', nullable: true })
+  aiMetrics?: any | null;
+
   @CreateDateColumn({ type: 'timestamp' })
   createdAt!: Date;
 }
