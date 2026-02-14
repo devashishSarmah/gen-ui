@@ -48,12 +48,10 @@ export const appRoutes: Route[] = [
       {
         path: '',
         component: WelcomeScreenComponent,
-        outlet: 'primary',
       },
       {
         path: ':id',
         component: ConversationViewComponent,
-        outlet: 'primary',
       },
     ],
   },
