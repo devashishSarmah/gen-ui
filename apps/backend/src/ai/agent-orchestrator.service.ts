@@ -374,12 +374,16 @@ export class AgentOrchestratorService {
   ): AsyncIterableIterator<UISchemaChunk> {
     const trace = this.traceId(context);
     let current = this.normalizePatchPayload(schema, baseSchema);
+    let lastValidationErrors: string[] = [];
+    let lastValidationWarnings: string[] = [];
 
     for (let round = 0; round <= this.MAX_REPAIR_ROUNDS; round++) {
       this.logger.log(
         `[${trace}] validate_round_start round=${round + 1}/${this.MAX_REPAIR_ROUNDS + 1}`,
       );
       const result = this.validator.validate(current);
+      lastValidationErrors = result.errors.map((error: any) => error.message);
+      lastValidationWarnings = result.warnings;
 
       if (result.valid) {
         current = this.stampVersion(current);
@@ -442,15 +446,22 @@ export class AgentOrchestratorService {
       }
     }
 
-    this.logger.warn('All repair rounds exhausted, returning best-effort schema');
-    current = this.stampVersion(current);
+    this.logger.error(
+      `[${trace}] validation_exhausted rounds=${this.MAX_REPAIR_ROUNDS + 1} errors=${lastValidationErrors.length}`,
+    );
+
     yield {
-      type: 'complete',
-      data: current,
+      type: 'error',
+      data: {
+        error: 'Generated schema failed renderer validation after repair attempts.',
+        code: 'SCHEMA_VALIDATION_FAILED',
+        details: lastValidationErrors,
+      },
       done: true,
       meta: {
         safety: safetyDecision,
         routingDecision: context.routingDecision,
+        warnings: lastValidationWarnings,
         telemetry: this.buildTelemetry(usageByLayer),
       },
     };

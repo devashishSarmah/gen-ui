@@ -233,6 +233,18 @@ import {
             <lucide-icon [img]="SendHorizontal" [size]="16"></lucide-icon>
           </button>
         </form>
+
+        <div class="retry-inline" *ngIf="canRetryPrompt()">
+          <button
+            type="button"
+            class="retry-inline-btn"
+            (click)="retryLastPrompt()"
+            [disabled]="uiStateStore.isStreaming() || !webSocketService.isConnected()"
+          >
+            <lucide-icon [img]="RefreshCw" [size]="13"></lucide-icon>
+            Retry last prompt
+          </button>
+        </div>
       </div>
     </div>
   `,
@@ -258,6 +270,9 @@ import {
         flex: 1;
         min-height: 0;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+        touch-action: pan-y;
         padding: 1rem 1.25rem;
         display: flex;
         flex-direction: column;
@@ -749,6 +764,37 @@ import {
         gap: 0.75rem;
       }
 
+      .retry-inline {
+        margin-top: 0.5rem;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .retry-inline-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.7rem;
+        border: 1px solid rgba(255, 116, 133, 0.35);
+        border-radius: var(--ds-radius-pill);
+        background: rgba(255, 255, 255, 0.06);
+        color: #ffd8de;
+        font-size: 0.73rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 116, 133, 0.55);
+        }
+
+        &:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+      }
+
       .message-input {
         flex: 1;
         padding: 0.6rem 1rem;
@@ -942,9 +988,9 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
   readonly CheckCircle = CheckCircle;
 
   readonly starterPrompts: string[] = [
-    'Create a compact dashboard with KPI cards and a trend chart',
-    'Build a searchable customer table with filters and detail drawer',
-    'Design a 3-step onboarding flow with progress and validation hints',
+    'Build a player comparison UI for Messi vs Ronaldo with stats cards and radar chart.',
+    'Display top Spotify tracks this week with play preview buttons.',
+    'Design a 3-step onboarding flow with progress and validation hints.',
   ];
 
   private conversationApi = inject(ConversationApiService);
@@ -1126,14 +1172,16 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
     this.uiStateStore.startStreaming();
 
     // Send via WebSocket
-    try {
-      this.webSocketService.sendPrompt(this.conversationId, message);
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      this.uiStateStore.setStreamingError('Failed to send message');
-      this.lastFailedPrompt = message;
-      this.lastSubmittedPrompt = null;
-    }
+    void this.webSocketService
+      .sendPrompt(this.conversationId, message)
+      .catch((error) => {
+        console.error('Failed to send message:', error);
+        this.uiStateStore.setStreamingError(
+          typeof error === 'string' ? error : error?.message || 'Failed to send message'
+        );
+        this.lastFailedPrompt = message;
+        this.lastSubmittedPrompt = null;
+      });
 
     this.scrollToBottom();
   }
@@ -1161,14 +1209,16 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
     this.conversationStore.setError(null);
     this.uiStateStore.startStreaming();
 
-    try {
-      this.webSocketService.sendPrompt(this.conversationId, promptToRetry);
-    } catch (error) {
-      console.error('Failed to retry prompt:', error);
-      this.uiStateStore.setStreamingError('Failed to retry prompt');
-      this.lastFailedPrompt = promptToRetry;
-      this.lastSubmittedPrompt = null;
-    }
+    void this.webSocketService
+      .sendPrompt(this.conversationId, promptToRetry)
+      .catch((error) => {
+        console.error('Failed to retry prompt:', error);
+        this.uiStateStore.setStreamingError(
+          typeof error === 'string' ? error : error?.message || 'Failed to retry prompt'
+        );
+        this.lastFailedPrompt = promptToRetry;
+        this.lastSubmittedPrompt = null;
+      });
 
     this.scrollToBottom();
   }

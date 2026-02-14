@@ -431,9 +431,9 @@ export class WelcomeScreenComponent {
     },
     {
       icon: Globe,
-      title: 'Portfolio Page',
-      description: 'Hero, projects grid & contact section',
-      prompt: 'Build a developer portfolio page with a hero section, a project showcase grid with 4 projects, a skills section, and a contact form',
+      title: 'Messi vs Ronaldo',
+      description: 'Stats cards and radar chart',
+      prompt: 'Build a player comparison UI for Messi vs Ronaldo with stats cards and radar chart.',
     },
     {
       icon: Compass,
@@ -461,9 +461,9 @@ export class WelcomeScreenComponent {
     },
     {
       icon: Sparkles,
-      title: 'Pricing Table',
-      description: 'Tiered plans with feature comparison',
-      prompt: 'Create a pricing table with 3 tiers (Free, Pro, Enterprise) showing features, prices, and call-to-action buttons',
+      title: 'Spotify Weekly Tracks',
+      description: 'Top songs with preview actions',
+      prompt: 'Display top Spotify tracks this week with play preview buttons.',
     },
   ];
 

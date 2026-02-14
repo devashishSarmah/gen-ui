@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Gen-UI Renderer Schema",
-  "description": "Auto-generated from manifest 1.0.0-4b23b686e9f0",
+  "description": "Auto-generated from manifest 1.0.0-0e52acecde36",
   "type": "object",
   "oneOf": [
     {
@@ -81,6 +81,12 @@
     },
     {
       "$ref": "#/definitions/carousel"
+    },
+    {
+      "$ref": "#/definitions/audioPlayer"
+    },
+    {
+      "$ref": "#/definitions/videoPlayer"
     },
     {
       "$ref": "#/definitions/statsCard"
@@ -175,7 +181,15 @@
             },
             "filterOperator": {
               "type": "string",
-              "enum": ["contains", "equals", "gt", "lt", "gte", "lte", "in"],
+              "enum": [
+                "contains",
+                "equals",
+                "gt",
+                "lt",
+                "gte",
+                "lte",
+                "in"
+              ],
               "description": "Filter comparison operator"
             }
           },
@@ -247,7 +261,15 @@
             },
             "filterOperator": {
               "type": "string",
-              "enum": ["contains", "equals", "gt", "lt", "gte", "lte", "in"],
+              "enum": [
+                "contains",
+                "equals",
+                "gt",
+                "lt",
+                "gte",
+                "lte",
+                "in"
+              ],
               "description": "Filter comparison operator"
             }
           },
@@ -299,7 +321,15 @@
             },
             "filterOperator": {
               "type": "string",
-              "enum": ["contains", "equals", "gt", "lt", "gte", "lte", "in"],
+              "enum": [
+                "contains",
+                "equals",
+                "gt",
+                "lt",
+                "gte",
+                "lte",
+                "in"
+              ],
               "description": "Filter comparison operator"
             }
           },
@@ -364,7 +394,15 @@
             },
             "filterOperator": {
               "type": "string",
-              "enum": ["contains", "equals", "gt", "lt", "gte", "lte", "in"],
+              "enum": [
+                "contains",
+                "equals",
+                "gt",
+                "lt",
+                "gte",
+                "lte",
+                "in"
+              ],
               "description": "Filter comparison operator"
             }
           },
@@ -434,7 +472,15 @@
             },
             "filterOperator": {
               "type": "string",
-              "enum": ["contains", "equals", "gt", "lt", "gte", "lte", "in"],
+              "enum": [
+                "contains",
+                "equals",
+                "gt",
+                "lt",
+                "gte",
+                "lte",
+                "in"
+              ],
               "description": "Filter comparison operator"
             }
           },
@@ -879,6 +925,12 @@
         },
         "events": {
           "$ref": "#/definitions/events"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/node"
+          }
         }
       },
       "additionalProperties": false
@@ -1511,6 +1563,123 @@
       },
       "additionalProperties": false
     },
+    "audioPlayer": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "audio-player"
+        },
+        "props": {
+          "type": "object",
+          "properties": {
+            "src": {
+              "type": "string",
+              "description": "Audio URL (allowlisted domain or relative path)"
+            },
+            "title": {
+              "type": "string",
+              "description": "Track or episode title"
+            },
+            "subtitle": {
+              "type": "string",
+              "description": "Artist or supporting text"
+            },
+            "controls": {
+              "type": "boolean"
+            },
+            "autoplay": {
+              "type": "boolean"
+            },
+            "loop": {
+              "type": "boolean"
+            },
+            "muted": {
+              "type": "boolean"
+            },
+            "preload": {
+              "type": "string",
+              "enum": [
+                "none",
+                "metadata",
+                "auto"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "events": {
+          "$ref": "#/definitions/events"
+        }
+      },
+      "additionalProperties": false
+    },
+    "videoPlayer": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "video-player"
+        },
+        "props": {
+          "type": "object",
+          "properties": {
+            "src": {
+              "type": "string",
+              "description": "Video URL (allowlisted domain or relative path)"
+            },
+            "title": {
+              "type": "string",
+              "description": "Video title"
+            },
+            "poster": {
+              "type": "string",
+              "description": "Poster image URL (allowlisted domain or relative path)"
+            },
+            "controls": {
+              "type": "boolean"
+            },
+            "autoplay": {
+              "type": "boolean"
+            },
+            "loop": {
+              "type": "boolean"
+            },
+            "muted": {
+              "type": "boolean"
+            },
+            "playsInline": {
+              "type": "boolean"
+            },
+            "preload": {
+              "type": "string",
+              "enum": [
+                "none",
+                "metadata",
+                "auto"
+              ]
+            },
+            "aspectRatio": {
+              "type": "string",
+              "enum": [
+                "16:9",
+                "4:3",
+                "1:1"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "events": {
+          "$ref": "#/definitions/events"
+        }
+      },
+      "additionalProperties": false
+    },
     "statsCard": {
       "type": "object",
       "required": [
@@ -2013,6 +2182,12 @@
         },
         {
           "$ref": "#/definitions/carousel"
+        },
+        {
+          "$ref": "#/definitions/audioPlayer"
+        },
+        {
+          "$ref": "#/definitions/videoPlayer"
         },
         {
           "$ref": "#/definitions/statsCard"

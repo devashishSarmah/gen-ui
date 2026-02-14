@@ -19,6 +19,8 @@ import { ListboxComponent } from './components/data-display/listbox.component';
 import { BasicChartComponent } from './components/data-display/basic-chart.component';
 import { TimelineComponent } from './components/data-display/timeline.component';
 import { CarouselComponent } from './components/data-display/carousel.component';
+import { AudioPlayerComponent } from './components/data-display/audio-player.component';
+import { VideoPlayerComponent } from './components/data-display/video-player.component';
 import { StatsCardComponent } from './components/data-display/stats-card.component';
 import { FlowDiagramComponent } from './components/data-display/flow-diagram.component';
 import { ChartBarComponent } from './components/data-display/chart-bar.component';
@@ -72,6 +74,8 @@ const COMPONENT_MAP: Record<string, Type<any>> = {
   error: ErrorComponent,
   timeline: TimelineComponent,
   carousel: CarouselComponent,
+  'audio-player': AudioPlayerComponent,
+  'video-player': VideoPlayerComponent,
   'stats-card': StatsCardComponent,
   'progress-ring': ProgressRingComponent,
   'flow-diagram': FlowDiagramComponent,

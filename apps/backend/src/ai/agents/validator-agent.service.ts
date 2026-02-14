@@ -31,6 +31,10 @@ export class ValidatorAgentService {
     'formaction',
     'target',
   ]);
+  private readonly mediaComponentTypes = new Set(['audio-player', 'video-player']);
+  private readonly mediaUrlPropKeys = new Set(['src', 'poster']);
+  private readonly mediaAllowedDomains: Set<string>;
+  private readonly mediaAllowAllDomains: boolean;
 
   private readonly knownTools: Set<string>;
 
@@ -43,7 +47,18 @@ export class ValidatorAgentService {
       .map((tool) => tool.trim())
       .filter(Boolean);
 
+    const configuredMediaDomains = String(
+      this.configService.get('AI_MEDIA_ALLOWED_DOMAINS') || '',
+    )
+      .split(',')
+      .map((domain) => this.normalizeDomain(domain))
+      .filter(Boolean);
+
     this.knownTools = new Set(configured);
+    this.mediaAllowAllDomains = configuredMediaDomains.includes('*');
+    this.mediaAllowedDomains = new Set(
+      configuredMediaDomains.filter((domain) => domain !== '*'),
+    );
   }
 
   validate(schema: any): ValidationResult {
@@ -198,7 +213,14 @@ export class ValidatorAgentService {
           continue;
         }
 
-        if (this.looksLikeUrlKey(key) && typeof rawValue === 'string' && this.isNavigationOrExternalUrl(rawValue)) {
+        if (
+          this.looksLikeUrlKey(key) &&
+          typeof rawValue === 'string' &&
+          this.isNavigationOrExternalUrl(rawValue)
+        ) {
+          if (this.isAllowedMediaPropUrl(node.type, key, rawValue)) {
+            continue;
+          }
           errors.push({
             type: 'policy',
             message: `${path}.props.${rawKey}: external/navigation URLs are forbidden`,
@@ -443,8 +465,79 @@ export class ValidatorAgentService {
       key.includes('href') ||
       key.includes('link') ||
       key.includes('endpoint') ||
-      key.includes('action')
+      key.includes('action') ||
+      key === 'src' ||
+      key === 'poster'
     );
+  }
+
+  private isAllowedMediaPropUrl(
+    componentType: unknown,
+    key: string,
+    value: string,
+  ): boolean {
+    const normalizedType = String(componentType || '').toLowerCase();
+    if (!this.mediaComponentTypes.has(normalizedType)) {
+      return false;
+    }
+
+    const normalizedKey = String(key || '').toLowerCase();
+    if (!this.mediaUrlPropKeys.has(normalizedKey)) {
+      return false;
+    }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return false;
+    }
+
+    const lower = trimmed.toLowerCase();
+    if (lower.startsWith('mailto:') || lower.startsWith('tel:') || lower.startsWith('//')) {
+      return false;
+    }
+
+    if (trimmed.startsWith('/')) {
+      return true;
+    }
+
+    let parsed: URL;
+    try {
+      parsed = new URL(trimmed);
+    } catch {
+      return false;
+    }
+
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return false;
+    }
+
+    if (this.mediaAllowAllDomains) {
+      return true;
+    }
+
+    if (this.mediaAllowedDomains.size === 0) {
+      return false;
+    }
+
+    const host = parsed.hostname.toLowerCase();
+    for (const domain of this.mediaAllowedDomains) {
+      if (host === domain || host.endsWith(`.${domain}`)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private normalizeDomain(rawDomain: string): string {
+    const trimmed = String(rawDomain || '').trim().toLowerCase();
+    if (!trimmed) return '';
+    if (trimmed === '*') return '*';
+
+    const withoutProtocol = trimmed.replace(/^https?:\/\//, '');
+    const withoutWildcard = withoutProtocol.startsWith('*.')
+      ? withoutProtocol.slice(2)
+      : withoutProtocol;
+    return withoutWildcard.split('/')[0];
   }
 
   private isNavigationOrExternalUrl(value: string): boolean {

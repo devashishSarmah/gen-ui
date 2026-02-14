@@ -19,6 +19,7 @@ export class SchemaValidationService {
       'grid',
       'card',
       'tabs',
+      'split-layout',
       'accordion',
       'input',
       'select',
@@ -42,6 +43,8 @@ export class SchemaValidationService {
       // Data display components
       'timeline',
       'carousel',
+      'audio-player',
+      'video-player',
       'stats-card',
       'flow-diagram',
       'chart-bar',

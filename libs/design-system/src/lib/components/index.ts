@@ -22,6 +22,8 @@ export { ListboxComponent, type ListboxOption } from './data-display/listbox.com
 export { BasicChartComponent, type ChartDataPoint } from './data-display/basic-chart.component';
 export { TimelineComponent } from './data-display/timeline.component';
 export { CarouselComponent } from './data-display/carousel.component';
+export { AudioPlayerComponent } from './data-display/audio-player.component';
+export { VideoPlayerComponent } from './data-display/video-player.component';
 export { StatsCardComponent } from './data-display/stats-card.component';
 export { FlowDiagramComponent } from './data-display/flow-diagram.component';
 export { ChartBarComponent } from './data-display/chart-bar.component';

@@ -61,6 +61,7 @@ const CONTAINER_MAP: Record<string, string> = {
   card: 'cardContent',
   tabs: 'tabsHost',
   flexbox: 'flexHost',
+  'split-layout': 'splitHost',
   accordion: 'accordionHost',
   toolbar: 'toolbarHost',
 };
@@ -344,12 +345,108 @@ export function manifestToSystemPrompt(manifest: ComponentManifest): string {
   for (const pattern of manifest.interactionSafety.forbiddenPatterns) {
     lines.push(`- ${pattern}`);
   }
+  lines.push('- Decorative / dead-end buttons with no real client-side action');
   lines.push('ALLOWED interactions:');
   for (const action of manifest.interactionSafety.allowedInteractions) {
     lines.push(`- ${action}`);
   }
+  lines.push('- open-details must stay inside the same UI (tabs/accordion), never external links');
+  lines.push('- clearFilters / nextPage / prevPage are allowed when wired to data-engine IDs');
+  lines.push('Media URL policy:');
+  lines.push('- External URLs are blocked by default except media `src`/`poster` on `audio-player` and `video-player`.');
+  lines.push('- Use only trusted HTTPS media domains configured in `AI_MEDIA_ALLOWED_DOMAINS`, or relative paths like `/media/clip.mp3`.');
   lines.push('');
   lines.push('If user asks for "contact form" or similar, generate read-only info cards with copy buttons, not a submitting form.');
+  lines.push('');
+  lines.push('### Button Rules');
+  lines.push('- Emit a `button` only when it causes a real client-side effect (filter clear, pagination, tab switch, step navigation, copy-to-clipboard).');
+  lines.push('- Do not generate buttons for external navigation, API calls, or purely decorative CTAs.');
+  lines.push('- If a CTA has no wired action, replace it with `badge`/`paragraph` or omit it.');
+  lines.push('');
+
+  lines.push('## Client-Side Data Engine (CRITICAL)');
+  lines.push('All filtering, sorting, and pagination must run client-side with no backend roundtrip.');
+  lines.push('The renderer wires filter controls to data components using IDs.');
+  lines.push('');
+  lines.push('### How It Works');
+  lines.push('1. Data components (table, list) must expose an `id` prop as a data source.');
+  lines.push('2. Form controls (input/select/checkbox) target a source with:');
+  lines.push('   - `filterTarget`: the data component `id`');
+  lines.push('   - `filterField`: the data field to filter');
+  lines.push('   - `filterOperator`: contains|equals|gt|lt|gte|lte|in');
+  lines.push('3. User interactions should filter instantly in the browser.');
+  lines.push('');
+  lines.push('### Critical Rules');
+  lines.push('- Always include all records in the data component. Never pre-filter server-side.');
+  lines.push('- Always assign `id` to data components and filter controls.');
+  lines.push('- Connect filters using `filterTarget` + `filterField`.');
+  lines.push('- For select/checkbox filters, prefer `equals` or `in` operators.');
+  lines.push('- For pagination, set table `pageSize` (for example `10`).');
+  lines.push('');
+  lines.push('### Filter Example');
+  lines.push('```json');
+  lines.push(JSON.stringify({
+    type: 'split-layout',
+    props: { sidebarWidth: 260 },
+    children: [
+      {
+        type: 'flexbox',
+        props: { direction: 'column', gap: 12 },
+        children: [
+          { type: 'heading', props: { text: 'Filters', level: 4 } },
+          {
+            type: 'input',
+            props: {
+              id: 'searchFilter',
+              label: 'Search',
+              placeholder: 'Search jobs...',
+              filterTarget: 'jobTable',
+              filterField: 'title',
+              filterOperator: 'contains',
+            },
+          },
+          {
+            type: 'select',
+            props: {
+              id: 'locationFilter',
+              label: 'Location',
+              placeholder: 'All locations',
+              options: [
+                { label: 'Remote', value: 'Remote' },
+                { label: 'New York', value: 'New York' },
+                { label: 'San Francisco', value: 'San Francisco' },
+              ],
+              filterTarget: 'jobTable',
+              filterField: 'location',
+              filterOperator: 'equals',
+            },
+          },
+        ],
+      },
+      {
+        type: 'table',
+        props: {
+          id: 'jobTable',
+          pageSize: 10,
+          columns: [
+            { key: 'title', label: 'Job Title', sortable: true },
+            { key: 'location', label: 'Location', sortable: true },
+            { key: 'salary', label: 'Salary', sortable: true },
+          ],
+          data: [
+            { title: 'Frontend Engineer', location: 'Remote', salary: 120000 },
+            { title: 'Backend Engineer', location: 'New York', salary: 140000 },
+            { title: 'DevOps Engineer', location: 'San Francisco', salary: 150000 },
+          ],
+        },
+      },
+    ],
+  }, null, 2));
+  lines.push('```');
+  lines.push('');
+  lines.push('### Button ID Conventions');
+  lines.push('- `clearFilters_<sourceId>` clears all filters for a data source.');
+  lines.push('- `nextPage_<sourceId>` / `prevPage_<sourceId>` navigates table pagination.');
   lines.push('');
 
   // Component reference
@@ -382,7 +479,7 @@ export function manifestToSystemPrompt(manifest: ComponentManifest): string {
 
   // Schema rules
   lines.push('## Schema Rules');
-  lines.push('- Root must be a layout component (container, flexbox, grid, card, tabs)');
+  lines.push('- Root must be a layout component (container, flexbox, grid, card, tabs, split-layout)');
   lines.push('- Use children arrays for nesting inside container components');
   lines.push('- Do NOT invent new component types');
   lines.push('- Provide ariaLabel for accessibility where supported');

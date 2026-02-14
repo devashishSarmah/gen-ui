@@ -113,16 +113,31 @@ export class WebSocketService {
   /**
    * Send prompt to generate new UI
    */
-  sendPrompt(conversationId: string, prompt: string, provider?: string): void {
+  sendPrompt(conversationId: string, prompt: string, provider?: string): Promise<void> {
     if (!this.socket?.connected) {
       this.lastError.set('WebSocket not connected');
       throw new Error('WebSocket not connected');
     }
 
-    this.socket.emit('prompt', {
-      conversationId,
-      prompt,
-      provider,
+    return new Promise<void>((resolve, reject) => {
+      this.socket?.emit(
+        'prompt',
+        {
+          conversationId,
+          prompt,
+          provider,
+        },
+        (response: any) => {
+          if (response?.error) {
+            const errorMessage = String(response.error);
+            this.lastError.set(errorMessage);
+            reject(new Error(errorMessage));
+            return;
+          }
+
+          resolve();
+        }
+      );
     });
   }
 

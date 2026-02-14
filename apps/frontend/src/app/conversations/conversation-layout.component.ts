@@ -65,6 +65,7 @@ import {
         display: flex;
         height: calc(100vh - var(--app-header-height, 60px) - var(--app-footer-height, 48px));
         height: calc(100dvh - var(--app-header-height, 60px) - var(--app-footer-height, 48px));
+        min-height: 0;
         width: 100%;
         overflow: hidden;
       }
@@ -117,6 +118,7 @@ import {
         overflow: hidden;
         background: transparent;
         min-width: 0;
+        min-height: 0;
       }
 
       .main-toolbar {
