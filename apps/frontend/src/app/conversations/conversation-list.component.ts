@@ -95,9 +95,11 @@ import {
               </div>
               <p class="empty-title">No conversations yet</p>
               <p class="empty-hint">Start chatting to generate your first UI</p>
-              <button (click)="createNewConversation()" class="btn-primary">
-                <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-                New Conversation
+              <button (click)="createNewConversation()" class="btn-primary empty-state-cta">
+                <span class="cta-icon">
+                  <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+                </span>
+                <span class="cta-label">New Conversation</span>
               </button>
             </div>
           </ng-container>
@@ -462,6 +464,11 @@ import {
       }
 
       .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        white-space: nowrap;
         padding: 0.5rem 1.25rem;
         background: linear-gradient(135deg, var(--ds-accent-teal), var(--ds-accent-indigo));
         color: #0a0b0f;
@@ -482,6 +489,37 @@ import {
         &:active {
           transform: translateY(0);
         }
+
+        lucide-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+      }
+
+      .empty-state-cta {
+        display: inline-grid;
+        grid-auto-flow: column;
+        grid-auto-columns: max-content;
+        align-items: center;
+        column-gap: 0.45rem;
+        justify-content: center;
+        white-space: nowrap;
+      }
+
+      .empty-state-cta .cta-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+        line-height: 0;
+      }
+
+      .empty-state-cta .cta-label {
+        display: inline-block;
+        white-space: nowrap;
+        line-height: 1;
       }
 
       .btn-secondary {
