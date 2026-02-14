@@ -29,6 +29,7 @@ WORKDIR /app
 
 # Copy built files and dependencies
 COPY --from=builder /app/dist/apps/backend ./
+COPY --from=builder /app/libs/design-system/src/lib/manifest/dist ./libs/design-system/src/lib/manifest/dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 
