@@ -1,4 +1,13 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ElementRef,
+  ViewChild,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -46,7 +55,7 @@ import {
         </span>
       </div>
 
-      <div class="conversations">
+      <div class="conversations" #conversationsScroller (scroll)="onConversationScroll()">
         <ng-container *ngIf="!conversationStore.isLoadingConversations()">
           <ng-container *ngIf="filteredConversations().length > 0">
             <div
@@ -64,7 +73,7 @@ import {
                   {{ conv.lastMessageAt | date: 'short' }}
                 </p>
               </div>
-              <div class="conversation-actions">
+              <div class="conversation-actions" [attr.data-conversation-id]="conv.id">
                 <button
                   type="button"
                   class="action-btn"
@@ -74,7 +83,13 @@ import {
                 >
                   <lucide-icon [img]="MoreVertical" [size]="14"></lucide-icon>
                 </button>
-                <div class="dropdown-menu" *ngIf="activeMenuId() === conv.id" (click)="preventConversationSelection($event)">
+                <div
+                  class="dropdown-menu"
+                  [class.open-up]="menuOpensUp()"
+                  [attr.data-conversation-id]="conv.id"
+                  *ngIf="activeMenuId() === conv.id"
+                  (click)="preventConversationSelection($event)"
+                >
                   <button type="button" (mousedown)="preventConversationSelection($event)" (click)="startRename(conv)"><lucide-icon [img]="Pencil" [size]="13"></lucide-icon> Rename</button>
                   <button type="button" (mousedown)="preventConversationSelection($event)" (click)="confirmDelete(conv)" class="danger"><lucide-icon [img]="Trash2" [size]="13"></lucide-icon> Delete</button>
                 </div>
@@ -376,7 +391,15 @@ import {
         z-index: 120;
         min-width: 140px;
         overflow: hidden;
-        animation: dropdownFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-origin: top right;
+        animation: dropdownFadeInDown 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &.open-up {
+          top: auto;
+          bottom: calc(100% + 0.5rem);
+          transform-origin: bottom right;
+          animation: dropdownFadeInUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
         button {
           display: flex;
@@ -639,10 +662,21 @@ import {
         letter-spacing: 0.01em;
       }
 
-      @keyframes dropdownFadeIn {
+      @keyframes dropdownFadeInDown {
         from {
           opacity: 0;
           transform: translateY(-8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes dropdownFadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
         }
         to {
           opacity: 1;
@@ -673,6 +707,9 @@ import {
   ],
 })
 export class ConversationListComponent implements OnInit, OnDestroy {
+  @ViewChild('conversationsScroller', { static: true })
+  private conversationsScroller?: ElementRef<HTMLElement>;
+
   conversationStore = inject(ConversationStore);
   uiStateStore = inject(UIStateStore);
   private conversationApi = inject(ConversationApiService);
@@ -692,6 +729,7 @@ export class ConversationListComponent implements OnInit, OnDestroy {
   newTitle = '';
 
   activeMenuId = signal<string | null>(null);
+  menuOpensUp = signal(false);
   renameModalOpen = signal(false);
   deleteModalOpen = signal(false);
   conversationToRename = signal<Conversation | null>(null);
@@ -731,7 +769,7 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 
   private closeMenuOnOutsideClick(event: Event): void {
     if (this.activeMenuId() && !(event.target as Element).closest('.conversation-actions')) {
-      this.activeMenuId.set(null);
+      this.closeActiveMenu();
     }
   }
 
@@ -758,7 +796,22 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 
   openMenu(event: Event, conv: Conversation): void {
     this.preventConversationSelection(event);
-    this.activeMenuId.set(this.activeMenuId() === conv.id ? null : conv.id);
+    if (this.activeMenuId() === conv.id) {
+      this.closeActiveMenu();
+      return;
+    }
+
+    this.activeMenuId.set(conv.id);
+    this.menuOpensUp.set(false);
+    requestAnimationFrame(() => this.updateDropdownDirection(conv.id));
+  }
+
+  onConversationScroll(): void {
+    const activeId = this.activeMenuId();
+    if (!activeId) {
+      return;
+    }
+    requestAnimationFrame(() => this.updateDropdownDirection(activeId));
   }
 
   onConversationItemClick(event: Event, conversationId: string): void {
@@ -768,7 +821,7 @@ export class ConversationListComponent implements OnInit, OnDestroy {
     }
 
     if (this.activeMenuId()) {
-      this.activeMenuId.set(null);
+      this.closeActiveMenu();
       return;
     }
 
@@ -779,7 +832,7 @@ export class ConversationListComponent implements OnInit, OnDestroy {
     this.conversationToRename.set(conv);
     this.newTitle = conv.title;
     this.renameModalOpen.set(true);
-    this.activeMenuId.set(null);
+    this.closeActiveMenu();
   }
 
   closeRenameModal(): void {
@@ -812,7 +865,7 @@ export class ConversationListComponent implements OnInit, OnDestroy {
   confirmDelete(conv: Conversation): void {
     this.conversationToDelete.set(conv);
     this.deleteModalOpen.set(true);
-    this.activeMenuId.set(null);
+    this.closeActiveMenu();
   }
 
   closeDeleteModal(): void {
@@ -894,5 +947,42 @@ export class ConversationListComponent implements OnInit, OnDestroy {
           this.conversationStore.setError('Failed to create conversation');
         },
       });
+  }
+
+  private closeActiveMenu(): void {
+    this.activeMenuId.set(null);
+    this.menuOpensUp.set(false);
+  }
+
+  private updateDropdownDirection(conversationId: string): void {
+    const scroller = this.conversationsScroller?.nativeElement;
+    if (!scroller || this.activeMenuId() !== conversationId) {
+      return;
+    }
+
+    const selectorId = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+      ? CSS.escape(conversationId)
+      : conversationId;
+
+    const actionsEl = scroller.querySelector(
+      `.conversation-actions[data-conversation-id="${selectorId}"]`
+    ) as HTMLElement | null;
+    const menuEl = scroller.querySelector(
+      `.dropdown-menu[data-conversation-id="${selectorId}"]`
+    ) as HTMLElement | null;
+
+    if (!actionsEl || !menuEl) {
+      return;
+    }
+
+    const scrollerRect = scroller.getBoundingClientRect();
+    const actionsRect = actionsEl.getBoundingClientRect();
+    const menuHeight = menuEl.offsetHeight || 96;
+    const minGap = 8;
+    const spaceBelow = scrollerRect.bottom - actionsRect.bottom - minGap;
+    const spaceAbove = actionsRect.top - scrollerRect.top - minGap;
+
+    const shouldOpenUp = spaceBelow < menuHeight && spaceAbove > spaceBelow;
+    this.menuOpensUp.set(shouldOpenUp);
   }
 }
