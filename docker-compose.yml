@@ -59,8 +59,8 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
       NODE_ENV: ${NODE_ENV}
-    ports:
-      - "${BACKEND_PORT}:3000"
+    expose:
+      - "3000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -76,14 +76,34 @@ services:
       dockerfile: apps/frontend/Dockerfile
     container_name: genui-frontend
     environment:
-      API_URL: http://localhost:${BACKEND_PORT}
+      API_URL: /api
       FRONTEND_URL: ${FRONTEND_URL}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GA_MEASUREMENT_ID: ${GA_MEASUREMENT_ID}
-    ports:
-      - "${FRONTEND_PORT}:80"
+    expose:
+      - "80"
     depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - genui-network
+
+  nginx:
+    build:
+      context: .
+      dockerfile: infra/nginx/Dockerfile
+    container_name: genui-nginx
+    environment:
+      NGINX_CERT_DOMAIN: ${NGINX_CERT_DOMAIN:-localhost}
+      NGINX_CERT_DAYS: ${NGINX_CERT_DAYS:-365}
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - nginx_certs:/etc/nginx/certs
+    depends_on:
+      - frontend
       - backend
     restart: unless-stopped
     networks:
@@ -94,6 +114,8 @@ volumes:
     name: genui-postgres-data
   redis_data:
     name: genui-redis-data
+  nginx_certs:
+    name: genui-nginx-certs
 
 networks:
   genui-network:

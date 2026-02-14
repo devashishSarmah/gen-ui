@@ -197,7 +197,8 @@ Required variables:
 | `POSTGRES_PASSWORD` | Secure password for PostgreSQL |
 | `REDIS_PASSWORD` | Secure password for Redis |
 | `JWT_SECRET` | Signing secret (min 32 chars) |
-| `FRONTEND_URL` | Frontend origin (default: `http://localhost:4200`) |
+| `FRONTEND_URL` | Frontend origin (default with proxy: `http://localhost`) |
+| `NGINX_HTTP_PORT` / `NGINX_HTTPS_PORT` | Host ports exposed by reverse proxy (defaults: `80` / `443`) |
 | At least one AI provider key | `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENROUTER_API_KEY` |
 
 Optional OAuth:
@@ -217,9 +218,11 @@ npm run docker:down      # Stop
 
 | Service | URL |
 |---------|-----|
-| Frontend | http://localhost:4200 |
-| Backend API | http://localhost:3000 |
-| Health check | http://localhost:3000/health |
+| Frontend (via Nginx) | http://localhost (or https://localhost) |
+| Backend API (via Nginx) | http://localhost/api |
+| Health check (via Nginx) | http://localhost/api/health |
+
+Note: Docker setup uses an internal reverse proxy (`nginx`) as the only host-exposed service. `backend` and `frontend` are not directly exposed.
 
 ### 4. Development Mode
 
