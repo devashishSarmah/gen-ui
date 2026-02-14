@@ -5,7 +5,10 @@ services:
       context: .
       dockerfile: apps/backend/Dockerfile
       target: builder
+    env_file:
+      - .env
     environment:
+      REDIS_USERNAME: ""
       FRONTEND_URL: ${FRONTEND_URL}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}

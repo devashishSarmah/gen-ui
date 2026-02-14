@@ -73,14 +73,17 @@ import { AppService } from './app.service';
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        redis: {
-          host: configService.get('REDIS_HOST'),
-          port: configService.get<number>('REDIS_PORT'),
-          username: configService.get('REDIS_USERNAME'),
-          password: configService.get('REDIS_PASSWORD'),
-        },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const redisUsername = configService.get<string>('REDIS_USERNAME')?.trim();
+        return {
+          redis: {
+            host: configService.get('REDIS_HOST'),
+            port: configService.get<number>('REDIS_PORT'),
+            ...(redisUsername ? { username: redisUsername } : {}),
+            password: configService.get('REDIS_PASSWORD'),
+          },
+        };
+      },
     }),
     AuthModule,
     UsersModule,
