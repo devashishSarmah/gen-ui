@@ -23,6 +23,7 @@ import { AdminModule } from '../admin/admin.module';
 import { SchedulerModule } from '../scheduler/scheduler.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { CommonModule } from '../common/common.module';
+import { SeedModule } from '../seed/seed.module';
 import { GlobalExceptionFilter } from '../common/filters/global-exception.filter';
 import { RequestLoggerMiddleware } from '../common/middleware/request-logger.middleware';
 import { AppController } from './app.controller';
@@ -97,6 +98,7 @@ import { AppService } from './app.service';
     SchedulerModule,
     AnalyticsModule,
     CommonModule,
+    SeedModule,
   ],
   controllers: [AppController],
   providers: [
