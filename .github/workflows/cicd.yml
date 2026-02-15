@@ -76,7 +76,7 @@ jobs:
         run: |
           set -eux
           echo "Disk before cleanup:"
-          df -h /
+          df -h / /mnt
           sudo rm -rf \
             /usr/local/lib/android \
             /opt/ghc \
@@ -108,10 +108,32 @@ jobs:
           sudo apt-get clean || true
           docker system prune -af || true
           echo "Disk after cleanup:"
-          df -h /
+          df -h / /mnt
+
+      - name: Move Docker data-root to /mnt
+        run: |
+          # The root partition (/) is small (~14 GB). /mnt has 50+ GB.
+          # Relocate Docker's storage there so builds don't run out of space.
+          sudo systemctl stop docker
+          sudo mkdir -p /mnt/docker
+          sudo cp /etc/docker/daemon.json /etc/docker/daemon.json.bak 2>/dev/null || true
+          echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
+          # Move existing Docker data to avoid re-pulling base images
+          sudo rsync -a /var/lib/docker/ /mnt/docker/ || true
+          sudo rm -rf /var/lib/docker
+          sudo systemctl start docker
+          echo "Docker data-root relocated to /mnt/docker"
+          sudo mkdir -p /mnt/docker-tmp
+          df -h / /mnt
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: env.TMPDIR=/mnt/docker-tmp
+          buildkitd-config-inline: |
+            [worker.oci]
+              gc = true
+              gckeepstorage = 5000000000
 
       - name: Login to GHCR
         uses: docker/login-action@v3
