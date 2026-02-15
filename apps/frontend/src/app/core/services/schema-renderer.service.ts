@@ -449,7 +449,12 @@ export class SchemaRendererService {
       const childComponents: ComponentRef<any>[] = [];
       if (schema.children && schema.children.length > 0) {
         // Try multi-container distribution first (e.g., tabs → one VCR per panel)
-        const multiContainers = this.resolveMultiChildContainers(componentRef);
+        let multiContainers = this.resolveMultiChildContainers(componentRef);
+        // @ViewChildren populated by *ngFor may need a second CD cycle
+        if (!multiContainers && typeof componentRef.instance.getChildContainers === 'function') {
+          componentRef.changeDetectorRef.detectChanges();
+          multiContainers = this.resolveMultiChildContainers(componentRef);
+        }
         if (multiContainers) {
           schema.children.forEach((childSchema, index) => {
             if (index < multiContainers.length) {

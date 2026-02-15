@@ -113,7 +113,7 @@ export class WebSocketService {
   /**
    * Send prompt to generate new UI
    */
-  sendPrompt(conversationId: string, prompt: string, provider?: string): Promise<void> {
+  sendPrompt(conversationId: string, prompt: string, provider?: string, isRetry = false): Promise<void> {
     if (!this.socket?.connected) {
       this.lastError.set('WebSocket not connected');
       throw new Error('WebSocket not connected');
@@ -126,6 +126,7 @@ export class WebSocketService {
           conversationId,
           prompt,
           provider,
+          isRetry,
         },
         (response: any) => {
           if (response?.error) {

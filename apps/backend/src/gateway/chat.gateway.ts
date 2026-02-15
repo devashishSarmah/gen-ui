@@ -127,7 +127,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('prompt')
   async handlePrompt(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { conversationId: string; prompt: string; provider?: string }
+    @MessageBody() data: { conversationId: string; prompt: string; provider?: string; isRetry?: boolean }
   ) {
     const traceId = this.createTraceId();
     const startedAt = Date.now();
@@ -150,14 +150,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     try {
-      this.logger.log(`[${traceId}] prompt_stage save_user_message_start`);
-      // Save user message
-      await this.conversationsService.addMessage(
-        data.conversationId,
-        MessageRole.USER,
-        data.prompt
-      );
-      this.logger.log(`[${traceId}] prompt_stage save_user_message_done`);
+      // Save user message (skip on retry — the message already exists from the first attempt)
+      if (!data.isRetry) {
+        this.logger.log(`[${traceId}] prompt_stage save_user_message_start`);
+        await this.conversationsService.addMessage(
+          data.conversationId,
+          MessageRole.USER,
+          data.prompt
+        );
+        this.logger.log(`[${traceId}] prompt_stage save_user_message_done`);
+      } else {
+        this.logger.log(`[${traceId}] prompt_stage skip_user_message (retry)`);
+      }
 
       // Generate title from first prompt if conversation title is default
       if (conversation.title === 'New Conversation') {

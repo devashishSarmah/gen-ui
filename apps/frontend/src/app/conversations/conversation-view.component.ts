@@ -1210,7 +1210,7 @@ export class ConversationViewComponent implements OnInit, OnDestroy {
     this.uiStateStore.startStreaming();
 
     void this.webSocketService
-      .sendPrompt(this.conversationId, promptToRetry)
+      .sendPrompt(this.conversationId, promptToRetry, undefined, true)
       .catch((error) => {
         console.error('Failed to retry prompt:', error);
         this.uiStateStore.setStreamingError(
