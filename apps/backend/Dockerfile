@@ -26,6 +26,25 @@ RUN --mount=type=cache,target=/root/.npm \
     rm -rf node_modules .nx /tmp/nx-* && \
     # ── 5. Fresh production-only install ────────────────────────
     npm ci --omit=dev --legacy-peer-deps --ignore-scripts && \
+    # ── 5b. Remove frontend/tooling packages accidentally kept in deps ──
+    rm -rf \
+      node_modules/@angular \
+      node_modules/@angular-devkit \
+      node_modules/@angular-eslint \
+      node_modules/zone.js \
+      node_modules/lucide-angular \
+      node_modules/@nx \
+      node_modules/nx \
+      node_modules/typescript \
+      node_modules/postcss \
+      node_modules/tailwindcss \
+      node_modules/@tailwindcss \
+      node_modules/esbuild \
+      node_modules/@esbuild \
+      node_modules/webpack \
+      node_modules/webpack-dev-server \
+      node_modules/@swc \
+    2>/dev/null; \
     # ── 6. Strip unnecessary files from prod deps ───────────────
     find node_modules -type f \( \
       -name '*.map' -o -name '*.ts' -o -name '*.md' \
