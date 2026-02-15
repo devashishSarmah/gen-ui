@@ -6,8 +6,13 @@ Gen UI is an experimental system where LLMs generate fully interactive Angular c
 
 Inspired by Google Research's [Generative UI](https://research.google/blog/generative-ui-a-rich-custom-visual-interactive-user-experience-for-any-prompt/) paper (Nov 2025), which demonstrated that LLMs can create immersive visual experiences and interactive tools on the fly for any prompt.
 
+
+<img width="1662" height="813" alt="Screenshot 2026-02-16 at 2 21 49 AM" src="https://github.com/user-attachments/assets/c074cc0e-32b8-4b94-8672-c764c7c072bb" />
+<img width="1661" height="814" alt="Screenshot 2026-02-16 at 1 42 17 AM" src="https://github.com/user-attachments/assets/1b446dc6-ed38-4dce-ad4a-19cfe3c9e945" />
+<img width="1661" height="812" alt="Screenshot 2026-02-16 at 2 03 10 AM" src="https://github.com/user-attachments/assets/be39ff1b-f275-4a9e-ad9e-a55bf5b32bd2" />
+
 <!-- Screenshots / GIF placeholder -->
-<!-- ![Gen UI Demo](docs/demo.gif) -->
+[Live Demo](https://layer.devashishsarmah.com/)
 
 ---
 
