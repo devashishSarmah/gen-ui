@@ -26,6 +26,17 @@ RUN npx nx build backend --configuration=production
 # This significantly reduces layer size in CI and avoids disk exhaustion on runners.
 RUN npm prune --omit=dev --legacy-peer-deps
 
+# Remove sourcemaps, markdown, and other non-essential files to shrink the layer.
+RUN find node_modules -type f \( \
+      -name '*.map' -o -name '*.ts' -o -name '*.md' \
+      -o -name '*.markdown' -o -name 'LICENSE*' -o -name 'CHANGELOG*' \
+      -o -name '*.d.ts.map' -o -name '.package-lock.json' \
+    \) -delete 2>/dev/null; \
+    find node_modules -type d -name '__tests__' -exec rm -rf {} + 2>/dev/null; \
+    find node_modules -type d -name 'test' -exec rm -rf {} + 2>/dev/null; \
+    find node_modules -type d -name 'docs' -exec rm -rf {} + 2>/dev/null; \
+    true
+
 # Stage 2: Production
 FROM node:20-alpine
 
