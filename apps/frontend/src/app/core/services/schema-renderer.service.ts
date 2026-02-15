@@ -41,7 +41,14 @@ export class SchemaRendererService {
   constructor(
     private injector: EnvironmentInjector,
     private componentRegistry: ComponentRegistryService
-  ) {}
+  ) {
+    // Subscribe to content-target children updates.
+    // When InteractionService detects metadata.children, it emits here
+    // so we can re-render the target container's child tree.
+    this.interactionService.contentChildrenUpdate$.subscribe((event) => {
+      this.replaceTargetChildren(event.targetRef, event.targetType, event.children);
+    });
+  }
 
   /**
    * Render a schema to a component.
@@ -403,6 +410,44 @@ export class SchemaRendererService {
     }
 
     return null;
+  }
+
+  /**
+   * Replace a container component's children with new schema children.
+   * Used by contentTarget linking when metadata contains a `children` array.
+   */
+  private replaceTargetChildren(
+    targetRef: ComponentRef<any>,
+    targetType: string,
+    children: UISchema[],
+  ): void {
+    // Resolve the target's child ViewContainerRef
+    const capability = this.componentRegistry.getCapability(targetType);
+    if (!capability?.isContainer) {
+      console.warn(
+        `[SchemaRenderer] contentTarget type "${targetType}" is not a container; cannot replace children.`
+      );
+      return;
+    }
+
+    const hostProperty = capability.contentHost || 'contentHost';
+    const vcr = (targetRef.instance as any)[hostProperty] as ViewContainerRef | undefined;
+    if (!vcr || typeof vcr.clear !== 'function') {
+      console.warn(
+        `[SchemaRenderer] contentTarget "${targetType}" has no accessible ViewContainerRef ("${hostProperty}").`
+      );
+      return;
+    }
+
+    // Clear existing children
+    vcr.clear();
+
+    // Render new children into the container
+    for (const childSchema of children) {
+      this.renderSchemaTree(childSchema, vcr);
+    }
+
+    targetRef.changeDetectorRef.markForCheck();
   }
 
   /**

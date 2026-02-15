@@ -438,9 +438,14 @@ When a timeline or stepper should control a detail panel, use `contentTarget`:
 1. Give the **source** (timeline/stepper) an `id` prop.
 2. Give the **detail component** (card, flexbox, etc.) an `id`, e.g. `"detailCard"`. **Both IDs are REQUIRED.**
 3. Set `contentTarget: "detailCard"` on the timeline/stepper — must match the target's `id` exactly.
-4. Put the detail component's props for each item inside `metadata`.
+4. Put the detail component's props inside each item's `metadata`.
+   - For **simple content** (just title/description), use flat keys matching the target's props:
+     `"metadata": { "title": "2011 WC", "description": "India won." }`
+   - For **rich content** (multiple paragraphs, lists, etc.), use a `children` key containing a UI schema array. The target's existing children are replaced:
+     `"metadata": { "title": "2011 WC", "children": [ { "type": "paragraph", "props": { "text": "..." } } ] }`
+5. Set the card/target's initial props and children to match the first item's metadata (so it looks correct on load).
 
-Clicking an item copies its `metadata` into the target component's props.
+Clicking an item copies its `metadata` into the target: flat keys become props, `children` replaces the target's child tree.
 
 ```json
 {
@@ -455,10 +460,22 @@ Clicking an item copies its `metadata` into the target component's props.
         "selectedIndex": 0,
         "items": [
           { "id": "y1", "title": "2011", "status": "completed",
-            "metadata": { "title": "2011 World Cup", "description": "India won their second World Cup title." }
+            "metadata": {
+              "title": "2011 World Cup",
+              "children": [
+                { "type": "paragraph", "props": { "text": "**Result:** Champions" } },
+                { "type": "paragraph", "props": { "text": "**Captain:** MS Dhoni" } }
+              ]
+            }
           },
           { "id": "y2", "title": "2015", "status": "active",
-            "metadata": { "title": "2015 World Cup", "description": "Australia claimed their fifth title." }
+            "metadata": {
+              "title": "2015 World Cup",
+              "children": [
+                { "type": "paragraph", "props": { "text": "**Result:** Semi-finals" } },
+                { "type": "paragraph", "props": { "text": "**Captain:** MS Dhoni" } }
+              ]
+            }
           }
         ]
       }
@@ -467,9 +484,12 @@ Clicking an item copies its `metadata` into the target component's props.
       "type": "card",
       "props": {
         "id": "detailCard",
-        "title": "2011 World Cup",
-        "description": "India won their second World Cup title."
-      }
+        "title": "2011 World Cup"
+      },
+      "children": [
+        { "type": "paragraph", "props": { "text": "**Result:** Champions" } },
+        { "type": "paragraph", "props": { "text": "**Captain:** MS Dhoni" } }
+      ]
     }
   ]
 }

@@ -1,4 +1,5 @@
 import { Injectable, inject, ComponentRef, signal } from '@angular/core';
+import { Subject } from 'rxjs';
 import { ClientDataEngine } from './client-data-engine.service';
 
 /**
@@ -123,6 +124,24 @@ export class InteractionService {
    */
   private contentTargetBindings = new Map<string, string>();
 
+  /**
+   * Component types: componentId → schema type string (e.g. 'card', 'flexbox').
+   * Needed by SchemaRendererService to resolve the correct child ViewContainerRef.
+   */
+  private componentTypes = new Map<string, string>();
+
+  /**
+   * Emitted when metadata.children needs to be rendered into a target container.
+   * SchemaRendererService subscribes to this to avoid circular dependency.
+   */
+  readonly contentChildrenUpdate$ = new Subject<{
+    targetId: string;
+    targetRef: ComponentRef<any>;
+    targetType: string;
+    children: any[];
+    targetProps?: Record<string, any>;
+  }>();
+
   /** Signal: true when an interaction is in progress (kept for API compat). */
   readonly interacting = signal(false);
 
@@ -138,6 +157,7 @@ export class InteractionService {
     this.dataComponentRefs.clear();
     this.allComponentRefs.clear();
     this.contentTargetBindings.clear();
+    this.componentTypes.clear();
     this.dataEngine.clearAll();
   }
 
@@ -159,6 +179,7 @@ export class InteractionService {
     // Store all component refs by ID for content-target linking
     if (componentId) {
       this.allComponentRefs.set(componentId, componentRef);
+      this.componentTypes.set(componentId, componentType);
     }
 
     // Register content-target binding (e.g., timeline → card linking)
@@ -340,7 +361,34 @@ export class InteractionService {
 
     if (!metadata || typeof metadata !== 'object') return;
 
-    // Apply metadata key/values as props on the target component
+    const targetType = this.componentTypes.get(targetId) || 'unknown';
+
+    // If metadata contains a children array, emit for SchemaRendererService
+    // to re-render the target's child tree from the new schema.
+    if (Array.isArray(metadata['children'])) {
+      // Also apply any non-children props (e.g. title)
+      const { children, ...propsToApply } = metadata;
+      const setInput = (targetRef as any).setInput;
+      for (const [key, value] of Object.entries(propsToApply)) {
+        if (typeof setInput === 'function') {
+          setInput.call(targetRef, key, value);
+        } else {
+          (targetRef.instance as any)[key] = value;
+        }
+      }
+      targetRef.changeDetectorRef.markForCheck();
+
+      this.contentChildrenUpdate$.next({
+        targetId,
+        targetRef,
+        targetType,
+        children: metadata['children'],
+        targetProps: propsToApply,
+      });
+      return;
+    }
+
+    // Flat metadata: apply key/values as props on the target component
     const setInput = (targetRef as any).setInput;
     for (const [key, value] of Object.entries(metadata)) {
       if (typeof setInput === 'function') {

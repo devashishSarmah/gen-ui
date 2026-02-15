@@ -1486,7 +1486,7 @@
                   },
                   "metadata": {
                     "type": "object",
-                    "description": "Key-value data applied as props on the contentTarget component when this item is clicked. Keys must match the target component's @Input names (e.g. title, description, items)."
+                    "description": "Data applied to the contentTarget when clicked. Flat keys become props (e.g. title). A 'children' key (array of UI schema nodes) replaces the target's child tree for rich content."
                   }
                 }
               },
@@ -1505,7 +1505,7 @@
             },
             "contentTarget": {
               "type": "string",
-              "description": "ID of a sibling component whose props are updated from the clicked item's metadata"
+              "description": "ID of a sibling component whose props/children are updated from the clicked item's metadata. The target MUST have an id prop matching this value."
             }
           },
           "additionalProperties": false
@@ -2099,7 +2099,7 @@
                   },
                   "metadata": {
                     "type": "object",
-                    "description": "Key-value data applied as props on the contentTarget component when this step is clicked."
+                    "description": "Data applied to the contentTarget when clicked. Flat keys become props. A 'children' key (array of UI schema nodes) replaces the target's child tree."
                   }
                 }
               },
@@ -2120,7 +2120,7 @@
             },
             "contentTarget": {
               "type": "string",
-              "description": "ID of a sibling component whose props are updated from the clicked step's metadata"
+              "description": "ID of a sibling component whose props/children are updated from the clicked step's metadata. The target MUST have an id prop matching this value."
             }
           },
           "additionalProperties": false
