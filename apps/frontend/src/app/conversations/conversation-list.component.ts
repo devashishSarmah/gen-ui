@@ -33,7 +33,7 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, SkeletonLoaderComponent, LucideAngularModule],
   template: `
-    <div class="conversation-list-container">
+    <div class="conversation-list-container w-full">
       <div class="header">
         <h2>Conversations</h2>
         <button (click)="createNewConversation()" class="btn-new">
