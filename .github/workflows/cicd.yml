@@ -25,9 +25,6 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/gen-ui-backend
-  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/gen-ui-frontend
-  NGINX_IMAGE: ghcr.io/${{ github.repository_owner }}/gen-ui-nginx
   DOCKER_PLATFORMS: ${{ vars.DOCKER_PLATFORMS || 'linux/amd64' }}
 
 jobs:
@@ -88,7 +85,8 @@ jobs:
       - name: Resolve image name
         id: image
         run: |
-          echo "name=${REGISTRY}/${GITHUB_REPOSITORY_OWNER}/gen-ui-${{ matrix.service }}" >> "$GITHUB_OUTPUT"
+          OWNER_LOWER="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          echo "name=${REGISTRY}/${OWNER_LOWER}/gen-ui-${{ matrix.service }}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v6
@@ -155,9 +153,10 @@ jobs:
 
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
-            export BACKEND_IMAGE="${{ env.BACKEND_IMAGE }}"
-            export FRONTEND_IMAGE="${{ env.FRONTEND_IMAGE }}"
-            export NGINX_IMAGE="${{ env.NGINX_IMAGE }}"
+            OWNER_LOWER="$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
+            export BACKEND_IMAGE="ghcr.io/${OWNER_LOWER}/gen-ui-backend"
+            export FRONTEND_IMAGE="ghcr.io/${OWNER_LOWER}/gen-ui-frontend"
+            export NGINX_IMAGE="ghcr.io/${OWNER_LOWER}/gen-ui-nginx"
             export IMAGE_TAG="${{ github.sha }}"
 
             $COMPOSE -f infra/deploy/docker-compose.ec2.yml --env-file .env pull
