@@ -6,6 +6,9 @@
 # ─────────────────────────────────────────
 FROM node:20-alpine AS builder
 
+# Build tools needed for native addons (bcrypt)
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
 
 COPY package*.json ./
@@ -26,6 +29,8 @@ RUN --mount=type=cache,target=/root/.npm \
     rm -rf node_modules .nx /tmp/nx-* && \
     # ── 5. Fresh production-only install ────────────────────────
     npm ci --omit=dev --legacy-peer-deps --ignore-scripts && \
+    # ── 5a. Rebuild native addons (bcrypt needs compiled .node binary) ──
+    npm rebuild bcrypt --build-from-source && \
     # ── 5b. Remove frontend/tooling packages accidentally kept in deps ──
     rm -rf \
       node_modules/@angular \
