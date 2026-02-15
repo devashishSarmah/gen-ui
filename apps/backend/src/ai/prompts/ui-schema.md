@@ -227,11 +227,11 @@ The renderer wires filter controls to data components using IDs.
 - **input**: Text input field with label, placeholder, and validation
   Props: id: string, type: string [text|email|password|number|tel|url] = "text", label: string, placeholder: string, value: string, disabled: boolean = false, required: boolean = false, pattern: string, error: string, filterTarget: string, filterField: string, filterOperator: string [contains|equals|gt|lt|gte|lte|in] = "contains"
 - **select**: Dropdown select field with options
-  Props: id: string, label: string, placeholder: string, value: any, options: array, disabled: boolean = false, required: boolean = false, error: string, filterTarget: string, filterField: string, filterOperator: string [contains|equals|gt|lt|gte|lte|in] = "equals"
+  Props: id: string, label: string, placeholder: string, value: any, options: array [{label:string, value:any}], disabled: boolean = false, required: boolean = false, error: string, filterTarget: string, filterField: string, filterOperator: string [contains|equals|gt|lt|gte|lte|in] = "equals"
 - **checkbox**: Checkbox input with label
   Props: id: string, label: string, checked: boolean = false, disabled: boolean = false, error: string, filterTarget: string, filterField: string, filterOperator: string [contains|equals|gt|lt|gte|lte|in] = "equals"
 - **radio**: Radio button group with multiple options
-  Props: id: string, groupLabel: string, value: any, options: array, disabled: boolean = false, error: string, filterTarget: string, filterField: string, filterOperator: string [contains|equals|gt|lt|gte|lte|in] = "equals"
+  Props: id: string, groupLabel: string, value: any, options: array [{label:string, value:any}], disabled: boolean = false, error: string, filterTarget: string, filterField: string, filterOperator: string [contains|equals|gt|lt|gte|lte|in] = "equals"
 - **textarea**: Multi-line text input field
   Props: id: string, label: string, placeholder: string, value: string, rows: number = 4, cols: number = 50, maxLength: number, disabled: boolean = false, required: boolean = false, error: string, filterTarget: string, filterField: string, filterOperator: string [contains|equals|gt|lt|gte|lte|in] = "contains"
 - **button**: Interactive button with variants and states
@@ -245,9 +245,9 @@ The renderer wires filter controls to data components using IDs.
 - **card** [container]: Card container with header, content, and footer
   Props: title: string, padding: number = 12, elevated: boolean = true, footer: boolean = false
 - **tabs** [container]: Tabbed interface using Angular Aria headless directives
-  Props: tabs: array, defaultTab: string, selectionMode: string [follow|explicit] = "follow", orientation: string [horizontal|vertical] = "horizontal"
+  Props: tabs: array [{label:string, value:string, disabled:boolean}], defaultTab: string, selectionMode: string [follow|explicit] = "follow", orientation: string [horizontal|vertical] = "horizontal"
 - **accordion** [container]: Expandable/collapsible sections using Angular Aria accordion directives
-  Props: items: array, multiExpandable: boolean = true
+  Props: items: array [{id:string, title:string, content:string, disabled:boolean, expanded:boolean}], multiExpandable: boolean = true
 - **flexbox** [container]: Flexbox layout component
   Props: direction: string [row|column|row-reverse|column-reverse] = "column", alignItems: string [stretch|flex-start|center|flex-end|baseline] = "stretch", justifyContent: string [flex-start|center|flex-end|space-between|space-around|space-evenly] = "flex-start", wrap: string [nowrap|wrap|wrap-reverse] = "nowrap", gap: number|string = 12, padding: number|string = 0
 - **split-layout** [container]: Two-pane sidebar + main layout. Supply exactly 2 children: sidebar content and main content.
@@ -255,17 +255,17 @@ The renderer wires filter controls to data components using IDs.
 
 ### Data-display
 - **table**: Data table with striping, borders, sorting, and pagination. Virtual scroll auto-enabled >100 rows.
-  Props: id: string, columns: array, data: array, striped: boolean = true, bordered: boolean = true, hoverable: boolean = true, pageSize: number = 0, rowHeight: number = 36, maxVisibleRows: number = 15
+  Props: id: string, columns: array [{key:string, label:string, width:string, sortable:boolean}], data: array, striped: boolean = true, bordered: boolean = true, hoverable: boolean = true, pageSize: number = 0, rowHeight: number = 36, maxVisibleRows: number = 15
 - **list**: List component with items and descriptions. Virtual scroll auto-enabled >100 items.
-  Props: id: string, items: array, styled: boolean = true, itemHeight: number = 48, maxVisibleItems: number = 15
+  Props: id: string, items: array [{id:string, label:string, description:string, icon:string}], styled: boolean = true, itemHeight: number = 48, maxVisibleItems: number = 15
 - **listbox**: Accessible listbox using Angular Aria with keyboard navigation and selection
-  Props: options: array, label: string, multi: boolean = false, orientation: string [vertical|horizontal] = "vertical", selectionMode: string [follow|explicit] = "explicit"
+  Props: options: array [{value:string, label:string, description:string, icon:string, disabled:boolean}], label: string, multi: boolean = false, orientation: string [vertical|horizontal] = "vertical", selectionMode: string [follow|explicit] = "explicit"
 - **basic-chart**: Basic chart component with bar, line, and pie charts
-  Props: data: array, title: string, type: string [bar|line|pie] = "bar", width: number = 400, height: number = 300
+  Props: data: array [{label:string, value:number}], title: string, type: string [bar|line|pie] = "bar", width: number = 400, height: number = 300
 - **timeline**: Timeline component showing chronological events with status indicators
-  Props: items: array, orientation: string [vertical|horizontal] = "vertical"
+  Props: items: array [{id:string, title:string, description:string, timestamp:string, icon:string, status:string[completed|active|pending|error]}], orientation: string [vertical|horizontal] = "vertical"
 - **carousel**: Carousel/slider component for displaying multiple items with navigation
-  Props: slides: array, autoplay: boolean = false, interval: number = 5000, loop: boolean = true, showControls: boolean = true, showIndicators: boolean = true
+  Props: slides: array [{id:string, title:string, description:string, image:string, content:string, icon:string}], autoplay: boolean = false, interval: number = 5000, loop: boolean = true, showControls: boolean = true, showIndicators: boolean = true
 - **audio-player**: Embedded audio player for music clips, podcasts, or previews
   Props: src: string, title: string, subtitle: string, controls: boolean = true, autoplay: boolean = false, loop: boolean = false, muted: boolean = false, preload: string [none|metadata|auto] = "metadata"
 - **video-player**: Embedded video player with poster and aspect-ratio controls
@@ -275,9 +275,9 @@ The renderer wires filter controls to data components using IDs.
 - **progress-ring**: Circular progress indicator with percentage display
   Props: value: number = 0, size: number = 120, strokeWidth: number = 8, label: string, icon: string, showValue: boolean = true
 - **flow-diagram**: Flow diagram showing process steps with connections
-  Props: nodes: array, connections: array
+  Props: nodes: array [{id:string, label:string, icon:string, description:string, type:string[start|end|process|decision]}], connections: array [{from:string, to:string, label:string}]
 - **chart-bar**: Modern bar chart for displaying metrics
-  Props: title: string, data: array
+  Props: title: string, data: array [{label:string, value:number, color:string}]
 
 ### Typography
 - **heading**: Heading text with configurable level
@@ -289,13 +289,13 @@ The renderer wires filter controls to data components using IDs.
 
 ### Navigation
 - **wizard-stepper**: Multi-step wizard with stepper UI
-  Props: steps: array
+  Props: steps: array [{id:string, label:string, description:string, completed:boolean}]
 - **menu**: Dropdown menu using Angular Aria with keyboard navigation and groups
-  Props: actions: array, triggerLabel: string = "Menu"
+  Props: actions: array [{value:string, label:string, icon:string, disabled:boolean, group:string}], triggerLabel: string = "Menu"
 - **toolbar** [container]: Accessible toolbar using Angular Aria with keyboard navigation
   Props: orientation: string [horizontal|vertical] = "horizontal", ariaLabel: string = "Toolbar"
 - **stepper**: Step indicator showing progress through a multi-step process
-  Props: steps: array, currentStep: number = 0, orientation: string [vertical|horizontal] = "vertical", clickable: boolean = false
+  Props: steps: array [{id:string, title:string, description:string, icon:string, status:string[completed|active|pending|error]}], currentStep: number = 0, orientation: string [vertical|horizontal] = "vertical", clickable: boolean = false
 
 ### Error
 - **error**: Error display with retry and reporting options

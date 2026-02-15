@@ -467,7 +467,19 @@ export function manifestToSystemPrompt(manifest: ComponentManifest): string {
           const type = Array.isArray(v.type) ? v.type.join('|') : v.type;
           const def = v.default !== undefined ? ` = ${JSON.stringify(v.default)}` : '';
           const enums = v.enum ? ` [${v.enum.join('|')}]` : '';
-          return `${k}: ${type}${enums}${def}`;
+          // For array props with object items, show the item fields
+          let itemFields = '';
+          if (v.type === 'array' && v.items?.type === 'object' && v.items.properties) {
+            const fields = Object.entries(v.items.properties)
+              .map(([fk, fv]: [string, any]) => {
+                const ft = fv.type || 'string';
+                const fe = fv.enum ? `[${fv.enum.join('|')}]` : '';
+                return `${fk}:${ft}${fe}`;
+              })
+              .join(', ');
+            itemFields = ` [{${fields}}]`;
+          }
+          return `${k}: ${type}${enums}${def}${itemFields}`;
         })
         .join(', ');
       const container = comp.childrenRules.isContainer ? ' [container]' : '';
