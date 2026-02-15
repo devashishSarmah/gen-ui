@@ -230,6 +230,14 @@ jobs:
             export NGINX_IMAGE="ghcr.io/${OWNER_LOWER}/gen-ui-nginx"
             export IMAGE_TAG="${{ github.sha }}"
 
+            # ── Free space BEFORE pulling new images ─────────────────
+            echo "=== Disk before cleanup ==="
+            df -h /
+            docker image prune -af --filter "until=24h" || true
+            docker builder prune -af || true
+            echo "=== Disk after cleanup ==="
+            df -h /
+
             $COMPOSE -p "$COMPOSE_PROJECT_NAME" -f infra/deploy/docker-compose.ec2.yml --env-file .env pull
             $COMPOSE -p "$COMPOSE_PROJECT_NAME" -f infra/deploy/docker-compose.ec2.yml --env-file .env up -d --remove-orphans
 
