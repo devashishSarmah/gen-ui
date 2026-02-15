@@ -110,30 +110,37 @@ jobs:
           echo "Disk after cleanup:"
           df -h / /mnt
 
-      - name: Configure Docker daemon data-root
+      - name: Relocate Docker storage to /mnt via symlink
         run: |
           set -eux
 
-          # ── Stop Docker fully ─────────────────────────────────────
-          # docker.socket MUST be stopped first — it auto-restarts
-          # docker.service on any Docker API access.
+          # ── Stop Docker completely (socket first to prevent auto-restart) ──
           sudo systemctl stop docker.socket docker.service
           while sudo systemctl is-active --quiet docker; do sleep 1; done
+          echo "Docker stopped."
 
-          # ── Point data-root at /mnt (50+ GB free) ─────────────────
+          # ── Replace /var/lib/docker with a symlink to /mnt/docker ──
+          # This is filesystem-level — no daemon.json or systemd config can bypass it.
+          sudo rm -rf /var/lib/docker
           sudo mkdir -p /mnt/docker
-          echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
+          sudo ln -s /mnt/docker /var/lib/docker
+          ls -la /var/lib/docker
 
-          # ── Restart Docker ────────────────────────────────────────
+          # ── Start Docker ───────────────────────────────────────────
           sudo systemctl start docker
           timeout 30 sh -c 'until docker info >/dev/null 2>&1; do sleep 1; done'
 
-          # ── Hard gate: FAIL if data-root wasn't applied ───────────
-          ACTUAL=$(docker info --format '{{.DockerRootDir}}')
-          echo "Docker Root Dir: $ACTUAL"
-          if [ "$ACTUAL" != "/mnt/docker" ]; then
-            echo "::error::Docker data-root is '$ACTUAL' — expected '/mnt/docker'"
-            cat /etc/docker/daemon.json
+          # ── Hard gate: verify writes actually land on /mnt ─────────
+          TARGET=$(readlink /var/lib/docker)
+          echo "Symlink target: $TARGET"
+          if [ "$TARGET" != "/mnt/docker" ]; then
+            echo "::error::Symlink broken — /var/lib/docker points to '$TARGET'"
+            exit 1
+          fi
+          MOUNT=$(df --output=target /var/lib/docker/ | tail -1)
+          echo "Mount point for Docker storage: $MOUNT"
+          if [ "$MOUNT" != "/mnt" ]; then
+            echo "::error::Docker storage is on mount '$MOUNT' — expected '/mnt'"
             exit 1
           fi
           df -h / /mnt
