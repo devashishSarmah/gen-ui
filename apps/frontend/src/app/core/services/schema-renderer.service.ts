@@ -397,6 +397,24 @@ export class SchemaRendererService {
   }
 
   /**
+   * Resolve multiple child containers for components that distribute
+   * children across separate hosts (e.g., tabs → one VCR per panel).
+   * Components opt-in by exposing a `getChildContainers()` method.
+   */
+  private resolveMultiChildContainers(
+    componentRef: ComponentRef<any>,
+  ): ViewContainerRef[] | null {
+    const instance = componentRef.instance;
+    if (typeof instance.getChildContainers === 'function') {
+      const containers = instance.getChildContainers();
+      if (Array.isArray(containers) && containers.length > 0) {
+        return containers;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Recursively render a schema tree into a ViewContainerRef
    * Creates component instances and wires inputs/outputs
    * Handles children rendering and projection
@@ -430,18 +448,32 @@ export class SchemaRendererService {
 
       const childComponents: ComponentRef<any>[] = [];
       if (schema.children && schema.children.length > 0) {
-        const childContainer = this.resolveChildContainer(componentRef, schema);
-        if (!childContainer) {
-          console.warn(
-            `Component '${schema.type}' does not expose a child ViewContainerRef for rendering children`
-          );
-        } else {
-          schema.children.forEach((childSchema) => {
-            const childResult = this.renderSchemaTree(childSchema, childContainer);
-            if (childResult.component) {
-              childComponents.push(childResult.component);
+        // Try multi-container distribution first (e.g., tabs → one VCR per panel)
+        const multiContainers = this.resolveMultiChildContainers(componentRef);
+        if (multiContainers) {
+          schema.children.forEach((childSchema, index) => {
+            if (index < multiContainers.length) {
+              const childResult = this.renderSchemaTree(childSchema, multiContainers[index]);
+              if (childResult.component) {
+                childComponents.push(childResult.component);
+              }
             }
           });
+        } else {
+          // Single-container fallback
+          const childContainer = this.resolveChildContainer(componentRef, schema);
+          if (!childContainer) {
+            console.warn(
+              `Component '${schema.type}' does not expose a child ViewContainerRef for rendering children`
+            );
+          } else {
+            schema.children.forEach((childSchema) => {
+              const childResult = this.renderSchemaTree(childSchema, childContainer);
+              if (childResult.component) {
+                childComponents.push(childResult.component);
+              }
+            });
+          }
         }
       }
 

@@ -7,6 +7,9 @@ import {
   SimpleChanges,
   signal,
   ChangeDetectionStrategy,
+  ViewChildren,
+  ViewContainerRef,
+  QueryList,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Tabs, TabList, Tab, TabPanel, TabContent } from '@angular/aria/tabs';
@@ -46,14 +49,10 @@ export interface TabItem {
       </div>
       <ng-container *ngFor="let tab of tabs">
         <div ngTabPanel [value]="tab.value" class="tab-pane">
-          <ng-template ngTabContent>
-            <ng-container *ngIf="tab.contentTemplate; else defaultContent">
-              <ng-container *ngTemplateOutlet="tab.contentTemplate"></ng-container>
-            </ng-container>
-            <ng-template #defaultContent>
-              <ng-content></ng-content>
-            </ng-template>
-          </ng-template>
+          <ng-container *ngIf="tab.contentTemplate">
+            <ng-container *ngTemplateOutlet="tab.contentTemplate"></ng-container>
+          </ng-container>
+          <ng-container #tabPanelHost></ng-container>
         </div>
       </ng-container>
     </div>
@@ -166,7 +165,19 @@ export class TabsComponent implements OnChanges {
 
   @Output() tabChange = new EventEmitter<string>();
 
+  /** Per-tab-panel ViewContainerRefs for dynamic child rendering. */
+  @ViewChildren('tabPanelHost', { read: ViewContainerRef })
+  tabPanelRefs!: QueryList<ViewContainerRef>;
+
   activeTab = signal('');
+
+  /**
+   * Returns one ViewContainerRef per tab panel so the schema renderer
+   * can distribute `children[i]` into the matching panel.
+   */
+  getChildContainers(): ViewContainerRef[] {
+    return this.tabPanelRefs?.toArray() ?? [];
+  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['tabs'] || changes['defaultTab']) {
