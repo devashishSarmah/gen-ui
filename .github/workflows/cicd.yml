@@ -161,6 +161,8 @@ jobs:
               exit 1
             fi
 
+            COMPOSE_PROJECT_NAME="gen-ui"
+
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
             OWNER_LOWER="$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
@@ -169,10 +171,10 @@ jobs:
             export NGINX_IMAGE="ghcr.io/${OWNER_LOWER}/gen-ui-nginx"
             export IMAGE_TAG="${{ github.sha }}"
 
-            $COMPOSE -f infra/deploy/docker-compose.ec2.yml --env-file .env pull
-            $COMPOSE -f infra/deploy/docker-compose.ec2.yml --env-file .env up -d --remove-orphans
+            $COMPOSE -p "$COMPOSE_PROJECT_NAME" -f infra/deploy/docker-compose.ec2.yml --env-file .env pull
+            $COMPOSE -p "$COMPOSE_PROJECT_NAME" -f infra/deploy/docker-compose.ec2.yml --env-file .env up -d --remove-orphans
 
             chmod +x infra/scripts/ec2-cleanup.sh
             IMAGE_RETENTION_HOURS=168 PRUNE_VOLUMES=false infra/scripts/ec2-cleanup.sh
 
-            $COMPOSE -f infra/deploy/docker-compose.ec2.yml --env-file .env ps
+            $COMPOSE -p "$COMPOSE_PROJECT_NAME" -f infra/deploy/docker-compose.ec2.yml --env-file .env ps
