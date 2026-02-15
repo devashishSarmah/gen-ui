@@ -313,7 +313,13 @@ export class InteractionService {
     if (!targetId) return;
 
     const targetRef = this.allComponentRefs.get(targetId);
-    if (!targetRef) return;
+    if (!targetRef) {
+      console.warn(
+        `[InteractionService] contentTarget "${targetId}" not found. ` +
+        `Make sure the target component has id="${targetId}" in its props.`
+      );
+      return;
+    }
 
     // Extract metadata from the event value
     let metadata: Record<string, any> | undefined;

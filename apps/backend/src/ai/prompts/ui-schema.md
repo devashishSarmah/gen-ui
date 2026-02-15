@@ -435,9 +435,10 @@ Use the right layout for each situation:
 
 When a timeline or stepper should control a detail panel, use `contentTarget`:
 
-1. Give the **detail component** (card, flexbox, etc.) an `id`, e.g. `"detailCard"`.
-2. Set `contentTarget: "detailCard"` on the timeline/stepper.
-3. Put the detail component's props for each item inside `metadata`.
+1. Give the **source** (timeline/stepper) an `id` prop.
+2. Give the **detail component** (card, flexbox, etc.) an `id`, e.g. `"detailCard"`. **Both IDs are REQUIRED.**
+3. Set `contentTarget: "detailCard"` on the timeline/stepper — must match the target's `id` exactly.
+4. Put the detail component's props for each item inside `metadata`.
 
 Clicking an item copies its `metadata` into the target component's props.
 

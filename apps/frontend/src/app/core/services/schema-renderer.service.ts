@@ -86,11 +86,18 @@ export class SchemaRendererService {
     this.applySchemaProps(componentRef, schema);
     this.wireSchemaEvents(componentRef, schema);
 
+    // Derive a stable componentId: explicit id, or auto-generate when
+    // the component participates in content-target linking.
+    let componentId = schema.props?.['id'] as string | undefined;
+    if (!componentId && schema.props?.['contentTarget']) {
+      componentId = `__auto_${schema.type}_${this.autoIdCounter++}`;
+    }
+
     // Wire interaction bridge — auto-subscribes to all known @Outputs
     this.interactionService.wireComponentEvents(
       componentRef,
       schema.type,
-      schema.props?.['id'],
+      componentId,
       schema.props,
     );
 
@@ -136,6 +143,8 @@ export class SchemaRendererService {
       }
     });
   }
+
+  private autoIdCounter = 0;
 
   /**
    * Non-blocking version compatibility check.
