@@ -94,11 +94,20 @@ import {
       }
 
       .sidebar-content {
-        flex: 1;
+        flex: 1 1 auto;
+        height: 100%;
+        min-height: 0;
         overflow: visible;
         display: flex;
         flex-direction: column;
         min-width: 260px;  /* keeps content from reflowing during animation */
+      }
+
+      .sidebar-content > app-conversation-list {
+        display: flex;
+        flex: 1 1 auto;
+        width: 100%;
+        min-height: 0;
       }
 
       /* ── Mobile sidebar drawer ── */
@@ -221,7 +230,9 @@ import {
         .sidebar-mobile .sidebar-content {
           min-width: 0;
           flex: 1;
-          overflow: auto;
+          height: 100%;
+          min-height: 0;
+          overflow: visible;
         }
 
         .sidebar-overlay {
