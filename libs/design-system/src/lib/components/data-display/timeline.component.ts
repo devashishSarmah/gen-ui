@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DsIconComponent } from '../shared/ds-icon.component';
 
@@ -21,11 +21,13 @@ export interface TimelineItem {
     <div class="timeline" [class.vertical]="orientation === 'vertical'" [class.horizontal]="orientation === 'horizontal'">
       <div 
         *ngFor="let item of items; let i = index; let last = last"
-        class="timeline-item"
+        class="timeline-item clickable"
         [class.completed]="item.status === 'completed'"
         [class.active]="item.status === 'active'"
         [class.pending]="item.status === 'pending'"
         [class.error]="item.status === 'error'"
+        [class.selected]="selectedIndex === i"
+        (click)="onItemClick(i, item)"
       >
         <div class="timeline-marker">
           <div class="timeline-icon" *ngIf="item.icon"><ds-icon [name]="item.icon" [size]="16"></ds-icon></div>
@@ -64,6 +66,38 @@ export interface TimelineItem {
       display: flex;
       gap: 0.875rem;
       padding-bottom: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .timeline-item.clickable:hover .timeline-content {
+      border-color: var(--ds-border-glow);
+      box-shadow: 0 4px 16px rgba(0, 255, 245, 0.15);
+    }
+
+    .timeline-item.clickable:hover .timeline-dot {
+      transform: scale(1.2);
+      box-shadow: 0 0 16px rgba(0, 255, 245, 0.4);
+    }
+
+    .timeline-item.selected .timeline-content {
+      border-color: var(--ds-border-glow);
+      box-shadow: 0 8px 24px rgba(0, 255, 245, 0.2);
+      transform: translateX(4px);
+    }
+
+    .timeline.horizontal .timeline-item.selected .timeline-content {
+      transform: translateY(-4px);
+    }
+
+    .timeline-item.selected .timeline-dot {
+      background: var(--ds-accent-teal);
+      border-color: var(--ds-accent-teal);
+      box-shadow: 0 0 24px var(--ds-accent-teal);
+    }
+
+    .timeline-item.selected .timeline-icon {
+      box-shadow: 0 8px 24px rgba(0, 255, 245, 0.5), 0 0 0 4px rgba(0, 255, 245, 0.2);
     }
 
     .timeline.horizontal .timeline-item {
@@ -230,4 +264,11 @@ export interface TimelineItem {
 export class TimelineComponent {
   @Input() items: TimelineItem[] = [];
   @Input() orientation: 'vertical' | 'horizontal' = 'vertical';
+  @Input() selectedIndex = -1;
+  @Output() itemClick = new EventEmitter<{ index: number; item: TimelineItem }>();
+
+  onItemClick(index: number, item: TimelineItem): void {
+    this.selectedIndex = index;
+    this.itemClick.emit({ index, item });
+  }
 }

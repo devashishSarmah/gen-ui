@@ -262,8 +262,8 @@ The renderer wires filter controls to data components using IDs.
   Props: options: array [{value:string, label:string, description:string, icon:string, disabled:boolean}], label: string, multi: boolean = false, orientation: string [vertical|horizontal] = "vertical", selectionMode: string [follow|explicit] = "explicit"
 - **basic-chart**: Basic chart component with bar, line, and pie charts
   Props: data: array [{label:string, value:number}], title: string, type: string [bar|line|pie] = "bar", width: number = 400, height: number = 300
-- **timeline**: Timeline component showing chronological events with status indicators
-  Props: items: array [{id:string, title:string, description:string, timestamp:string, icon:string, status:string[completed|active|pending|error]}], orientation: string [vertical|horizontal] = "vertical"
+- **timeline**: Interactive timeline showing chronological events. Supports **content-target linking**: set `contentTarget` to the `id` of a sibling component (e.g. a card), and put that component's props inside each item's `metadata`. Clicking an item updates the target.
+  Props: id: string, items: array [{id:string, title:string, description:string, timestamp:string, icon:string, status:string[completed|active|pending|error], metadata:object}], orientation: string [vertical|horizontal] = "vertical", selectedIndex: number = -1, contentTarget: string
 - **carousel**: Carousel/slider component for displaying multiple items with navigation
   Props: slides: array [{id:string, title:string, description:string, image:string, content:string, icon:string}], autoplay: boolean = false, interval: number = 5000, loop: boolean = true, showControls: boolean = true, showIndicators: boolean = true
 - **audio-player**: Embedded audio player for music clips, podcasts, or previews
@@ -294,8 +294,8 @@ The renderer wires filter controls to data components using IDs.
   Props: actions: array [{value:string, label:string, icon:string, disabled:boolean, group:string}], triggerLabel: string = "Menu"
 - **toolbar** [container]: Accessible toolbar using Angular Aria with keyboard navigation
   Props: orientation: string [horizontal|vertical] = "horizontal", ariaLabel: string = "Toolbar"
-- **stepper**: Step indicator showing progress through a multi-step process
-  Props: steps: array [{id:string, title:string, description:string, icon:string, status:string[completed|active|pending|error]}], currentStep: number = 0, orientation: string [vertical|horizontal] = "vertical", clickable: boolean = false
+- **stepper**: Interactive step indicator showing progress. Supports **content-target linking**: set `clickable: true` and `contentTarget` to a sibling's `id`, with per-step `metadata` containing target component props.
+  Props: id: string, steps: array [{id:string, title:string, description:string, icon:string, status:string[completed|active|pending|error], metadata:object}], currentStep: number = 0, orientation: string [vertical|horizontal] = "vertical", clickable: boolean = false, contentTarget: string
 
 ### Error
 - **error**: Error display with retry and reporting options
@@ -426,6 +426,49 @@ Use the right layout for each situation:
           ]
         }
       ]
+    }
+  ]
+}
+```
+
+### Content-target linking (timeline / stepper → detail component)
+
+When a timeline or stepper should control a detail panel, use `contentTarget`:
+
+1. Give the **detail component** (card, flexbox, etc.) an `id`, e.g. `"detailCard"`.
+2. Set `contentTarget: "detailCard"` on the timeline/stepper.
+3. Put the detail component's props for each item inside `metadata`.
+
+Clicking an item copies its `metadata` into the target component's props.
+
+```json
+{
+  "type": "split-layout",
+  "props": { "sidebarWidth": 260, "gap": 16 },
+  "children": [
+    {
+      "type": "timeline",
+      "props": {
+        "id": "yearTimeline",
+        "contentTarget": "detailCard",
+        "selectedIndex": 0,
+        "items": [
+          { "id": "y1", "title": "2011", "status": "completed",
+            "metadata": { "title": "2011 World Cup", "description": "India won their second World Cup title." }
+          },
+          { "id": "y2", "title": "2015", "status": "active",
+            "metadata": { "title": "2015 World Cup", "description": "Australia claimed their fifth title." }
+          }
+        ]
+      }
+    },
+    {
+      "type": "card",
+      "props": {
+        "id": "detailCard",
+        "title": "2011 World Cup",
+        "description": "India won their second World Cup title."
+      }
     }
   ]
 }

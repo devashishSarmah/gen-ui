@@ -8,6 +8,7 @@ export interface Step {
   description?: string;
   icon?: string;
   status?: 'completed' | 'active' | 'pending' | 'error';
+  metadata?: Record<string, any>;
 }
 
 @Component({

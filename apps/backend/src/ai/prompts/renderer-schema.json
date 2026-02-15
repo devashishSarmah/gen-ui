@@ -1451,6 +1451,10 @@
         "props": {
           "type": "object",
           "properties": {
+            "id": {
+              "type": "string",
+              "description": "Component ID, required when using contentTarget"
+            },
             "items": {
               "type": "array",
               "items": {
@@ -1479,6 +1483,10 @@
                       "pending",
                       "error"
                     ]
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "description": "Key-value data applied as props on the contentTarget component when this item is clicked. Keys must match the target component's @Input names (e.g. title, description, items)."
                   }
                 }
               },
@@ -1490,6 +1498,14 @@
                 "vertical",
                 "horizontal"
               ]
+            },
+            "selectedIndex": {
+              "type": "number",
+              "description": "Index of the initially selected item (-1 = none)"
+            },
+            "contentTarget": {
+              "type": "string",
+              "description": "ID of a sibling component whose props are updated from the clicked item's metadata"
             }
           },
           "additionalProperties": false
@@ -2051,6 +2067,10 @@
         "props": {
           "type": "object",
           "properties": {
+            "id": {
+              "type": "string",
+              "description": "Component ID, required when using contentTarget"
+            },
             "steps": {
               "type": "array",
               "items": {
@@ -2076,6 +2096,10 @@
                       "pending",
                       "error"
                     ]
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "description": "Key-value data applied as props on the contentTarget component when this step is clicked."
                   }
                 }
               },
@@ -2093,6 +2117,10 @@
             },
             "clickable": {
               "type": "boolean"
+            },
+            "contentTarget": {
+              "type": "string",
+              "description": "ID of a sibling component whose props are updated from the clicked step's metadata"
             }
           },
           "additionalProperties": false

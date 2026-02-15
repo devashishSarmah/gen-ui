@@ -518,7 +518,7 @@ export const COMPONENT_METADATA: ComponentMetadata[] = [
   {
     name: 'timeline',
     category: 'data-display',
-    description: 'Timeline component showing chronological events with status indicators',
+    description: 'Interactive timeline component showing chronological events. Clicking an item emits itemClick. Use contentTarget to link to another component whose props update from the clicked item\'s metadata.',
     propsSchema: {
       items: {
         type: 'array',
@@ -531,6 +531,10 @@ export const COMPONENT_METADATA: ComponentMetadata[] = [
             timestamp: { type: 'string' },
             icon: { type: 'string' },
             status: { type: 'string', enum: ['completed', 'active', 'pending', 'error'] },
+            metadata: {
+              type: 'object',
+              description: 'Arbitrary key-value data passed to the contentTarget component when this item is clicked. Keys should match the target component\'s props (e.g. title, description, items).',
+            },
           },
         },
         description: 'Array of timeline items',
@@ -539,6 +543,15 @@ export const COMPONENT_METADATA: ComponentMetadata[] = [
         type: 'string',
         enum: ['vertical', 'horizontal'],
         default: 'vertical',
+      },
+      selectedIndex: {
+        type: 'number',
+        default: -1,
+        description: 'Index of the initially selected item (-1 = none)',
+      },
+      contentTarget: {
+        type: 'string',
+        description: 'ID of a sibling component to update when an item is clicked. The clicked item\'s metadata object is applied as props on the target.',
       },
     },
   },
@@ -743,7 +756,7 @@ export const COMPONENT_METADATA: ComponentMetadata[] = [
   {
     name: 'stepper',
     category: 'navigation',
-    description: 'Step indicator showing progress through a multi-step process',
+    description: 'Interactive step indicator showing progress through a multi-step process. Clicking a step (when clickable=true) emits stepChange. Use contentTarget to link to another component whose props update from the clicked step\'s metadata.',
     propsSchema: {
       steps: {
         type: 'array',
@@ -755,6 +768,10 @@ export const COMPONENT_METADATA: ComponentMetadata[] = [
             description: { type: 'string' },
             icon: { type: 'string' },
             status: { type: 'string', enum: ['completed', 'active', 'pending', 'error'] },
+            metadata: {
+              type: 'object',
+              description: 'Arbitrary key-value data passed to the contentTarget component when this step is clicked.',
+            },
           },
         },
         description: 'Array of steps',
@@ -766,6 +783,10 @@ export const COMPONENT_METADATA: ComponentMetadata[] = [
         default: 'vertical',
       },
       clickable: { type: 'boolean', default: false },
+      contentTarget: {
+        type: 'string',
+        description: 'ID of a sibling component to update when a step is clicked.',
+      },
     },
   },
 ];

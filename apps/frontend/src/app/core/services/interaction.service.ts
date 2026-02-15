@@ -56,6 +56,11 @@ const EVENT_REGISTRY: Record<string, EventMapping> = {
     kind: 'action',
     describe: (id, _type, val) => `Tab "${val}" selected${id ? ` in "${id}"` : ''}`,
   },
+  itemClick: {
+    kind: 'action',
+    describe: (id, _type, val) =>
+      `Timeline item "${val?.item?.title || val}" clicked${id ? ` in "${id}"` : ''}`,
+  },
   panelToggle: {
     kind: 'action',
     describe: (id, _type, val) =>
@@ -105,6 +110,19 @@ export class InteractionService {
    */
   private dataComponentRefs = new Map<string, ComponentRef<any>>();
 
+  /**
+   * General component refs: componentId → ComponentRef.
+   * Used for content-target linking (e.g., timeline itemClick → update card).
+   */
+  private allComponentRefs = new Map<string, ComponentRef<any>>();
+
+  /**
+   * Content-target bindings: sourceComponentId → targetComponentId.
+   * When a source emits itemClick/stepChange, the target component's
+   * props get updated from the clicked item's metadata.
+   */
+  private contentTargetBindings = new Map<string, string>();
+
   /** Signal: true when an interaction is in progress (kept for API compat). */
   readonly interacting = signal(false);
 
@@ -118,6 +136,8 @@ export class InteractionService {
     this.formState.clear();
     this.filterBindings.clear();
     this.dataComponentRefs.clear();
+    this.allComponentRefs.clear();
+    this.contentTargetBindings.clear();
     this.dataEngine.clearAll();
   }
 
@@ -135,6 +155,16 @@ export class InteractionService {
   ): void {
     // Seed initial form state
     this.seedInitialState(componentRef, componentType, componentId);
+
+    // Store all component refs by ID for content-target linking
+    if (componentId) {
+      this.allComponentRefs.set(componentId, componentRef);
+    }
+
+    // Register content-target binding (e.g., timeline → card linking)
+    if (componentId && schemaProps?.['contentTarget']) {
+      this.contentTargetBindings.set(componentId, schemaProps['contentTarget']);
+    }
 
     // Register filter binding if the component has filterTarget
     if (componentId && schemaProps?.['filterTarget'] && schemaProps?.['filterField']) {
@@ -229,6 +259,11 @@ export class InteractionService {
     if (eventName === 'btnClick' && componentId) {
       this.handleButtonAction(componentId);
     }
+
+    // Content-target actions: itemClick / stepChange update linked component
+    if ((eventName === 'itemClick' || eventName === 'stepChange') && componentId) {
+      this.handleContentTargetAction(componentId, eventName, eventValue);
+    }
   }
 
   /**
@@ -260,6 +295,55 @@ export class InteractionService {
       this.dataEngine.setPage(sourceId, current - 1);
       this.refreshDataComponent(sourceId);
     }
+  }
+
+  /**
+   * Handle content-target linking for itemClick / stepChange.
+   *
+   * When a timeline or stepper with `contentTarget` prop emits an event,
+   * find the linked component and update its props from the clicked item's
+   * metadata (for timeline) or step metadata (for stepper).
+   */
+  private handleContentTargetAction(
+    componentId: string,
+    eventName: string,
+    eventValue: any,
+  ): void {
+    const targetId = this.contentTargetBindings.get(componentId);
+    if (!targetId) return;
+
+    const targetRef = this.allComponentRefs.get(targetId);
+    if (!targetRef) return;
+
+    // Extract metadata from the event value
+    let metadata: Record<string, any> | undefined;
+
+    if (eventName === 'itemClick') {
+      // eventValue = { index, item: TimelineItem }
+      metadata = eventValue?.item?.metadata;
+    } else if (eventName === 'stepChange') {
+      // eventValue = step index — look up steps from source component
+      const sourceRef = this.allComponentRefs.get(componentId);
+      if (sourceRef) {
+        const steps = sourceRef.instance.steps;
+        if (Array.isArray(steps) && steps[eventValue]) {
+          metadata = steps[eventValue]?.metadata;
+        }
+      }
+    }
+
+    if (!metadata || typeof metadata !== 'object') return;
+
+    // Apply metadata key/values as props on the target component
+    const setInput = (targetRef as any).setInput;
+    for (const [key, value] of Object.entries(metadata)) {
+      if (typeof setInput === 'function') {
+        setInput.call(targetRef, key, value);
+      } else {
+        (targetRef.instance as any)[key] = value;
+      }
+    }
+    targetRef.changeDetectorRef.markForCheck();
   }
 
   /**
