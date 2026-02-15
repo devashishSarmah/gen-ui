@@ -1,5 +1,8 @@
 # ─────────────────────────────────────────
-# Stage 1: BUILD — full install, generate schema, compile
+# Stage 1: BUILD + PROD DEPS
+# Everything happens in a single RUN so that the huge dev node_modules
+# is never committed as a Docker layer — only the final state (dist +
+# production deps) is written, which halves the disk needed on CI.
 # ─────────────────────────────────────────
 FROM node:20-alpine AS builder
 
@@ -13,23 +16,17 @@ COPY libs/shared ./libs/shared
 COPY libs/design-system ./libs/design-system
 
 RUN --mount=type=cache,target=/root/.npm \
+    # ── 1. Full install (dev + prod) ────────────────────────────
     npm ci --legacy-peer-deps && \
+    # ── 2. Generate manifest/schema ─────────────────────────────
     npm run generate:schema && \
-    npx nx build backend --configuration=production
-
-# ─────────────────────────────────────────
-# Stage 2: DEPS — clean production-only install
-# Avoids the huge "prune from full install" approach that was exhausting disk.
-# ─────────────────────────────────────────
-FROM node:20-alpine AS deps
-
-WORKDIR /app
-
-COPY package*.json ./
-
-RUN --mount=type=cache,target=/root/.npm \
+    # ── 3. Build backend ────────────────────────────────────────
+    npx nx build backend --configuration=production && \
+    # ── 4. Nuke everything the runtime doesn't need ─────────────
+    rm -rf node_modules .nx /tmp/nx-* && \
+    # ── 5. Fresh production-only install ────────────────────────
     npm ci --omit=dev --legacy-peer-deps --ignore-scripts && \
-    # Strip heavy files the Node.js runtime doesn't need
+    # ── 6. Strip unnecessary files from prod deps ───────────────
     find node_modules -type f \( \
       -name '*.map' -o -name '*.ts' -o -name '*.md' \
       -o -name '*.markdown' -o -name 'LICENSE*' -o -name 'CHANGELOG*' \
@@ -48,7 +45,7 @@ RUN --mount=type=cache,target=/root/.npm \
     true
 
 # ─────────────────────────────────────────
-# Stage 3: PRODUCTION — minimal runtime image
+# Stage 2: PRODUCTION — minimal runtime image
 # ─────────────────────────────────────────
 FROM node:20-alpine
 
@@ -56,16 +53,12 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Built application
 COPY --from=builder /app/dist/apps/backend ./
-# Generated manifest & prompt files
 COPY --from=builder /app/libs/design-system/src/lib/manifest/dist ./libs/design-system/src/lib/manifest/dist
 COPY --from=builder /app/apps/backend/src/ai/prompts ./apps/backend/src/ai/prompts
-# Production-only node_modules (from the clean deps stage)
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
 
-# Ensure express is resolvable at the top level
 RUN if [ ! -e /app/node_modules/express ] && [ -d /app/node_modules/@nestjs/platform-express/node_modules/express ]; then \
       ln -s /app/node_modules/@nestjs/platform-express/node_modules/express /app/node_modules/express; \
     fi
