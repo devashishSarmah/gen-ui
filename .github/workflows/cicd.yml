@@ -86,10 +86,21 @@ jobs:
             /usr/local/graalvm \
             /usr/local/share/chromium \
             /usr/local/lib/node_modules \
-            /opt/hostedtoolcache/CodeQL \
-            /opt/hostedtoolcache/go \
-            /opt/hostedtoolcache/Python \
-            /opt/hostedtoolcache/Ruby \
+            /opt/hostedtoolcache \
+            /usr/share/miniconda \
+            /usr/local/julia* \
+            /usr/share/kotlinc \
+            /usr/share/gradle-* \
+            /usr/share/apache-maven-* \
+            /usr/share/sbt \
+            /usr/share/az_* \
+            /usr/share/postgresql \
+            /usr/share/mysql \
+            /usr/lib/google-cloud-sdk \
+            /usr/lib/jvm \
+            /usr/lib/firefox \
+            /usr/lib/mono \
+            /usr/lib/heroku \
             || true
           sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' azure-cli google-chrome-stable \
             firefox powershell mono-devel 2>/dev/null || true

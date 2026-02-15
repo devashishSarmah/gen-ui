@@ -1,51 +1,35 @@
-# Stage 1: Build
+# ─────────────────────────────────────────
+# Stage 1: BUILD — full install, generate schema, compile
+# ─────────────────────────────────────────
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
-COPY nx.json ./
-COPY tsconfig.base.json ./
+COPY nx.json tsconfig.base.json ./
 
-# Copy source code
 COPY apps/backend ./apps/backend
 COPY libs/shared ./libs/shared
 COPY libs/design-system ./libs/design-system
 
-# Install, build, prune, and clean in a single layer to avoid disk exhaustion
-# on CI runners. The --mount=type=cache keeps the npm download cache off the
-# layer and speeds up rebuilds.
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --legacy-peer-deps && \
     npm run generate:schema && \
-    npx nx build backend --configuration=production && \
-    # ── Shrink: remove everything the Node.js backend doesn't need ──
-    npm prune --omit=dev --legacy-peer-deps && \
-    rm -rf .nx /tmp/nx-* && \
-    # Remove frontend-only packages that remain in "dependencies"
-    rm -rf \
-      node_modules/@angular \
-      node_modules/@angular-devkit \
-      node_modules/@angular-eslint \
-      node_modules/zone.js \
-      node_modules/lucide-angular \
-      node_modules/@nx \
-      node_modules/nx \
-      node_modules/typescript \
-      node_modules/postcss \
-      node_modules/tailwindcss \
-      node_modules/@tailwindcss \
-      node_modules/esbuild \
-      node_modules/@esbuild \
-      node_modules/webpack \
-      node_modules/webpack-dev-server \
-    2>/dev/null; \
-    # Remove browser bundles, sourcemaps, docs, and tests
-    rm -rf node_modules/typeorm/browser \
-      node_modules/rxjs/dist/esm5 node_modules/rxjs/dist/esm \
-      node_modules/rxjs/_esm5 node_modules/rxjs/_esm2015 node_modules/rxjs/bundles \
-    2>/dev/null; \
+    npx nx build backend --configuration=production
+
+# ─────────────────────────────────────────
+# Stage 2: DEPS — clean production-only install
+# Avoids the huge "prune from full install" approach that was exhausting disk.
+# ─────────────────────────────────────────
+FROM node:20-alpine AS deps
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev --legacy-peer-deps --ignore-scripts && \
+    # Strip heavy files the Node.js runtime doesn't need
     find node_modules -type f \( \
       -name '*.map' -o -name '*.ts' -o -name '*.md' \
       -o -name '*.markdown' -o -name 'LICENSE*' -o -name 'CHANGELOG*' \
@@ -54,33 +38,38 @@ RUN --mount=type=cache,target=/root/.npm \
     find node_modules -type d \( \
       -name '__tests__' -o -name 'test' -o -name 'tests' \
       -o -name 'docs' -o -name 'doc' -o -name 'example' -o -name 'examples' \
-      -o -name '.github' -o -name '.vscode' \
+      -o -name '.github' -o -name '.vscode' -o -name 'browser' \
     \) -exec rm -rf {} + 2>/dev/null; \
+    rm -rf \
+      node_modules/typeorm/browser \
+      node_modules/rxjs/dist/esm5 node_modules/rxjs/dist/esm \
+      node_modules/rxjs/_esm5 node_modules/rxjs/_esm2015 node_modules/rxjs/bundles \
+    2>/dev/null; \
     true
 
-# Stage 2: Production
+# ─────────────────────────────────────────
+# Stage 3: PRODUCTION — minimal runtime image
+# ─────────────────────────────────────────
 FROM node:20-alpine
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy built files and dependencies
+# Built application
 COPY --from=builder /app/dist/apps/backend ./
+# Generated manifest & prompt files
 COPY --from=builder /app/libs/design-system/src/lib/manifest/dist ./libs/design-system/src/lib/manifest/dist
 COPY --from=builder /app/apps/backend/src/ai/prompts ./apps/backend/src/ai/prompts
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
+# Production-only node_modules (from the clean deps stage)
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package*.json ./
 
-# Nx backend bundle issues a top-level require("express").
-# After pruning dev deps, express may exist only under @nestjs/platform-express.
-# Link it at the top-level so runtime resolution is stable.
+# Ensure express is resolvable at the top level
 RUN if [ ! -e /app/node_modules/express ] && [ -d /app/node_modules/@nestjs/platform-express/node_modules/express ]; then \
       ln -s /app/node_modules/@nestjs/platform-express/node_modules/express /app/node_modules/express; \
     fi
 
-# Expose port
 EXPOSE 3000
 
-# Start application
 CMD ["node", "main.js"]
