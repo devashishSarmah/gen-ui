@@ -39,6 +39,13 @@ COPY --from=builder /app/libs/design-system/src/lib/manifest/dist ./libs/design-
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 
+# Nx backend bundle issues a top-level require("express").
+# After pruning dev deps, express may exist only under @nestjs/platform-express.
+# Link it at the top-level so runtime resolution is stable.
+RUN if [ ! -e /app/node_modules/express ] && [ -d /app/node_modules/@nestjs/platform-express/node_modules/express ]; then \
+      ln -s /app/node_modules/@nestjs/platform-express/node_modules/express /app/node_modules/express; \
+    fi
+
 # Expose port
 EXPOSE 3000
 
