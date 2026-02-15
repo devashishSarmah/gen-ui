@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
@@ -24,6 +24,7 @@ import { SchedulerModule } from '../scheduler/scheduler.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { CommonModule } from '../common/common.module';
 import { GlobalExceptionFilter } from '../common/filters/global-exception.filter';
+import { RequestLoggerMiddleware } from '../common/middleware/request-logger.middleware';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -57,7 +58,7 @@ import { AppService } from './app.service';
           migrations: isProduction ? ['dist/apps/backend/migrations/*.js'] : [],
           migrationsRun: isProduction,
           synchronize: !isProduction,
-          logging: !isProduction,
+          logging: isProduction ? ['error', 'warn', 'migration'] : true,
         };
       },
     }),
@@ -103,4 +104,8 @@ import { AppService } from './app.service';
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestLoggerMiddleware).forRoutes('*');
+  }
+}

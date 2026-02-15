@@ -15,5 +15,5 @@ export default new DataSource({
   entities: ['apps/backend/src/entities/*.entity.ts'],
   migrations: ['apps/backend/src/migrations/*.ts'],
   synchronize: false,
-  logging: true,
+  logging: ['error', 'warn', 'migration', 'schema'],
 });

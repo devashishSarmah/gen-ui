@@ -118,11 +118,17 @@ export class ManifestLoaderService implements OnModuleInit {
         const raw = readFileSync(schemaPath, 'utf-8');
         this.jsonSchema = JSON.parse(raw);
         this.schemaValidator = this.ajv.compile(this.jsonSchema);
+        this.logger.log(`Renderer schema loaded from ${schemaPath}`);
+      } else {
+        this.logger.warn(`Renderer schema NOT found at ${schemaPath} — JSON Schema validation disabled`);
       }
 
       // Load system prompt
       if (existsSync(promptPath)) {
         this.systemPrompt = readFileSync(promptPath, 'utf-8').trim();
+        this.logger.log(`System prompt loaded (${this.systemPrompt.length} chars)`);
+      } else {
+        this.logger.warn(`System prompt NOT found at ${promptPath} — LLM will receive empty system prompt`);
       }
     } catch (error) {
       this.logger.error('Failed to load manifest', error);
