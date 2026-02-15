@@ -111,20 +111,31 @@ jobs:
           df -h / /mnt
 
       - name: Configure Docker daemon data-root
-        uses: docker/setup-docker-action@v4
-        with:
-          daemon-config: |
-            {
-              "data-root": "/mnt/docker",
-              "features": {
-                "buildkit": true
-              }
-            }
-
-      - name: Verify Docker root dir
         run: |
           set -eux
-          docker info | grep 'Docker Root Dir'
+
+          # ── Stop Docker fully ─────────────────────────────────────
+          # docker.socket MUST be stopped first — it auto-restarts
+          # docker.service on any Docker API access.
+          sudo systemctl stop docker.socket docker.service
+          while sudo systemctl is-active --quiet docker; do sleep 1; done
+
+          # ── Point data-root at /mnt (50+ GB free) ─────────────────
+          sudo mkdir -p /mnt/docker
+          echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
+
+          # ── Restart Docker ────────────────────────────────────────
+          sudo systemctl start docker
+          timeout 30 sh -c 'until docker info >/dev/null 2>&1; do sleep 1; done'
+
+          # ── Hard gate: FAIL if data-root wasn't applied ───────────
+          ACTUAL=$(docker info --format '{{.DockerRootDir}}')
+          echo "Docker Root Dir: $ACTUAL"
+          if [ "$ACTUAL" != "/mnt/docker" ]; then
+            echo "::error::Docker data-root is '$ACTUAL' — expected '/mnt/docker'"
+            cat /etc/docker/daemon.json
+            exit 1
+          fi
           df -h / /mnt
 
       - name: Set up Docker Buildx
