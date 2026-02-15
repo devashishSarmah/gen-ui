@@ -14,30 +14,48 @@ COPY libs/shared ./libs/shared
 COPY libs/design-system ./libs/design-system
 
 # Install, build, prune, and clean in a single layer to avoid disk exhaustion
-# on CI runners. Intermediate files (full node_modules, nx cache) are never
-# persisted to a layer.
-RUN npm ci --legacy-peer-deps && \
+# on CI runners. The --mount=type=cache keeps the npm download cache off the
+# layer and speeds up rebuilds.
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --legacy-peer-deps && \
     npm run generate:schema && \
     npx nx build backend --configuration=production && \
+    # ── Shrink: remove everything the Node.js backend doesn't need ──
     npm prune --omit=dev --legacy-peer-deps && \
-    rm -rf .nx /tmp/nx-* /root/.npm/_cacache && \
+    rm -rf .nx /tmp/nx-* && \
+    # Remove frontend-only packages that remain in "dependencies"
+    rm -rf \
+      node_modules/@angular \
+      node_modules/@angular-devkit \
+      node_modules/@angular-eslint \
+      node_modules/zone.js \
+      node_modules/lucide-angular \
+      node_modules/@nx \
+      node_modules/nx \
+      node_modules/typescript \
+      node_modules/postcss \
+      node_modules/tailwindcss \
+      node_modules/@tailwindcss \
+      node_modules/esbuild \
+      node_modules/@esbuild \
+      node_modules/webpack \
+      node_modules/webpack-dev-server \
+    2>/dev/null; \
+    # Remove browser bundles, sourcemaps, docs, and tests
+    rm -rf node_modules/typeorm/browser \
+      node_modules/rxjs/dist/esm5 node_modules/rxjs/dist/esm \
+      node_modules/rxjs/_esm5 node_modules/rxjs/_esm2015 node_modules/rxjs/bundles \
+    2>/dev/null; \
     find node_modules -type f \( \
       -name '*.map' -o -name '*.ts' -o -name '*.md' \
       -o -name '*.markdown' -o -name 'LICENSE*' -o -name 'CHANGELOG*' \
-      -o -name '*.d.ts.map' -o -name '.package-lock.json' \
-      -o -name '*.min.js' -o -name '*.mjs.map' \
+      -o -name '.package-lock.json' \
     \) -delete 2>/dev/null; \
     find node_modules -type d \( \
       -name '__tests__' -o -name 'test' -o -name 'tests' \
       -o -name 'docs' -o -name 'doc' -o -name 'example' -o -name 'examples' \
       -o -name '.github' -o -name '.vscode' \
     \) -exec rm -rf {} + 2>/dev/null; \
-    rm -rf node_modules/typeorm/browser 2>/dev/null; \
-    rm -rf node_modules/rxjs/dist/esm5 2>/dev/null; \
-    rm -rf node_modules/rxjs/dist/esm 2>/dev/null; \
-    rm -rf node_modules/rxjs/_esm5 2>/dev/null; \
-    rm -rf node_modules/rxjs/_esm2015 2>/dev/null; \
-    rm -rf node_modules/rxjs/bundles 2>/dev/null; \
     true
 
 # Stage 2: Production
