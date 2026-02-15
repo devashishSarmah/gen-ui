@@ -143,10 +143,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          buildkitd-config-inline: |
-            [worker.oci]
-              gc = true
-              gckeepstorage = 2000000000
+          driver: docker
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -167,12 +164,11 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           push: true
-          platforms: ${{ env.DOCKER_PLATFORMS }}
           tags: |
             ${{ steps.image.outputs.name }}:${{ github.sha }}
             ${{ steps.image.outputs.name }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=min
+          cache-from: type=registry,ref=${{ steps.image.outputs.name }}:buildcache
+          cache-to: type=inline
 
   deploy:
     name: Deploy to EC2
