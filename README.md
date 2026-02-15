@@ -84,7 +84,7 @@ The **LayerLLM** system maps each agent layer (router, summariser, schema, repai
 
 ---
 
-## Design System — 34 Components
+## Design System — 36 Components
 
 The frontend ships a manifest-driven design system. The AI generates a JSON schema tree and the renderer instantiates real Angular components:
 
@@ -92,7 +92,7 @@ The frontend ships a manifest-driven design system. The AI generates a JSON sche
 |----------|-----------|
 | **Form** | `input` · `select` · `checkbox` · `radio` · `textarea` · `button` |
 | **Layout** | `container` · `grid` · `card` · `tabs` · `accordion` · `flexbox` · `split-layout` |
-| **Data Display** | `table` · `list` · `listbox` · `basic-chart` · `timeline` · `carousel` · `stats-card` · `progress-ring` · `flow-diagram` · `chart-bar` |
+| **Data Display** | `table` · `list` · `listbox` · `basic-chart` · `timeline` · `carousel` · `audio-player` · `video-player` · `stats-card` · `progress-ring` · `flow-diagram` · `chart-bar` |
 | **Typography** | `heading` · `paragraph` · `divider` |
 | **Navigation** | `wizard-stepper` · `menu` · `toolbar` · `stepper` |
 | **Feedback** | `badge` · `alert` · `progress-bar` |
@@ -298,6 +298,105 @@ npm run db:migrate              # Run migrations
 npm run db:migrate:generate     # Generate migration from entity changes
 npm run db:migrate:revert       # Revert last migration
 ```
+
+---
+
+## CI/CD (GitHub Actions -> EC2)
+
+This repo includes a full pipeline at `.github/workflows/cicd.yml`.
+
+What it does:
+
+1. CI on PR/push:
+   - `npm ci --legacy-peer-deps`
+   - `npm run generate:schema`
+   - production builds for `frontend` and `backend`
+2. On `main` push (or manual run):
+   - builds and pushes Docker images to GHCR:
+     - `ghcr.io/<owner>/gen-ui-backend`
+     - `ghcr.io/<owner>/gen-ui-frontend`
+     - `ghcr.io/<owner>/gen-ui-nginx`
+   - tags each image with:
+     - commit SHA
+     - `latest`
+3. Deploy job:
+   - uploads deploy files to EC2:
+     - `infra/deploy/docker-compose.ec2.yml`
+     - `infra/scripts/ec2-cleanup.sh`
+   - pulls new images and restarts via Docker Compose on EC2
+   - runs cleanup script after deploy
+
+### Required GitHub Secrets
+
+Set these in `Settings -> Secrets and variables -> Actions`:
+
+- `EC2_HOST`: public IP or DNS of EC2
+- `EC2_USER`: SSH user (for example `ec2-user` or `ubuntu`)
+- `EC2_SSH_KEY`: private key content (PEM)
+- `EC2_PORT`: SSH port (usually `22`)
+- `EC2_APP_DIR`: absolute deploy directory on EC2 (for example `/opt/genui`)
+- `GHCR_USERNAME`: GitHub username/org account used for GHCR auth
+- `GHCR_TOKEN`: PAT with at least `read:packages`
+
+Optional GitHub Actions variable:
+
+- `DOCKER_PLATFORMS`: defaults to `linux/amd64`.
+  - Use `linux/arm64` for Graviton EC2.
+  - Use `linux/amd64,linux/arm64` for multi-arch images.
+
+### One-time EC2 Setup
+
+```bash
+# 1) Create deploy directory
+sudo mkdir -p /opt/genui
+sudo chown -R "$USER":"$USER" /opt/genui
+
+# 2) Place your runtime env file (same keys as .env.example)
+cp /path/to/your/.env /opt/genui/.env
+
+# 3) Ensure Docker + Compose are installed and running
+docker --version
+docker compose version || docker-compose --version
+sudo systemctl enable docker
+sudo systemctl start docker
+```
+
+The deploy workflow expects `.env` at `${EC2_APP_DIR}/.env`.
+
+### Manual Deploy Commands on EC2 (Fallback)
+
+```bash
+cd /opt/genui
+export BACKEND_IMAGE=ghcr.io/<owner>/gen-ui-backend
+export FRONTEND_IMAGE=ghcr.io/<owner>/gen-ui-frontend
+export NGINX_IMAGE=ghcr.io/<owner>/gen-ui-nginx
+export IMAGE_TAG=<commit_sha_or_latest>
+
+docker compose -f infra/deploy/docker-compose.ec2.yml --env-file .env pull
+docker compose -f infra/deploy/docker-compose.ec2.yml --env-file .env up -d --remove-orphans
+```
+
+If your server only has legacy Compose binary, replace `docker compose` with `docker-compose`.
+
+### Cleanup Steps on EC2
+
+Automatic cleanup runs after each deploy via `infra/scripts/ec2-cleanup.sh`.
+
+Manual run:
+
+```bash
+cd /opt/genui
+chmod +x infra/scripts/ec2-cleanup.sh
+IMAGE_RETENTION_HOURS=168 PRUNE_VOLUMES=false ./infra/scripts/ec2-cleanup.sh
+```
+
+What it prunes:
+
+- old unused images
+- old build cache
+- old stopped containers
+
+It does **not** prune volumes unless you explicitly set `PRUNE_VOLUMES=true`.
 
 ---
 

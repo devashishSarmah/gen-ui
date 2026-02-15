@@ -50,3 +50,6 @@ Thumbs.db
 # Angular cache
 .angular/
 .github/*
+!.github/copilot-instructions.md
+!.github/workflows/
+!.github/workflows/**

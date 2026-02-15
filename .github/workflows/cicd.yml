@@ -1,0 +1,169 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Deploy to EC2 after build"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: genui-cicd-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/gen-ui-backend
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/gen-ui-frontend
+  NGINX_IMAGE: ghcr.io/${{ github.repository_owner }}/gen-ui-nginx
+  DOCKER_PLATFORMS: ${{ vars.DOCKER_PLATFORMS || 'linux/amd64' }}
+
+jobs:
+  ci:
+    name: CI Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Generate manifest/schema
+        run: npm run generate:schema
+
+      - name: Build frontend (production)
+        run: npx nx build frontend --configuration=production --skip-nx-cache
+
+      - name: Build backend (production)
+        run: npx nx build backend --configuration=production --skip-nx-cache
+
+  build_images:
+    name: Build & Push Docker Images
+    needs: ci
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: backend
+            dockerfile: apps/backend/Dockerfile
+          - service: frontend
+            dockerfile: apps/frontend/Dockerfile
+          - service: nginx
+            dockerfile: infra/nginx/Dockerfile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve image name
+        id: image
+        run: |
+          echo "name=${REGISTRY}/${GITHUB_REPOSITORY_OWNER}/gen-ui-${{ matrix.service }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push ${{ matrix.service }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          platforms: ${{ env.DOCKER_PLATFORMS }}
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ github.sha }}
+            ${{ steps.image.outputs.name }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to EC2
+    needs: build_images
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.deploy)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload deploy files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || '22' }}
+          source: infra/deploy/docker-compose.ec2.yml,infra/scripts/ec2-cleanup.sh
+          target: ${{ secrets.EC2_APP_DIR }}
+
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || '22' }}
+          script_stop: true
+          command_timeout: 30m
+          script: |
+            set -eu
+
+            APP_DIR="${{ secrets.EC2_APP_DIR }}"
+            cd "$APP_DIR"
+
+            if [ ! -f ".env" ]; then
+              echo "Missing .env in $APP_DIR"
+              exit 1
+            fi
+
+            if docker compose version >/dev/null 2>&1; then
+              COMPOSE="docker compose"
+            elif docker-compose version >/dev/null 2>&1; then
+              COMPOSE="docker-compose"
+            else
+              echo "Neither 'docker compose' nor 'docker-compose' is installed"
+              exit 1
+            fi
+
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+
+            export BACKEND_IMAGE="${{ env.BACKEND_IMAGE }}"
+            export FRONTEND_IMAGE="${{ env.FRONTEND_IMAGE }}"
+            export NGINX_IMAGE="${{ env.NGINX_IMAGE }}"
+            export IMAGE_TAG="${{ github.sha }}"
+
+            $COMPOSE -f infra/deploy/docker-compose.ec2.yml --env-file .env pull
+            $COMPOSE -f infra/deploy/docker-compose.ec2.yml --env-file .env up -d --remove-orphans
+
+            chmod +x infra/scripts/ec2-cleanup.sh
+            IMAGE_RETENTION_HOURS=168 PRUNE_VOLUMES=false infra/scripts/ec2-cleanup.sh
+
+            $COMPOSE -f infra/deploy/docker-compose.ec2.yml --env-file .env ps

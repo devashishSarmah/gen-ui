@@ -1,0 +1,117 @@
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: genui-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - genui-network
+
+  redis:
+    image: redis:6-alpine
+    container_name: genui-redis
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - genui-network
+
+  backend:
+    image: ${BACKEND_IMAGE}:${IMAGE_TAG:-latest}
+    container_name: genui-backend
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_USERNAME: ""
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      FRONTEND_URL: ${FRONTEND_URL}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      GITHUB_CALLBACK_URL: ${GITHUB_CALLBACK_URL}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
+      NODE_ENV: ${NODE_ENV}
+    expose:
+      - "3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - genui-network
+
+  frontend:
+    image: ${FRONTEND_IMAGE}:${IMAGE_TAG:-latest}
+    container_name: genui-frontend
+    environment:
+      API_URL: /api
+      FRONTEND_URL: ${FRONTEND_URL}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GA_MEASUREMENT_ID: ${GA_MEASUREMENT_ID}
+    expose:
+      - "80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - genui-network
+
+  nginx:
+    image: ${NGINX_IMAGE}:${IMAGE_TAG:-latest}
+    container_name: genui-nginx
+    environment:
+      NGINX_CERT_DOMAIN: ${NGINX_CERT_DOMAIN:-localhost}
+      NGINX_CERT_DAYS: ${NGINX_CERT_DAYS:-365}
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - /opt/genui/nginx-certs:/etc/nginx/certs:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - genui-network
+
+volumes:
+  postgres_data:
+    name: genui-postgres-data
+  redis_data:
+    name: genui-redis-data
+
+networks:
+  genui-network:
+    name: genui-network
+    driver: bridge
