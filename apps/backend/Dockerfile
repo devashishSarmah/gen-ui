@@ -22,10 +22,16 @@ RUN npm run generate:schema
 # Build backend
 RUN npx nx build backend --configuration=production
 
+# Drop dev dependencies before producing runtime layers.
+# This significantly reduces layer size in CI and avoids disk exhaustion on runners.
+RUN npm prune --omit=dev --legacy-peer-deps
+
 # Stage 2: Production
 FROM node:20-alpine
 
 WORKDIR /app
+
+ENV NODE_ENV=production
 
 # Copy built files and dependencies
 COPY --from=builder /app/dist/apps/backend ./
