@@ -444,10 +444,68 @@ export class SchemaRendererService {
 
     // Render new children into the container
     for (const childSchema of children) {
-      this.renderSchemaTree(childSchema, vcr);
+      this.renderSchemaTree(childSchema, vcr, false);
     }
 
     targetRef.changeDetectorRef.markForCheck();
+  }
+
+  // ── Schema pre-processing ──────────────────────────────────────────
+
+  /**
+   * Walk the schema tree and auto-assign `id` props for components
+   * referenced by a sibling's `contentTarget`, if not already set.
+   *
+   * For every children array, if a child has `contentTarget: "foo"`, we
+   * look for a sibling whose `id` is already `"foo"` — if none is found,
+   * we assign `"foo"` to the first sibling without an `id` that isn't
+   * the source itself (best-effort: picks the nearest non-source sibling).
+   */
+  private patchContentTargetIds(schema: UISchema): void {
+    if (!schema) return;
+
+    if (schema.children && schema.children.length > 0) {
+      // Collect all contentTarget references from siblings
+      const targetIds = new Set<string>();
+      const sourceIndices = new Set<number>();
+
+      schema.children.forEach((child, idx) => {
+        const ct = child.props?.['contentTarget'] as string | undefined;
+        if (ct) {
+          targetIds.add(ct);
+          sourceIndices.add(idx);
+        }
+      });
+
+      // For each referenced targetId, check if a sibling already has that id
+      for (const targetId of targetIds) {
+        const alreadyExists = schema.children.some(
+          (child) => child.props?.['id'] === targetId,
+        );
+        if (!alreadyExists) {
+          // Assign to the first sibling that isn't a source and has no id
+          for (let i = 0; i < schema.children.length; i++) {
+            if (sourceIndices.has(i)) continue;
+            const sibling = schema.children[i];
+            if (!sibling.props) sibling.props = {};
+            if (!sibling.props['id']) {
+              sibling.props['id'] = targetId;
+              break;
+            }
+          }
+        }
+      }
+
+      // Also auto-assign id on sources that don't have one
+      schema.children.forEach((child) => {
+        if (child.props?.['contentTarget'] && !child.props['id']) {
+          child.props['id'] = `__auto_${child.type}_${this.autoIdCounter++}`;
+        }
+      });
+
+      // Recurse into children
+      schema.children.forEach((child) => this.patchContentTargetIds(child));
+    }
   }
 
   /**
@@ -472,8 +530,21 @@ export class SchemaRendererService {
    * Recursively render a schema tree into a ViewContainerRef
    * Creates component instances and wires inputs/outputs
    * Handles children rendering and projection
+   *
+   * @param isRoot - internal flag, true only for the top-level call.
+   *   When true a pre-processing pass auto-assigns missing `id` props
+   *   for components referenced by contentTarget.
    */
-  renderSchemaTree(schema: UISchema, viewContainer: ViewContainerRef): RenderResult {
+  renderSchemaTree(
+    schema: UISchema,
+    viewContainer: ViewContainerRef,
+    isRoot = true,
+  ): RenderResult {
+    // On root entry, fix up missing contentTarget IDs across the whole tree
+    if (isRoot) {
+      this.patchContentTargetIds(schema);
+    }
+
     if (!schema || !schema.type) {
       return { component: null, schema, error: 'Invalid schema: missing type' };
     }
@@ -512,7 +583,7 @@ export class SchemaRendererService {
         if (multiContainers) {
           schema.children.forEach((childSchema, index) => {
             if (index < multiContainers.length) {
-              const childResult = this.renderSchemaTree(childSchema, multiContainers[index]);
+              const childResult = this.renderSchemaTree(childSchema, multiContainers[index], false);
               if (childResult.component) {
                 childComponents.push(childResult.component);
               }
@@ -527,7 +598,7 @@ export class SchemaRendererService {
             );
           } else {
             schema.children.forEach((childSchema) => {
-              const childResult = this.renderSchemaTree(childSchema, childContainer);
+              const childResult = this.renderSchemaTree(childSchema, childContainer, false);
               if (childResult.component) {
                 childComponents.push(childResult.component);
               }
