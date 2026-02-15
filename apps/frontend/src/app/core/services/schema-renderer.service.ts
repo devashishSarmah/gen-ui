@@ -453,58 +453,106 @@ export class SchemaRendererService {
   // ── Schema pre-processing ──────────────────────────────────────────
 
   /**
-   * Walk the schema tree and auto-assign `id` props for components
-   * referenced by a sibling's `contentTarget`, if not already set.
+   * Walk the entire schema tree and auto-assign missing `id` props for
+   * components that are referenced by some other node's `contentTarget`.
    *
-   * For every children array, if a child has `contentTarget: "foo"`, we
-   * look for a sibling whose `id` is already `"foo"` — if none is found,
-   * we assign `"foo"` to the first sibling without an `id` that isn't
-   * the source itself (best-effort: picks the nearest non-source sibling).
+   * Two-pass approach:
+   *   Pass 1 — collect every `contentTarget` value and every existing `id`.
+   *   Pass 2 — for each unresolved target (contentTarget with no matching
+   *            id), find a suitable component in the tree and assign the id.
+   *            Also auto-assign ids to source components that lack one.
+   *
+   * "Suitable component" heuristic: any container-type component (card,
+   * flexbox, container, grid, etc.) without an existing `id` that isn't
+   * itself a source (has contentTarget).
    */
   private patchContentTargetIds(schema: UISchema): void {
     if (!schema) return;
 
-    if (schema.children && schema.children.length > 0) {
-      // Collect all contentTarget references from siblings
-      const targetIds = new Set<string>();
-      const sourceIndices = new Set<number>();
+    // ── Pass 1: collect ──────────────────────────────────────────────
+    const contentTargets = new Set<string>(); // all contentTarget values
+    const existingIds = new Set<string>();    // all explicit id props
+    const allNodes: UISchema[] = [];          // flat list of every node
 
-      schema.children.forEach((child, idx) => {
-        const ct = child.props?.['contentTarget'] as string | undefined;
-        if (ct) {
-          targetIds.add(ct);
-          sourceIndices.add(idx);
+    const walk = (node: UISchema) => {
+      if (!node) return;
+      allNodes.push(node);
+      if (node.props?.['id']) existingIds.add(node.props['id']);
+      if (node.props?.['contentTarget']) contentTargets.add(node.props['contentTarget']);
+      node.children?.forEach(walk);
+    };
+    walk(schema);
+
+    // ── Pass 2: resolve missing IDs ──────────────────────────────────
+    const unresolvedTargets = new Set<string>();
+    for (const ct of contentTargets) {
+      if (!existingIds.has(ct)) unresolvedTargets.add(ct);
+    }
+
+    if (unresolvedTargets.size > 0) {
+      // Container-ish types that can receive children / act as targets
+      const containerTypes = new Set([
+        'card', 'flexbox', 'container', 'grid', 'split-layout',
+        'accordion', 'tabs', 'toolbar',
+      ]);
+
+      // Build set of source nodes (nodes with contentTarget) so we can
+      // skip them AND skip their ancestor containers
+      const sourceNodes = new Set<UISchema>(
+        allNodes.filter((n) => n.props?.['contentTarget']),
+      );
+
+      // Check if a node is an ancestor of any source node
+      const isAncestorOfSource = (node: UISchema): boolean => {
+        if (!node.children) return false;
+        for (const child of node.children) {
+          if (sourceNodes.has(child) || isAncestorOfSource(child)) return true;
         }
-      });
+        return false;
+      };
 
-      // For each referenced targetId, check if a sibling already has that id
-      for (const targetId of targetIds) {
-        const alreadyExists = schema.children.some(
-          (child) => child.props?.['id'] === targetId,
-        );
-        if (!alreadyExists) {
-          // Assign to the first sibling that isn't a source and has no id
-          for (let i = 0; i < schema.children.length; i++) {
-            if (sourceIndices.has(i)) continue;
-            const sibling = schema.children[i];
-            if (!sibling.props) sibling.props = {};
-            if (!sibling.props['id']) {
-              sibling.props['id'] = targetId;
-              break;
-            }
+      for (const targetId of unresolvedTargets) {
+        // Search from the END of allNodes (deeper/later nodes first)
+        // so we prefer leaf containers like card over wrapper containers.
+        // Skip: root node (allNodes[0]), nodes with ids, source nodes,
+        // and ancestors that contain the source.
+        let candidate: UISchema | null = null;
+
+        for (let i = allNodes.length - 1; i >= 1; i--) {
+          const node = allNodes[i];
+          if (node.props?.['id']) continue;           // already has id
+          if (node.props?.['contentTarget']) continue; // is a source
+          if (isAncestorOfSource(node)) continue;      // contains the source
+
+          if (containerTypes.has(node.type)) {
+            candidate = node;
+            break;
           }
         }
-      }
 
-      // Also auto-assign id on sources that don't have one
-      schema.children.forEach((child) => {
-        if (child.props?.['contentTarget'] && !child.props['id']) {
-          child.props['id'] = `__auto_${child.type}_${this.autoIdCounter++}`;
+        // Fallback: any non-source, non-root node without an id
+        if (!candidate) {
+          for (let i = allNodes.length - 1; i >= 1; i--) {
+            const node = allNodes[i];
+            if (node.props?.['id'] || node.props?.['contentTarget']) continue;
+            candidate = node;
+            break;
+          }
         }
-      });
 
-      // Recurse into children
-      schema.children.forEach((child) => this.patchContentTargetIds(child));
+        if (candidate) {
+          if (!candidate.props) candidate.props = {};
+          candidate.props['id'] = targetId;
+          existingIds.add(targetId);
+        }
+      }
+    }
+
+    // Auto-assign ids to source components that lack one
+    for (const node of allNodes) {
+      if (node.props?.['contentTarget'] && !node.props['id']) {
+        node.props['id'] = `__auto_${node.type}_${this.autoIdCounter++}`;
+      }
     }
   }
 
