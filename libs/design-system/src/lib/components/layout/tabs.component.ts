@@ -48,7 +48,7 @@ export interface TabItem {
         </div>
       </div>
       <ng-container *ngFor="let tab of tabs">
-        <div ngTabPanel [value]="tab.value" class="tab-pane">
+        <div ngTabPanel [value]="tab.value" class="tab-pane" [hidden]="activeTab() !== tab.value">
           <ng-container *ngIf="tab.contentTemplate">
             <ng-container *ngTemplateOutlet="tab.contentTemplate"></ng-container>
           </ng-container>
@@ -141,6 +141,10 @@ export interface TabItem {
       .tab-pane {
         padding: 0.75rem;
         animation: fadeIn 0.3s ease;
+      }
+
+      .tab-pane[hidden] {
+        display: none !important;
       }
 
       @keyframes fadeIn {
