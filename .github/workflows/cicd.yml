@@ -75,8 +75,11 @@ jobs:
       - name: Free disk space on runner
         run: |
           set -eux
-          echo "Disk before cleanup:"
-          df -h / /mnt
+          echo "=== Disk layout before cleanup ==="
+          df -h
+          lsblk || true
+
+          # ── Remove large pre-installed toolchains ──────────────────
           sudo rm -rf \
             /usr/local/lib/android \
             /opt/ghc \
@@ -101,49 +104,41 @@ jobs:
             /usr/lib/firefox \
             /usr/lib/mono \
             /usr/lib/heroku \
+            /opt/az \
+            /opt/microsoft \
+            /opt/pipx \
+            /usr/local/aws-cli \
+            /usr/local/sqlpackage \
+            /imagegeneration \
+            /usr/local/share/vcpkg \
             || true
+
+          # ── Remove swap to reclaim disk ────────────────────────────
+          sudo swapoff -a || true
+          sudo rm -f /mnt/swapfile /swapfile || true
+
+          # ── Purge packages and apt cache ───────────────────────────
           sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' azure-cli google-chrome-stable \
             firefox powershell mono-devel 2>/dev/null || true
           sudo apt-get autoremove -y || true
           sudo apt-get clean || true
+          sudo rm -rf /var/lib/apt/lists/*
+
+          # ── Purge Docker pre-cached images ─────────────────────────
           docker system prune -af || true
-          echo "Disk after cleanup:"
-          df -h / /mnt
 
-      - name: Relocate Docker storage to /mnt via symlink
-        run: |
-          set -eux
+          echo "=== Disk after cleanup ==="
+          df -h
 
-          # ── Stop Docker completely (socket first to prevent auto-restart) ──
-          sudo systemctl stop docker.socket docker.service
-          while sudo systemctl is-active --quiet docker; do sleep 1; done
-          echo "Docker stopped."
-
-          # ── Replace /var/lib/docker with a symlink to /mnt/docker ──
-          # This is filesystem-level — no daemon.json or systemd config can bypass it.
-          sudo rm -rf /var/lib/docker
-          sudo mkdir -p /mnt/docker
-          sudo ln -s /mnt/docker /var/lib/docker
-          ls -la /var/lib/docker
-
-          # ── Start Docker ───────────────────────────────────────────
-          sudo systemctl start docker
-          timeout 30 sh -c 'until docker info >/dev/null 2>&1; do sleep 1; done'
-
-          # ── Hard gate: verify writes actually land on /mnt ─────────
-          TARGET=$(readlink /var/lib/docker)
-          echo "Symlink target: $TARGET"
-          if [ "$TARGET" != "/mnt/docker" ]; then
-            echo "::error::Symlink broken — /var/lib/docker points to '$TARGET'"
+          # ── Hard gate: require at least 20 GB free on / ────────────
+          FREE_KB=$(df --output=avail / | tail -1 | tr -d ' ')
+          FREE_GB=$((FREE_KB / 1024 / 1024))
+          echo "Free space on /: ${FREE_GB} GB"
+          if [ "$FREE_GB" -lt 20 ]; then
+            echo "::error::Only ${FREE_GB} GB free — need at least 20 GB for Docker builds"
+            du -sh /* 2>/dev/null | sort -rh | head -20
             exit 1
           fi
-          MOUNT=$(df --output=target /var/lib/docker/ | tail -1)
-          echo "Mount point for Docker storage: $MOUNT"
-          if [ "$MOUNT" != "/mnt" ]; then
-            echo "::error::Docker storage is on mount '$MOUNT' — expected '/mnt'"
-            exit 1
-          fi
-          df -h / /mnt
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -151,7 +146,7 @@ jobs:
           buildkitd-config-inline: |
             [worker.oci]
               gc = true
-              gckeepstorage = 5000000000
+              gckeepstorage = 2000000000
 
       - name: Login to GHCR
         uses: docker/login-action@v3
