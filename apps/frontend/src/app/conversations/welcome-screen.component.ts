@@ -95,15 +95,22 @@ export interface ExamplePrompt {
   `,
   styles: [
     `
+      :host {
+        display: block;
+        height: 100%;
+      }
+
       .welcome-container {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: safe center;
         min-height: 100%;
         padding: 2rem;
         background: transparent;
         position: relative;
-        overflow: hidden;
+        overflow-y: auto;
+        overflow-x: hidden;
       }
 
       /* Floating gradient orb */
@@ -137,6 +144,8 @@ export interface ExamplePrompt {
         width: 100%;
         position: relative;
         z-index: 1;
+        margin: auto 0;
+        padding: 1rem 0;
       }
 
       /* ── Header ── */
@@ -359,8 +368,12 @@ export interface ExamplePrompt {
       @media (max-width: 480px) {
         .welcome-container {
           padding: 1.25rem 0.75rem;
-          align-items: flex-start;
-          padding-top: 2rem;
+          justify-content: flex-start;
+        }
+
+        .welcome-content {
+          margin: 0;
+          padding: 0.5rem 0 1.5rem;
         }
 
         .welcome-header {
@@ -387,6 +400,10 @@ export interface ExamplePrompt {
           padding: 0.75rem;
         }
 
+        .get-started {
+          margin-bottom: 1.5rem;
+        }
+
         .features {
           gap: 0.4rem;
         }
@@ -400,6 +417,28 @@ export interface ExamplePrompt {
           width: 220px;
           height: 220px;
           top: 5%;
+        }
+      }
+
+      @media (max-height: 700px) {
+        .welcome-container {
+          justify-content: flex-start;
+        }
+
+        .welcome-content {
+          margin: 0;
+        }
+
+        .welcome-header {
+          margin-bottom: 1.5rem;
+        }
+
+        .example-prompts {
+          margin-bottom: 1.5rem;
+        }
+
+        .get-started {
+          margin-bottom: 1.5rem;
         }
       }
     `,
