@@ -579,37 +579,36 @@ export class AgentOrchestratorService {
     const target = this.resolveParent(root, path, true);
     if (!target) return;
 
-    const clonedValue = this.deepClone(value);
+    // No per-value clone needed — root is already cloned in applyPatchOps,
+    // and incoming values are separate objects from the LLM JSON payload.
 
     if (Array.isArray(target.parent)) {
       if (target.key === '-') {
-        target.parent.push(clonedValue);
+        target.parent.push(value);
         return;
       }
 
       const index = this.asArrayIndex(target.key);
       if (index === null) return;
-      target.parent.splice(index, 0, clonedValue);
+      target.parent.splice(index, 0, value);
       return;
     }
 
-    target.parent[target.key] = clonedValue;
+    target.parent[target.key] = value;
   }
 
   private applyReplace(root: any, path: string, value: any): void {
     const target = this.resolveParent(root, path, true);
     if (!target) return;
 
-    const clonedValue = this.deepClone(value);
-
     if (Array.isArray(target.parent)) {
       const index = this.asArrayIndex(target.key);
       if (index === null) return;
-      target.parent[index] = clonedValue;
+      target.parent[index] = value;
       return;
     }
 
-    target.parent[target.key] = clonedValue;
+    target.parent[target.key] = value;
   }
 
   private applyRemove(root: any, path: string): void {
@@ -699,7 +698,7 @@ export class AgentOrchestratorService {
       }
     }
 
-    return this.deepClone(current);
+    return current;
   }
 
   private parsePatchPath(path: string): string[] {

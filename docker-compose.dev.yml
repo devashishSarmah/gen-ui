@@ -16,6 +16,7 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
+      NODE_OPTIONS: "--max-old-space-size=512"
     volumes:
       - .:/app
       - /app/node_modules

@@ -61,8 +61,11 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
       NODE_ENV: ${NODE_ENV}
+      NODE_OPTIONS: "--max-old-space-size=512"
     expose:
       - "3000"
+    mem_limit: 1g
+    memswap_limit: 1g
     depends_on:
       postgres:
         condition: service_healthy

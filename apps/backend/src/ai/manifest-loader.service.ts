@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
@@ -36,7 +36,7 @@ export interface ManifestComponent {
 }
 
 @Injectable()
-export class ManifestLoaderService implements OnModuleInit {
+export class ManifestLoaderService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(ManifestLoaderService.name);
 
   private manifest: ComponentManifest | null = null;
@@ -45,6 +45,7 @@ export class ManifestLoaderService implements OnModuleInit {
   private schemaValidator: ValidateFunction | null = null;
   private componentWhitelist: Set<string> = new Set();
   private ajv: Ajv;
+  private refreshTimer: ReturnType<typeof setInterval> | null = null;
   private readonly mediaComponentTypes = new Set(['audio-player', 'video-player']);
   private readonly mediaUrlPropKeys = new Set(['src', 'poster']);
   private readonly mediaAllowedDomains: Set<string>;
@@ -73,8 +74,15 @@ export class ManifestLoaderService implements OnModuleInit {
     const isDev = this.configService.get('NODE_ENV') !== 'production';
     if (isDev) {
       const interval = 30_000; // 30s
-      setInterval(() => this.loadManifest(), interval);
+      this.refreshTimer = setInterval(() => this.loadManifest(), interval);
       this.logger.log(`Dev mode: manifest auto-refresh every ${interval / 1000}s`);
+    }
+  }
+
+  onModuleDestroy(): void {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
     }
   }
 

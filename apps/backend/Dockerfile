@@ -89,4 +89,4 @@ RUN if [ ! -e /app/node_modules/express ] && [ -d /app/node_modules/@nestjs/plat
 
 EXPOSE 3000
 
-CMD ["node", "main.js"]
+CMD ["node", "--max-old-space-size=512", "main.js"]

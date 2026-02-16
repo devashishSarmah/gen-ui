@@ -70,11 +70,13 @@ export class ConversationsService {
   }
 
   async getConversationMessages(conversationId: string, limit = 50): Promise<Message[]> {
-    return await this.messageRepository.find({
+    // Fetch the most recent N messages (DESC), then reverse to chronological order
+    const messages = await this.messageRepository.find({
       where: { conversationId },
-      order: { createdAt: 'ASC' },
+      order: { createdAt: 'DESC' },
       take: limit,
     });
+    return messages.reverse();
   }
 
   async deleteConversation(id: string): Promise<void> {

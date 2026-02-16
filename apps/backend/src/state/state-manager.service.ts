@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Repository, LessThan } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RedisService } from '../redis/redis.service';
@@ -20,7 +20,8 @@ export interface ReplayState {
 }
 
 @Injectable()
-export class StateManagerService {
+export class StateManagerService implements OnModuleDestroy {
+  private readonly logger = new Logger(StateManagerService.name);
   private snapshotTriggerCounter: Map<string, number> = new Map();
   private lastSnapshotTime: Map<string, Date> = new Map();
   
@@ -28,6 +29,13 @@ export class StateManagerService {
   private readonly SNAPSHOT_TIME_THRESHOLD = 5 * 60 * 1000; // 5 minutes in ms
   private readonly SNAPSHOT_RETENTION_DAYS = 30;
   private readonly KEEP_EVENTS_AFTER_SNAPSHOT = 100; // Keep recent events for faster replay
+  private readonly MAP_EVICTION_INTERVAL = 10 * 60 * 1000; // 10 minutes
+  private readonly MAP_ENTRY_TTL = 30 * 60 * 1000; // 30 minutes of inactivity
+  private readonly MAP_MAX_SIZE = 5000;
+
+  /** Tracks when each conversation was last accessed for eviction */
+  private lastAccessTime: Map<string, number> = new Map();
+  private evictionTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private redisService: RedisService,
@@ -36,7 +44,56 @@ export class StateManagerService {
     private stateSnapshotRepository: Repository<StateSnapshot>,
     @InjectRepository(InteractionEvent)
     private interactionEventRepository: Repository<InteractionEvent>
-  ) {}
+  ) {
+    // Periodically evict stale entries from in-memory Maps
+    this.evictionTimer = setInterval(() => this.evictStaleCacheEntries(), this.MAP_EVICTION_INTERVAL);
+  }
+
+  onModuleDestroy(): void {
+    if (this.evictionTimer) {
+      clearInterval(this.evictionTimer);
+      this.evictionTimer = null;
+    }
+  }
+
+  /**
+   * Evict entries from in-memory Maps that haven't been accessed recently
+   * or when the Maps exceed the max size limit
+   */
+  private evictStaleCacheEntries(): void {
+    const now = Date.now();
+    let evicted = 0;
+
+    for (const [conversationId, lastAccess] of this.lastAccessTime) {
+      if (now - lastAccess > this.MAP_ENTRY_TTL) {
+        this.snapshotTriggerCounter.delete(conversationId);
+        this.lastSnapshotTime.delete(conversationId);
+        this.lastAccessTime.delete(conversationId);
+        evicted++;
+      }
+    }
+
+    // Hard cap: if still over max size, evict oldest entries
+    if (this.lastAccessTime.size > this.MAP_MAX_SIZE) {
+      const sorted = [...this.lastAccessTime.entries()].sort((a, b) => a[1] - b[1]);
+      const toEvict = sorted.slice(0, sorted.length - this.MAP_MAX_SIZE);
+      for (const [conversationId] of toEvict) {
+        this.snapshotTriggerCounter.delete(conversationId);
+        this.lastSnapshotTime.delete(conversationId);
+        this.lastAccessTime.delete(conversationId);
+        evicted++;
+      }
+    }
+
+    if (evicted > 0) {
+      this.logger.log(`Evicted ${evicted} stale cache entries, remaining=${this.lastAccessTime.size}`);
+    }
+  }
+
+  /** Track access time for a conversation */
+  private touchConversation(conversationId: string): void {
+    this.lastAccessTime.set(conversationId, Date.now());
+  }
 
   /**
    * Save conversation state to Redis (hot path) and create snapshot if needed
@@ -60,6 +117,7 @@ export class StateManagerService {
    * Check if snapshot should be created based on interaction count or time threshold
    */
   private async checkAndCreateSnapshot(state: ConversationState): Promise<void> {
+    this.touchConversation(state.conversationId);
     const interactionCount = (this.snapshotTriggerCounter.get(state.conversationId) || 0) + 1;
     this.snapshotTriggerCounter.set(state.conversationId, interactionCount);
 
