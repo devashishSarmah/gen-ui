@@ -98,6 +98,7 @@ export interface ExamplePrompt {
       :host {
         display: block;
         height: 100%;
+        overflow-y: auto;
       }
 
       .welcome-container {
